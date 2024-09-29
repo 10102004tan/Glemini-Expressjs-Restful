@@ -2,7 +2,12 @@
 const {CREATED} = require('../cores/success.response')
 
 class UserController {
-    static async createUser(req, res) {
+    
+    newUser = async (req, res) => {
+
+    }
+
+    checkRegisterEmailToken = async (req, res) => {
         
     }
 }
