@@ -3,7 +3,7 @@ const StatusCode = require('../utils/statusCode');
 const ReasonStatusCode = require('../utils/reasonPhrases');
 
 class ErrorResponse extends Error {
-    constructor(status, message) {
+    constructor(message,status) {
         super(message);
         this.status = status;
     }
