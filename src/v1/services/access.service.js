@@ -70,7 +70,7 @@ class AccessSevice {
 
             // update refresh token
             await KeyTokenService.updateRefreshTokenById({
-                userId: foundUser._id,
+                userId: newUser._id,
                 refreshToken: tokens.refreshToken
             });
 

@@ -31,7 +31,7 @@ class UserService {
         user_phone,
         user_avatar,
         user_status,
-        user_attributes
+        user_attributes = {}
     }) {
         this.user_fullname = user_fullname;
         this.user_email = user_email;
