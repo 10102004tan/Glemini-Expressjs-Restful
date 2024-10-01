@@ -83,7 +83,9 @@ class StudentService extends UserService {
 
 class TeacherService extends UserService {
     async createUser() {
-        const newTeacher = await Teacher.create(...this.user_attributes);
+        const newTeacher = await Teacher.create({
+            ...this.user_attributes
+        });
 
         if (!newTeacher) {
             throw new BadRequestError("Cannot create user");
