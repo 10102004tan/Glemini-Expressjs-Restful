@@ -1,16 +1,19 @@
-const mongoose = require('mongoose'); // Erase if already required
-const DOCUMENT_NAME = 'Question';
-const COLLECTION_NAME = 'Questions';
-// Declare the Schema of the Mongo model
+const mongoose = require('mongoose');
+
 var questionSchema = new mongoose.Schema(
 	{
+		quiz_id: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Quiz', // Liên kết đến model 'Quiz'
+			required: true,
+		},
 		question_excerpt: {
 			type: String,
 			required: true,
 		},
 		question_description: {
 			type: String,
-			required: true,
+			default: '',
 		},
 		question_audio: {
 			type: String,
@@ -34,22 +37,29 @@ var questionSchema = new mongoose.Schema(
 		},
 		question_explanation: {
 			type: String,
+			default: '',
 		},
 		question_type: {
 			type: String,
-			enum: ['single', 'multiple', 'truefalase', 'blank', 'box'],
+			enum: ['single', 'multiple', 'truefalse', 'blank', 'box'],
 			default: 'single',
 		},
-		question_answer_ids: {
-			type: Array,
-			default: [],
-		},
+		question_answer_ids: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'Answer', // Liên kết đến model 'Answer'
+			},
+		],
+		correct_answer_ids: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'Answer', // Liên kết đến model 'Answer'
+			},
+		],
 	},
 	{
 		timestamps: true,
-		collection: COLLECTION_NAME,
 	}
 );
 
-//Export the model
-module.exports = mongoose.model(DOCUMENT_NAME, questionSchema);
+module.exports = mongoose.model('Question', questionSchema);
