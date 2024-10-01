@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 class AccessSevice {
+
     static async signup({ fullname, email, password, type, attributes }) {
 
         // check if email is already used
@@ -232,3 +233,4 @@ class AccessSevice {
 
 
 module.exports = AccessSevice;
+
