@@ -1,5 +1,5 @@
 'use strict';
-const {CREATED} = require('../cores/success.response')
+const { CREATED } = require('../cores/success.response');
 
 class UserController {
     
