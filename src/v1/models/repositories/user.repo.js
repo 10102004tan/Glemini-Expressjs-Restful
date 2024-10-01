@@ -12,7 +12,13 @@ const findUserById = async (id) => {
     return foundUser;
 };
 
+const updatePasswordByEmail = async ({email, password}) => {
+    const updated = await User.updateOne({user_email:email}, {user_password: password});
+    return updated;
+};
+
 module.exports = {
     findUserByEmail,
-    findUserById
+    findUserById,
+    updatePasswordByEmail
 };

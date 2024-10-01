@@ -1,11 +1,14 @@
 'use strict';
 
 const mongoose = require('mongoose');
+const { type } = require('os');
 const { Schema, model } = mongoose;
 
 const teacherSchema = new Schema({
     teacher_status: {
+        type:String,
         enum: ['active', 'inactive'],
+        default:'inactive'
     },
     teacher_attributes:{
         type: Array,

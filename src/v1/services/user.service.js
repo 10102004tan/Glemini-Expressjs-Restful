@@ -31,7 +31,7 @@ class UserService {
         user_phone,
         user_avatar,
         user_status,
-        user_attributes
+        user_attributes = {}
     }) {
         this.user_fullname = user_fullname;
         this.user_email = user_email;
@@ -83,7 +83,9 @@ class StudentService extends UserService {
 
 class TeacherService extends UserService {
     async createUser() {
-        const newTeacher = await Teacher.create(...this.user_attributes);
+        const newTeacher = await Teacher.create({
+            ...this.user_attributes
+        });
 
         if (!newTeacher) {
             throw new BadRequestError("Cannot create user");

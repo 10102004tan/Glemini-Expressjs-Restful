@@ -27,6 +27,28 @@ class AccessController {
             metadata: await accessService.logout(req.user)
         }).send(res);
     }
+
+
+    refresh = async (req, res, next) => {
+        return new OK({
+            message: "User refresh token successfully",
+            metadata: await accessService.refresh({
+                user:req.user,
+                refreshToken:req.refreshToken
+            })
+        }).send(res);
+    }
+
+    changePassword = async (req, res, next) => {
+        return new OK({
+            message: "User change password successfully",
+            metadata: await accessService.changePassword({
+                email:req.user.user_email,
+                old_password:req.body.oldPassword,
+                new_password:req.body.newPassword
+            })
+        }).send(res);
+    };
 }
 
 module.exports = new AccessController();
