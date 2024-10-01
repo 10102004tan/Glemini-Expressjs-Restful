@@ -4,6 +4,8 @@ const router = express.Router();
 const { asynHandler } = require('../../auths/utils');
 const resultController = require('../../controllers/result.controller');
 
-router.get('result/single',asynHandler(resultController.single));
+router.post('/result/save-question', resultController.saveQuestion);
+router.post('/result/complete-quiz', resultController.completeQuiz);
+router.get('/result/single', resultController.single);
 
 module.exports = router;

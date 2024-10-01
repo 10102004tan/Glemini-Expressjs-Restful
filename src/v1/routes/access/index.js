@@ -9,7 +9,7 @@ router.post('/signup',asynHandler(accessController.signup));
 router.post('/login',asynHandler(accessController.login));
 
 /* AUTHENTICATION */
-router.use(asynHandler(authentication));
+// router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
 
