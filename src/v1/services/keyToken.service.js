@@ -1,5 +1,6 @@
 'use strict';
 
+const { BadRequestError } = require('../cores/error.repsone');
 const KeyToken = require('../models/keyToken.model');
 const {Types:{ObjectId}} = require('mongoose');
 

@@ -12,8 +12,14 @@ router.post('/login',asynHandler(accessController.login));
 // router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
-
+router.post('/me', asynHandler((req, res) => {
+    const user = req.user;
+    res.json(user);
+}))
 router.post('/logout', asynHandler(accessController.logout));
+router.post('/change-password', asynHandler(accessController.changePassword));
+router.post('/refresh', asynHandler(accessController.refresh));
+
 
 
 
