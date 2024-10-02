@@ -31,8 +31,15 @@ const resultSchema = new Schema(
                     ref: 'Question',
                 },
                 answer: {
-                    type: Array,
+                    type: [String], // Chấp nhận mảng hoặc một giá trị đơn (cho single-choice hoặc multiple-choice)
                     required: true,
+                    validate: {
+                        validator: function (answers) {
+                            // Nếu là single-choice thì chỉ cho phép một câu trả lời
+                            return answers.length > 0;
+                        },
+                        message: 'Phải có ít nhất một đáp án được chọn.',
+                    },
                 },
                 correct: {
                     type: Boolean,
