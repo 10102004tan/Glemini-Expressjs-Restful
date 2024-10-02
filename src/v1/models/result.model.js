@@ -1,13 +1,11 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 const DOCUMENT_NAME = 'Result';
-const COLLECTION_NAME = 'Results';
 
 const resultSchema = new Schema(
     {
         exercise_id: {
             type: mongoose.Schema.Types.ObjectId,
-            required: true,
             ref: 'Exercise',
         },
         user_id: {
@@ -33,7 +31,7 @@ const resultSchema = new Schema(
                     ref: 'Question',
                 },
                 answer: {
-                    type: String,
+                    type: Array,
                     required: true,
                 },
                 correct: {
@@ -49,7 +47,6 @@ const resultSchema = new Schema(
     },
     {
         timestamps: true,
-        collection: COLLECTION_NAME,
     }
 );
 
