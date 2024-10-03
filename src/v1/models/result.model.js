@@ -5,7 +5,7 @@ const DOCUMENT_NAME = 'Result';
 const resultSchema = new Schema(
     {
         exercise_id: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Number,
             ref: 'Exercise',
         },
         user_id: {
@@ -14,7 +14,7 @@ const resultSchema = new Schema(
             ref: 'User',
         },
         quiz_id: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Number,
             required: true,
             ref: 'Quiz',
         },
@@ -26,12 +26,12 @@ const resultSchema = new Schema(
         result_questions: [
             {
                 question_id: {
-                    type: mongoose.Schema.Types.ObjectId,
+                    type: Number,
                     required: true,
                     ref: 'Question',
                 },
                 answer: {
-                    type: [String], // Chấp nhận mảng hoặc một giá trị đơn (cho single-choice hoặc multiple-choice)
+                    type: [String],
                     required: true,
                     validate: {
                         validator: function (answers) {

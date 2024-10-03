@@ -3,9 +3,7 @@ const ResultModel = require('../models/result.model');
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
-    // Save a single question result
     static async saveQuestion({ exercise_id, user_id, quiz_id, question_id, answer, correct, score }) {
-        // Tạo điều kiện tìm kiếm, nếu không có exercise_id thì bỏ qua nó
         const query = {
             user_id,
             quiz_id,
@@ -17,7 +15,7 @@ class ResultService {
         let result = await ResultModel.findOne(query);
 
         if (!result) {
-            // Create new result document if it doesn't exist
+            // Nếu kết quả chưa tồn tại, tạo một kết quả mới với trạng thái "Đang thực hiện"
             result = new ResultModel({
                 user_id,
                 quiz_id,
@@ -25,28 +23,45 @@ class ResultService {
                 result_questions: [],
             });
 
-            // Thêm exercise_id nếu có
             if (exercise_id) {
                 result.exercise_id = exercise_id;
             }
+        } else {
+            // Nếu kết quả đã tồn tại và trạng thái là "Đã hoàn thành", đổi lại thành "Đang thực hiện"
+            if (result.status === 'Đã hoàn thành') {
+                result.status = 'Đang thực hiện';
+            }
         }
 
-        // Add result of the current question
-        result.result_questions.push({
-            question_id,
-            answer,
-            correct,
-            score,
-        });
+        // Kiểm tra xem câu hỏi đã tồn tại trong result_questions chưa
+        const questionIndex = result.result_questions.findIndex(
+            (q) => q.question_id.toString() === question_id.toString()
+        );
+
+        if (questionIndex !== -1) {
+            // Nếu câu hỏi đã tồn tại, cập nhật lại câu trả lời
+            result.result_questions[questionIndex] = {
+                question_id,
+                answer,
+                correct,
+                score,
+            };
+        } else {
+            // Nếu câu hỏi chưa tồn tại, thêm mới
+            result.result_questions.push({
+                question_id,
+                answer,
+                correct,
+                score,
+            });
+        }
 
         await result.save();
 
         return result;
     }
 
-    // Update result status to "Đã hoàn thành"
     static async completeQuiz({ exercise_id, user_id, quiz_id }) {
-        // Tạo điều kiện tìm kiếm, nếu không có exercise_id thì bỏ qua nó
         const query = {
             user_id,
             quiz_id,
@@ -68,9 +83,7 @@ class ResultService {
         return result;
     }
 
-    // Get single result
     static async single({ exercise_id, user_id, quiz_id }) {
-        // Tạo điều kiện tìm kiếm, nếu không có exercise_id thì bỏ qua nó
         const query = {
             user_id,
             quiz_id,
