@@ -10,7 +10,14 @@ class AccessController {
     signup = async (req, res, next) => {
         return new CREATED({
             message: "User created successfully",
-            metadata: await accessService.signup(req.body)
+            metadata: await accessService.signup({
+                fullname: req.body.fullname,
+                email: req.body.email,
+                password: req.body.password,
+                type: req.body.type,
+                attributes: req.body.attributes,
+                files: req.files
+            })
         }).send(res);
     }
 
