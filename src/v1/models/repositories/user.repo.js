@@ -5,6 +5,11 @@ const Teacher = require('../../models/teacher.model');
 
 const findUserByEmail = async (email) => {
     const foundUser = await User.findOne({ user_email: email }).lean();
+    return foundUser;
+};
+
+const findUserByEmailV2 = async (email) => {
+    const foundUser = await User.findOne({ user_email: email }).lean();
     const teacherStatus = await Teacher.findOne({_id:foundUser._id},{teacher_status:1,_id:0}).lean();
     return (foundUser.user_type="teacher") ? { ...foundUser, teacher_status:teacherStatus.teacher_status} : foundUser;
 };
@@ -38,5 +43,6 @@ module.exports = {
     findUserByEmail,
     findUserById,
     updatePasswordByEmail,
-    findStatusByUserId
+    findStatusByUserId,
+    findUserByEmailV2
 };
