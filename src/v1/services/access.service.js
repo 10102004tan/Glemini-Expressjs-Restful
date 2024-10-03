@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, attributes }) {
+    static async signup({ fullname, email, password, type, attributes,files }) {
 
         // check if email is already used
         const foundUser = await findUserByEmail(email);
@@ -22,6 +22,12 @@ class AccessSevice {
 
         if (!hashPassword) {
             throw new BadRequestError("Sigup failed");
+        }
+        if (files) {
+            attributes = {
+                ...attributes,
+                file_urls: files.map(file => file.filename)
+            }
         }
 
         const newUser = await UserFactory.createUser(
@@ -82,12 +88,11 @@ class AccessSevice {
         }
 
     }
-
     static async login({ email, password }) {
         const foundUser = await findUserByEmail(email);
 
         if (!foundUser) {
-            throw new BadRequestError("User not found");
+            throw new BadRequestError("Account not found");
         }
 
         const match = await bcrypt.compare(password, foundUser.user_password);
@@ -197,6 +202,7 @@ class AccessSevice {
     }
 
     static async refresh({user,refreshToken}) {
+        
         const keyToken  = await findKeyTokenByUserIdAndRefreshToken(user.user_id,refreshToken);
 
         if(!keyToken){

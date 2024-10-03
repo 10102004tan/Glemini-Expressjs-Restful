@@ -4,8 +4,9 @@ const router = express.Router();
 const { asynHandler } = require('../../auths/utils');
 const accessController = require('../../controllers/access.controller');
 const {authentication} = require('../../auths');
+const {uploadDisk} = require('../../configs/multer.config');
 
-router.post('/signup',asynHandler(accessController.signup));
+router.post('/signup',uploadDisk.array('images'),asynHandler(accessController.signup));
 router.post('/login',asynHandler(accessController.login));
 
 /* AUTHENTICATION */
@@ -18,7 +19,7 @@ router.post('/me', asynHandler((req, res) => {
 }))
 router.post('/logout', asynHandler(accessController.logout));
 router.post('/change-password', asynHandler(accessController.changePassword));
-router.post('/refresh', asynHandler(accessController.refresh));
+router.post('/refresh-token', asynHandler(accessController.refresh));
 
 
 
