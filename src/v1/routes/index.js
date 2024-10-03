@@ -12,7 +12,7 @@ const routeResult = require('./result');
 router.use('/api/v1/', require('./upload'));
 router.use('/api/v1/quizzes', routeQuizzes);
 router.use('/api/v1/questions', routeQuestions);
-router.use('/api/v1/', routeAccess);
+router.use('/api/v1/auth', routeAccess);
 router.use('/api/v1/result', routeResult);
 
 router.get('/', (req, res,next) => {

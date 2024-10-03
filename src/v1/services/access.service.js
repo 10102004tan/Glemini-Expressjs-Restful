@@ -1,7 +1,7 @@
 'use strict';
 const { createKeyPair } = require('../auths');
 const { BadRequestError } = require('../cores/error.repsone');
-const { findUserByEmail, findUserById, updatePasswordByEmail } = require('../models/repositories/user.repo');
+const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2 } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId,findKeyTokenByUserIdAndRefreshToken } = require('../models/repositories/keyToken.repo');
 const KeyTokenService = require('./keyToken.service');
 const { UserFactory } = require('./user.service');
@@ -89,15 +89,21 @@ class AccessSevice {
 
     }
     static async login({ email, password }) {
-        const foundUser = await findUserByEmail(email);
+        const foundUser = await findUserByEmailV2(email);
 
         if (!foundUser) {
             throw new BadRequestError("Account not found");
         }
 
+        console.log(foundUser);
+
         const match = await bcrypt.compare(password, foundUser.user_password);
         if (!match) {
             throw new BadRequestError("Password is incorrect");
+        }
+
+        if (foundUser.user_status !== "active") {
+            throw new BadRequestError(`Acccount is ${foundUser.user_status}`);
         }
 
 
@@ -232,6 +238,15 @@ class AccessSevice {
             user,
             tokens: tokens
         }
+    }
+
+    static async getStatus({user_id,user_type}){
+        const status = await findStatusByUserId({id:user_id,type:user_type});
+
+        if(!status){
+            throw new BadRequestError("User not found");
+        }
+        return status;
     }
 }
 
