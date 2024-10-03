@@ -2,6 +2,7 @@ const questionController = require('../controllers/question.controller');
 const { BadRequestError } = require('../cores/error.repsone');
 const answerModel = require('../models/answer.model');
 const questionModel = require('../models/question.model');
+const { getQuestionsByQuiz } = require('./quiz.service');
 class QuestionService {
 	async create(body) {
 		console.log(body);
@@ -28,7 +29,7 @@ class QuestionService {
 		const questionAnswerIds = [];
 		const correctAnswerIds = [];
 
-		const promises = body.answers.map(async (answer, index) => {
+		const promises = body.question_answer_ids.map(async (answer, index) => {
 			console.log(index);
 			const answerData = await answerModel.create({
 				text: answer.text,
@@ -65,6 +66,77 @@ class QuestionService {
 	async getQuestionsByQuizId({ quiz_id }) {
 		const questions = await questionModel.find({ quiz_id: quiz_id });
 		return questions;
+	}
+
+	async getQuestionsById({ question_id }) {
+		const question = await questionModel
+			.findById(question_id)
+			.populate('question_answer_ids')
+			.populate('correct_answer_ids')
+			.exec(); // Sử dụng exec để truy vấn
+
+		if (!question) {
+			throw new BadRequestError('Questions not found');
+		}
+
+		return question;
+	}
+
+	async update(question) {
+		console.log(question);
+		const questionUpdate = await questionModel.findOneAndUpdate(
+			{ _id: question._id },
+			{
+				question_excerpt: question.question_excerpt,
+				question_description: question.question_description,
+				question_image: question.question_image,
+				question_audio: question.question_audio,
+				question_video: question.question_video,
+				question_point: question.question_point,
+				question_time: question.question_time,
+				question_explanation: question.question_explanation,
+				question_type: question.question_type,
+			}
+		);
+
+		if (!questionUpdate) {
+			return BadRequestError('Update question failed');
+		}
+
+		// console.log(questionUpdate);
+
+		// create answers
+		// const questionAnswerIds = [];
+		// const correctAnswerIds = [];
+
+		// const promises = answers.map(async (answer, index) => {
+		// 	console.log(index);
+		// 	const answerData = await answerModel.create({
+		// 		text: answer.text,
+		// 		image: answer.image,
+		// 	});
+
+		// 	if (answerData) {
+		// 		questionAnswerIds.push(answerData._id);
+		// 		if (answer.correct) {
+		// 			correctAnswerIds.push(answerData._id);
+		// 		}
+		// 	}
+		// });
+
+		// wait for all promises to resolve
+		// await Promise.all(promises);
+
+		// // update question with answer ids
+		// const updatedQuestion = await questionModel.findOneAndUpdate(
+		// 	{ _id: question._id },
+		// 	{
+		// 		question_answer_ids: questionAnswerIds,
+		// 		correct_answer_ids: correctAnswerIds,
+		// 	}
+		// );
+
+		// return updatedQuestion;
 	}
 }
 
