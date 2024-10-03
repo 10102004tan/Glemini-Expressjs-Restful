@@ -1,5 +1,24 @@
+'use strict';
+
 const multer = require('multer');
 const path = require('path');
+
+const uploadMemory = multer({
+    storage: multer.memoryStorage(),
+});
+
+const uploadDisk = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, './src/v1/uploads'); 
+        },
+        filename: (req, file, cb) => {
+            cb(null, `${Date.now()}-${file.originalname}`);
+        }
+    }),
+});
+
+
 
 // Config storage for multer
 const storage = multer.diskStorage({
@@ -34,4 +53,9 @@ const upload = multer({
 	fileFilter: fileFilter,
 });
 
-module.exports = upload;
+module.exports = {
+    uploadMemory,
+    uploadDisk,
+	upload,
+};
+
