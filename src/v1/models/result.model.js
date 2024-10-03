@@ -5,7 +5,7 @@ const DOCUMENT_NAME = 'Result';
 const resultSchema = new Schema(
     {
         exercise_id: {
-            type: Number,
+            type: mongoose.Schema.Types.ObjectId,
             ref: 'Exercise',
         },
         user_id: {
