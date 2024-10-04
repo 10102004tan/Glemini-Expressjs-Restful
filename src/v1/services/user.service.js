@@ -6,6 +6,7 @@ const Student = require('../models/student.model');
 const Teacher = require('../models/teacher.model');
 const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
+const {uploadDisk} = require('../configs/multer.config');
 
 class UserFactory {
     static createUser(type, payload) {
@@ -19,6 +20,8 @@ class UserFactory {
                 throw new BadRequestError("User type is invalid");
         }
     }
+
+    // get status 
 }
 
 class UserService {
@@ -30,7 +33,7 @@ class UserService {
         user_type,
         user_phone,
         user_avatar,
-        user_status,
+        user_status='active',
         user_attributes = {}
     }) {
         this.user_fullname = user_fullname;
@@ -83,6 +86,10 @@ class StudentService extends UserService {
 
 class TeacherService extends UserService {
     async createUser() {
+
+        //TODO: upload file_url to /uploads
+        // uploadDisk.single()
+
         const newTeacher = await Teacher.create({
             ...this.user_attributes
         });

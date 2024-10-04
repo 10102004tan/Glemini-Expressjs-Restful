@@ -10,7 +10,14 @@ class AccessController {
     signup = async (req, res, next) => {
         return new CREATED({
             message: "User created successfully",
-            metadata: await accessService.signup(req.body)
+            metadata: await accessService.signup({
+                fullname: req.body.fullname,
+                email: req.body.email,
+                password: req.body.password,
+                type: req.body.type,
+                attributes: req.body.attributes,
+                files: req.files
+            })
         }).send(res);
     }
 
@@ -27,7 +34,6 @@ class AccessController {
             metadata: await accessService.logout(req.user)
         }).send(res);
     }
-
 
     refresh = async (req, res, next) => {
         return new OK({
@@ -47,6 +53,14 @@ class AccessController {
                 old_password:req.body.oldPassword,
                 new_password:req.body.newPassword
             })
+        }).send(res);
+    };
+
+    getStatus = async (req, res, next) => {
+        console.log(req.user);
+        return new OK({
+            message: "User status successfully",
+            metadata: await accessService.getStatus(req.user)
         }).send(res);
     };
 }

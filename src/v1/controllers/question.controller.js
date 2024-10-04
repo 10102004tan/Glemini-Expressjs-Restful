@@ -1,6 +1,6 @@
 'use strict';
 
-const { CREATED } = require('../cores/success.response');
+const { CREATED, OK } = require('../cores/success.response');
 const questionService = require('../services/question.service');
 
 class QuestionController {
@@ -11,12 +11,33 @@ class QuestionController {
 		}).send(res);
 	}
 
+	async update(req, res) {
+		return new OK({
+			message: 'Question created successfully',
+			metadata: await questionService.update(req.body),
+		}).send(res);
+	}
+
 	async get(req, res) {
-		return new CREATED({
+		return new OK({
 			message: 'Question fetched successfully',
 			metadata: await questionService.getQuestionsByQuizId(req.body),
 		}).send(res);
 	}
+
+	async getDetails(req, res) {
+		return new OK({
+			message: 'Question fetched successfully',
+			metadata: await questionService.getQuestionsById(req.body),
+		}).send(res);
+	}
+
+	async uploadQuizIamges(req, res) {
+      return new OK({
+			message: 'Question fetched successfully',
+			metadata: await questionService.uploadQuestionImages(req.body),
+		}).send(res);
+   }
 }
 
 module.exports = new QuestionController();
