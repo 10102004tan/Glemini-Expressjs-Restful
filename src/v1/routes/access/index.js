@@ -14,9 +14,6 @@ router.post(
 );
 router.post('/login', asynHandler(accessController.login));
 
-
-
-
 /* AUTHENTICATION */
 router.use(asynHandler(authentication));
 /* AUTHENTICATION */
