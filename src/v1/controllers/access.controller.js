@@ -35,7 +35,6 @@ class AccessController {
         }).send(res);
     }
 
-
     refresh = async (req, res, next) => {
         return new OK({
             message: "User refresh token successfully",
@@ -54,6 +53,14 @@ class AccessController {
                 old_password:req.body.oldPassword,
                 new_password:req.body.newPassword
             })
+        }).send(res);
+    };
+
+    getStatus = async (req, res, next) => {
+        console.log(req.user);
+        return new OK({
+            message: "User status successfully",
+            metadata: await accessService.getStatus(req.user)
         }).send(res);
     };
 }
