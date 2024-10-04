@@ -1,5 +1,6 @@
 'use strict';
 const ResultModel = require('../models/result.model');
+const QuestionModel = require('../models/question.model'); 
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
@@ -86,15 +87,29 @@ class ResultService {
         if (exercise_id) {
             query.exercise_id = exercise_id;
         }
-
-        const result = await ResultModel.findOne(query);
-        
+    
+        const result = await ResultModel.findOne(query).populate('result_questions.question_id'); // Giả sử question_id là ObjectId trong result_questions
+    
         if (!result) {
             throw new BadRequestError('Result not found');
         }
-
+    
+        // Lấy thông tin câu hỏi từ question model
+        const questions = await QuestionModel.find({
+            _id: { $in: result.result_questions.map(q => q.question_id) }
+        });
+    
+        result.result_questions = result.result_questions.map(rq => {
+            const question = questions.find(q => q._id.toString() === rq.question_id.toString());
+            return {
+                ...rq,
+                question: question ? question.text : null,
+            };
+        });
+    
         return result;
     }
+    
 }
 
 module.exports = ResultService;
