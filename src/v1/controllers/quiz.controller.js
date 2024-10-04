@@ -30,6 +30,13 @@ class QuizController {
 			metadata: await quizService.getQuestionsByQuiz(req.body),
 		}).send(res);
 	};
+
+	deleteQuiz = async (req, res) => {
+		return new OK({
+			message: 'Quiz deleted successfully',
+			metadata: await quizService.deleteQuiz(req.body),
+		}).send(res);
+	};
 }
 
 module.exports = new QuizController();
