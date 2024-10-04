@@ -32,8 +32,11 @@ class QuestionController {
 		}).send(res);
 	}
 
-	uploadQuizIamges(req, res) {
-      
+	async uploadQuizIamges(req, res) {
+      return new OK({
+			message: 'Question fetched successfully',
+			metadata: await questionService.uploadQuestionImages(req.body),
+		}).send(res);
    }
 }
 
