@@ -14,7 +14,7 @@ const resultSchema = new Schema(
             ref: 'User',
         },
         quiz_id: {
-            type: Number,
+            type: mongoose.Schema.Types.ObjectId,
             required: true,
             ref: 'Quiz',
         },
@@ -26,12 +26,12 @@ const resultSchema = new Schema(
         result_questions: [
             {
                 question_id: {
-                    type: Number,
+                    type: mongoose.Schema.Types.ObjectId,
                     required: true,
                     ref: 'Question',
                 },
                 answer: {
-                    type: [String],
+                    type: [mongoose.Schema.Types.ObjectId],
                     required: true,
                     validate: {
                         validator: function (answers) {
