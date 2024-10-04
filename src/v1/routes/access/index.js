@@ -20,6 +20,8 @@ router.post('/me', asynHandler((req, res) => {
 router.post('/logout', asynHandler(accessController.logout));
 router.post('/change-password', asynHandler(accessController.changePassword));
 router.post('/refresh-token', asynHandler(accessController.refresh));
+router.post('/status', asynHandler(accessController.getStatus));
+router.post('/teacher-status', asynHandler(accessController.getStatus));
 
 
 
