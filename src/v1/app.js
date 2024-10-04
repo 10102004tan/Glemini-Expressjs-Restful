@@ -3,11 +3,13 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
-const {default:helmet} = require('helmet');
+const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
 const io = require('socket.io')(server);
+const fs = require('fs');
+const path = require('path');
 
 global.__basedir = __dirname;
 global._io = io;
@@ -22,30 +24,40 @@ app.use(compression());
 /* MIDDLEWARES END*/
 
 /* DATABASE CONNECTION START*/
-require('./databases/init.mongodb')
+require('./databases/init.mongodb');
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
 
-io.on('connection',socketService.connection);
+io.on('connection', socketService.connection);
 
 /* ROUTES START*/
+/* FILES UPLOAD START */
+// Configuring the storage location for the uploaded files for the questions
+app.use('/uploads/questions', (req, res) => {
+	const { url } = req;
+	const filePath = path.join(__dirname, `/uploads/questions/${url}`);
+	return res.sendFile(filePath);
+});
+/* FILES UPLOAD END */
+
 app.use('/', require('./routes'));
 
 // catch 404 and forward to error handler
-app.use((req,res,next)=>{
-    const error = new Error('Not Found');
-    error.status = 404;
-    next(error);
+app.use((req, res, next) => {
+	const error = new Error('Not Found');
+	error.status = 404;
+	next(error);
 });
-app.use((error,req,res,next)=>{
-    const statusCode = error.status || 500;
-    return res.status(statusCode).json({
-        status:'error',
-        statusCode: statusCode,
-        stack: error.stack,
-        message: error.message || 'Internal Servel Error'
-    })
+
+app.use((error, req, res, next) => {
+	const statusCode = error.status || 500;
+	return res.status(statusCode).json({
+		status: 'error',
+		statusCode: statusCode,
+		stack: error.stack,
+		message: error.message || 'Internal Servel Error',
+	});
 });
 /* ROUTES END*/
 
