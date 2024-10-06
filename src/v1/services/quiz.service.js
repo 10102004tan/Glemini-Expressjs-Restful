@@ -49,6 +49,7 @@ class QuizService {
 	}
 
 	async getQuizDetails({ quiz_id }) {
+		console.log(quiz_id)
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
 			throw new BadRequestError('Quiz not found');
