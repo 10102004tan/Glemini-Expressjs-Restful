@@ -37,6 +37,13 @@ class QuizController {
 			metadata: await quizService.deleteQuiz(req.body),
 		}).send(res);
 	};
+
+	updateQuiz = async (req, res) => {
+		return new OK({
+			message: 'Quiz updated successfully',
+			metadata: await quizService.updateQuiz(req.body),
+		}).send(res);
+	};
 }
 
 module.exports = new QuizController();
