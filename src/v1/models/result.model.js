@@ -33,6 +33,7 @@ const resultSchema = new Schema(
                 answer: {
                     type: [mongoose.Schema.Types.ObjectId],
                     required: true,
+                    ref: 'Answer',
                     validate: {
                         validator: function (answers) {
                             // Nếu là single-choice thì chỉ cho phép một câu trả lời

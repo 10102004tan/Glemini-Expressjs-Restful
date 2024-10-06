@@ -1,5 +1,6 @@
 'use strict';
 const ResultModel = require('../models/result.model');
+const QuestionModel = require('../models/question.model'); 
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
@@ -78,7 +79,7 @@ class ResultService {
         return result;
     }
 
-    static async single({ exercise_id, user_id, quiz_id }) {
+    static async review({ exercise_id, user_id, quiz_id }) {
         const query = {
             user_id,
             quiz_id,
@@ -86,15 +87,28 @@ class ResultService {
         if (exercise_id) {
             query.exercise_id = exercise_id;
         }
-
-        const result = await ResultModel.findOne(query);
-        
+    
+        const result = await ResultModel.findOne(query)
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: {
+                    path: 'question_answer_ids', // Populate câu trả lời
+                    model: 'Answer'
+                }
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
+    
         if (!result) {
             throw new BadRequestError('Result not found');
         }
-
+    
         return result;
     }
+    
 }
 
 module.exports = ResultService;
