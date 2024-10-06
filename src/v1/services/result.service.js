@@ -79,7 +79,7 @@ class ResultService {
         return result;
     }
 
-    static async single({ exercise_id, user_id, quiz_id }) {
+    static async review({ exercise_id, user_id, quiz_id }) {
         const query = {
             user_id,
             quiz_id,
@@ -88,24 +88,23 @@ class ResultService {
             query.exercise_id = exercise_id;
         }
     
-        const result = await ResultModel.findOne(query).populate('result_questions.question_id'); // Giả sử question_id là ObjectId trong result_questions
+        const result = await ResultModel.findOne(query)
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: {
+                    path: 'question_answer_ids', // Populate câu trả lời
+                    model: 'Answer'
+                }
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
     
         if (!result) {
             throw new BadRequestError('Result not found');
         }
-    
-        // Lấy thông tin câu hỏi từ question model
-        const questions = await QuestionModel.find({
-            _id: { $in: result.result_questions.map(q => q.question_id) }
-        });
-    
-        result.result_questions = result.result_questions.map(rq => {
-            const question = questions.find(q => q._id.toString() === rq.question_id.toString());
-            return {
-                ...rq,
-                question: question ? question.text : null,
-            };
-        });
     
         return result;
     }

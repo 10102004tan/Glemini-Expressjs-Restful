@@ -6,6 +6,6 @@ const resultController = require('../../controllers/result.controller');
 
 router.post('/save-question', resultController.saveQuestion);
 router.post('/complete-quiz', resultController.completeQuiz);
-router.post('/single', resultController.single);
+router.post('/review', resultController.review);
 
 module.exports = router;
