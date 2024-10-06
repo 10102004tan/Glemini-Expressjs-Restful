@@ -18,6 +18,7 @@ class QuizService {
 	}
 
 	async getQuizByUser({ user_id }) {
+		console.log(user_id);
 		const quizzies = await quizModel.find({ user_id });
 		if (!quizzies) {
 			throw new BadRequestError('Quiz not found');
@@ -55,6 +56,14 @@ class QuizService {
 			throw new BadRequestError('Quiz not found');
 		}
 
+		return quiz;
+	}
+
+	async deleteQuiz({ quiz_id }) {
+		const quiz = await quizModel.findByIdAndDelete(quiz_id);
+		if (!quiz) {
+			throw new BadRequestError('Quiz not found');
+		}
 		return quiz;
 	}
 }

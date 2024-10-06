@@ -1,5 +1,6 @@
 'use strict';
 const ResultModel = require('../models/result.model');
+const QuestionModel = require('../models/question.model'); 
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
@@ -15,7 +16,6 @@ class ResultService {
         let result = await ResultModel.findOne(query);
 
         if (!result) {
-            // Nếu kết quả chưa tồn tại, tạo một kết quả mới với trạng thái "Đang thực hiện"
             result = new ResultModel({
                 user_id,
                 quiz_id,
@@ -27,19 +27,16 @@ class ResultService {
                 result.exercise_id = exercise_id;
             }
         } else {
-            // Nếu kết quả đã tồn tại và trạng thái là "Đã hoàn thành", đổi lại thành "Đang thực hiện"
             if (result.status === 'Đã hoàn thành') {
                 result.status = 'Đang thực hiện';
             }
         }
 
-        // Kiểm tra xem câu hỏi đã tồn tại trong result_questions chưa
         const questionIndex = result.result_questions.findIndex(
             (q) => q.question_id.toString() === question_id.toString()
         );
 
         if (questionIndex !== -1) {
-            // Nếu câu hỏi đã tồn tại, cập nhật lại câu trả lời
             result.result_questions[questionIndex] = {
                 question_id,
                 answer,
@@ -47,7 +44,6 @@ class ResultService {
                 score,
             };
         } else {
-            // Nếu câu hỏi chưa tồn tại, thêm mới
             result.result_questions.push({
                 question_id,
                 answer,
@@ -83,7 +79,7 @@ class ResultService {
         return result;
     }
 
-    static async single({ exercise_id, user_id, quiz_id }) {
+    static async review({ exercise_id, user_id, quiz_id }) {
         const query = {
             user_id,
             quiz_id,
@@ -91,15 +87,28 @@ class ResultService {
         if (exercise_id) {
             query.exercise_id = exercise_id;
         }
-
-        const result = await ResultModel.findOne(query);
-        
+    
+        const result = await ResultModel.findOne(query)
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: {
+                    path: 'question_answer_ids', // Populate câu trả lời
+                    model: 'Answer'
+                }
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
+    
         if (!result) {
             throw new BadRequestError('Result not found');
         }
-
+    
         return result;
     }
+    
 }
 
 module.exports = ResultService;
