@@ -18,6 +18,7 @@ class QuizService {
 	}
 
 	async getQuizByUser({ user_id }) {
+		console.log(user_id);
 		const quizzies = await quizModel.find({ user_id });
 		if (!quizzies) {
 			throw new BadRequestError('Quiz not found');
@@ -52,6 +53,44 @@ class QuizService {
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
 			throw new BadRequestError('Quiz not found');
+		}
+
+		return quiz;
+	}
+
+	async deleteQuiz({ quiz_id }) {
+		const quiz = await quizModel.findByIdAndDelete(quiz_id);
+		if (!quiz) {
+			throw new BadRequestError('Quiz not found');
+		}
+		return quiz;
+	}
+
+	async updateQuiz({
+		quiz_id,
+		quiz_name,
+		quiz_description,
+		subject_id,
+		quiz_status,
+	}) {
+		const quiz = await quizModel.findByIdAndUpdate(
+			quiz_id,
+			{
+				quiz_name,
+				quiz_description,
+				quiz_status,
+			},
+			{ new: true }
+		);
+
+		if (!quiz) {
+			throw new BadRequestError('Quiz not found');
+		}
+
+		// Cập nhật thông tin cho trường subject_ids
+		if (subject_id) {
+			quiz.subject_ids.push(subject_id);
+			await quiz.save();
 		}
 
 		return quiz;

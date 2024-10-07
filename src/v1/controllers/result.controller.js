@@ -21,11 +21,11 @@ class ResultController {
         }).send(res);
     };
 
-    // Get single result
-    single = async (req, res) => {
+    // Get review result
+    review = async (req, res) => {
         return new OK({
             message: 'Read result successfully!',
-            metadata: await resultService.single(req.body),
+            metadata: await resultService.review(req.body),
         }).send(res);
     };
 }

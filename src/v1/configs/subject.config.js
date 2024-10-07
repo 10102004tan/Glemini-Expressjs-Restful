@@ -1,0 +1,25 @@
+const defaultSubjects = [
+	{ thumb: '', name: 'Toán học' },
+	{ thumb: '', name: 'Khoa học' },
+	{ thumb: '', name: 'Lịch sử' },
+	{ thumb: '', name: 'Địa lý' },
+	{ thumb: '', name: 'Ngữ văn' },
+	{ thumb: '', name: 'Vật lý' },
+	{ thumb: '', name: 'Hóa học' },
+	{ thumb: '', name: 'Sinh học' },
+	{ thumb: '', name: 'Tiếng Anh' },
+	{ thumb: '', name: 'Mỹ thuật' },
+	{ thumb: '', name: 'Âm nhạc' },
+	{ thumb: '', name: 'Thể dục' },
+	{ thumb: '', name: 'Công nghệ' },
+	{ thumb: '', name: 'Tin học' },
+	{ thumb: '', name: 'Kinh tế học' },
+	{ thumb: '', name: 'Kinh doanh' },
+	{ thumb: '', name: 'Tâm lý học' },
+	{ thumb: '', name: 'Triết học' },
+	{ thumb: '', name: 'Xã hội học' },
+	{ thumb: '', name: 'Chính trị học' },
+	{ thumb: '', name: 'Khác' },
+];
+
+module.exports = defaultSubjects;
