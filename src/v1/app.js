@@ -17,7 +17,7 @@ global._io = io;
 /* MIDDLEWARES START*/
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(require('cors')());
+// app.use(require('cors')());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(compression());
@@ -33,10 +33,16 @@ io.on('connection', socketService.connection);
 
 /* ROUTES START*/
 /* FILES UPLOAD START */
-// Configuring the storage location for the uploaded files for the questions
+// Configuring the storage location for the uploaded files for the questions, quizzes
 app.use('/uploads/questions', (req, res) => {
 	const { url } = req;
 	const filePath = path.join(__dirname, `/uploads/questions/${url}`);
+	return res.sendFile(filePath);
+});
+
+app.use('/uploads/quizzes', (req, res) => {
+	const { url } = req;
+	const filePath = path.join(__dirname, `/uploads/quizzes/${url}`);
 	return res.sendFile(filePath);
 });
 /* FILES UPLOAD END */
