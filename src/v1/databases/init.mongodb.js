@@ -1,28 +1,44 @@
 'use strict';
 const mongoose = require('mongoose');
-const {host,port,name} = require('../configs/mongodb.config');
+const { host, port, name } = require('../configs/mongodb.config');
 const colors = require('../configs/colors.config');
+const subjectService = require('../services/subject.service');
 class Database {
-    constructor(){
-        this.connect();
-    }
+	constructor() {
+		this.connect();
+	}
 
-    connect(){
-        const connectString = `mongodb://${host}:${port}/${name}`;
-        mongoose.connect(connectString).then(()=>{
-            console.log(colors.bg.green,`MongoDB ${name} connection successful ☕︎`,colors.reset);
-            console.log();
-        }).catch(err=>{
-            console.log(colors.fg.white,colors.bg.red,"Error while connecting to database: ", err.message,colors.reset);
-        });
-    }
+	connect() {
+		const connectString = `mongodb://${host}:${port}/${name}`;
+		mongoose
+			.connect(connectString)
+			.then(() => {
+				console.log(
+					colors.bg.green,
+					`MongoDB ${name} connection successful ☕︎`,
+					colors.reset
+				);
+				// Khởi tạo dữ liệu mẫu
+				subjectService.initialize();
+				console.log();
+			})
+			.catch((err) => {
+				console.log(
+					colors.fg.white,
+					colors.bg.red,
+					'Error while connecting to database: ',
+					err.message,
+					colors.reset
+				);
+			});
+	}
 
-    static getInstance(){
-        if(!Database.instance){
-            Database.instance = new Database();
-        }
-        return Database.instance;
-    }
+	static getInstance() {
+		if (!Database.instance) {
+			Database.instance = new Database();
+		}
+		return Database.instance;
+	}
 }
 
 const instanceDB = Database.getInstance();
