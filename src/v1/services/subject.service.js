@@ -28,6 +28,18 @@ class SubjectService {
 		}
 		return subjects;
 	}
+
+	async getOneSubject(subject_id) {
+		const query = {
+			subject_id
+		}
+		const subject = await subjectModel.findOne(query);
+		console.log(subject);
+		if (!subject) {
+			throw new BadRequestError('Subject not found');
+		}
+		return subject;
+	}
 }
 
 module.exports = new SubjectService();

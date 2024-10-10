@@ -10,6 +10,13 @@ class SubjectController {
 			metadata: await subjectService.getAllSubjects(),
 		}).send(res);
 	};
+	
+	getSubject = async (req, res) => {
+		return new OK({
+			message: 'Subject fetched successfully',
+			metadata: await subjectService.getOneSubject(req.body),
+		}).send(res);
+	};
 }
 
 module.exports = new SubjectController();
