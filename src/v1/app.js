@@ -17,7 +17,7 @@ global._io = io;
 /* MIDDLEWARES START*/
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(require('cors')());
+app.use(require('cors')());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(compression());

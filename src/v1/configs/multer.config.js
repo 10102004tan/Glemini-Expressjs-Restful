@@ -18,10 +18,23 @@ const uploadDisk = multer({
 	}),
 });
 
-// Config storage for multer
+// Cấu hình storage cho multer để lưu file ảnh của câu hỏi
 const storageQuestions = multer.diskStorage({
 	destination: function (req, file, cb) {
-		cb(null, './src/v1/uploads/questions'); // Folder to save file
+		cb(null, './src/v1/uploads/questions');
+	},
+	filename: function (req, file, cb) {
+		cb(
+			null,
+			file.fieldname + '-' + Date.now() + path.extname(file.originalname)
+		);
+	},
+});
+
+// Cấu hình storage cho multer để lưu file ảnh của Quiz
+const storageQuizzes = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './src/v1/uploads/quizzes');
 	},
 	filename: function (req, file, cb) {
 		cb(
@@ -31,10 +44,10 @@ const storageQuestions = multer.diskStorage({
 	},
 });
 
-// Config storage for multer
-const storageQuizzes = multer.diskStorage({
+// Cấu hình storage cho multer để lưu các file template của Quiz
+const storageDocs = multer.diskStorage({
 	destination: function (req, file, cb) {
-		cb(null, './src/v1/uploads/quizzes'); // Folder to save file
+		cb(null, './src/v1/uploads/docs');
 	},
 	filename: function (req, file, cb) {
 		cb(
@@ -60,12 +73,17 @@ const fileFilter = (req, file, cb) => {
 };
 
 const uploadQuestions = multer({
-	storageQuestions,
+	storage: storageQuestions,
 	// fileFilter: fileFilter,
 });
 
 const uploadQuizzes = multer({
-	storageQuizzes,
+	storage: storageQuizzes,
+	// fileFilter: fileFilter,
+});
+
+const uploadDocs = multer({
+	storage: storageDocs,
 	// fileFilter: fileFilter,
 });
 
@@ -74,4 +92,5 @@ module.exports = {
 	uploadDisk,
 	uploadQuestions,
 	uploadQuizzes,
+	uploadDocs,
 };
