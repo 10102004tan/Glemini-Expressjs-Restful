@@ -16,6 +16,7 @@ router.post('/upload', uploadQuestions.single('question_image'), (req, res) => {
 			return res.status(400).send('No file uploaded.');
 		}
 		const imageUrl = `http://192.168.1.8:8000/uploads/questions/${req.file.filename}`;
+		console.log(imageUrl);
 		res.json({ url: imageUrl });
 	} catch (error) {
 		res.status(400).send(error.message);
