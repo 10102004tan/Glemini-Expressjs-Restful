@@ -49,6 +49,24 @@ class QuizService {
 		return questions;
 	}
 
+	async getQuizzesBySubjectIdPublished({ subjectId = null } = {}) {
+		const query = { quiz_status: 'published' }; 
+	
+		if (subjectId) {
+			query.subject_ids = subjectId;
+		}
+	
+		const quizzes = await quizModel.find(query);
+	
+		if (!quizzes || quizzes.length === 0) {
+			throw new BadRequestError('No quizzes found');
+		}
+	
+		return quizzes;
+	}
+	
+	
+
 	async getQuizDetails({ quiz_id }) {
 		console.log(quiz_id)
 		const quiz = await quizModel.findById(quiz_id);

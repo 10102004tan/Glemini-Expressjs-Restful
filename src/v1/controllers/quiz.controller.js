@@ -31,6 +31,13 @@ class QuizController {
 		}).send(res);
 	};
 
+	getQuizzesBySubjectPublished = async (req, res) => {
+		return new OK({
+			message: 'Quizzes fetched successfully',
+			metadata: await quizService.getQuizzesBySubjectIdPublished(req.body),
+		}).send(res);
+	};
+
 	deleteQuiz = async (req, res) => {
 		return new OK({
 			message: 'Quiz deleted successfully',

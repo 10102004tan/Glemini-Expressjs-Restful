@@ -12,6 +12,7 @@ router.post('/update', asynHandler(quizController.updateQuiz));
 router.post('/get-by-user', asynHandler(quizController.getQuizByUser));
 router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
+router.post('/get-quizpublished', asynHandler(quizController.getQuizzesBySubjectPublished));
 router.post('/upload', uploadQuizzes.single('quiz_image'), (req, res) => {
 	console.log(req.file);
 	try {
