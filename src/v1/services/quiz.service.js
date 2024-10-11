@@ -73,12 +73,14 @@ class QuizService {
 		quiz_description,
 		quiz_subjects,
 		quiz_status,
+		quiz_thumb,
 	}) {
 		const quiz = await quizModel.findByIdAndUpdate(
 			quiz_id,
 			{
 				quiz_name,
 				quiz_description,
+				quiz_thumb,
 			},
 			{ new: true }
 		);
