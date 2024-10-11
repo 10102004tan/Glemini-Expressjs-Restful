@@ -19,9 +19,22 @@ const uploadDisk = multer({
 });
 
 // Config storage for multer
-const storage = multer.diskStorage({
+const storageQuestions = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, './src/v1/uploads/questions'); // Folder to save file
+	},
+	filename: function (req, file, cb) {
+		cb(
+			null,
+			file.fieldname + '-' + Date.now() + path.extname(file.originalname)
+		); // Rename file
+	},
+});
+
+// Config storage for multer
+const storageQuizzes = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './src/v1/uploads/quizzes'); // Folder to save file
 	},
 	filename: function (req, file, cb) {
 		cb(
@@ -46,13 +59,19 @@ const fileFilter = (req, file, cb) => {
 	}
 };
 
-const upload = multer({
-	storage,
+const uploadQuestions = multer({
+	storageQuestions,
+	// fileFilter: fileFilter,
+});
+
+const uploadQuizzes = multer({
+	storageQuizzes,
 	// fileFilter: fileFilter,
 });
 
 module.exports = {
 	uploadMemory,
 	uploadDisk,
-	upload,
+	uploadQuestions,
+	uploadQuizzes,
 };

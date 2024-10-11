@@ -10,7 +10,9 @@ const findUserByEmail = async (email) => {
 
 const findUserByEmailV2 = async (email) => {
     const foundUser = await User.findOne({ user_email: email }).lean();
-    const teacherStatus = await Teacher.findOne({_id:foundUser._id},{teacher_status:1,_id:0}).lean();
+
+    console.log(foundUser.user_type);
+
     return (foundUser.user_type==="teacher") ? { ...foundUser, teacher_status:teacherStatus.teacher_status} : foundUser;
 };
 
