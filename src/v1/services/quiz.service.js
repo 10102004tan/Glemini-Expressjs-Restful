@@ -1,9 +1,11 @@
 'use strict';
+const mammoth = require('mammoth');
 const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
 
 class QuizService {
+	// Hàm tạo quiz
 	async createQuiz({ user_id, quiz_name, quiz_description }) {
 		const newQuiz = await quizModel.create({
 			user_id,
@@ -17,6 +19,7 @@ class QuizService {
 		return newQuiz;
 	}
 
+	// Hàm lấy danh sách quiz theo user
 	async getQuizByUser({ user_id }) {
 		console.log(user_id);
 		const quizzies = await quizModel.find({ user_id });
@@ -27,6 +30,7 @@ class QuizService {
 		return quizzies;
 	}
 
+	// Hàm lấy thông tin quiz theo id
 	async getQuizById({ quiz_id }) {
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
@@ -35,6 +39,7 @@ class QuizService {
 		return quiz;
 	}
 
+	// Hàm lấy danh sách câu hỏi theo quiz
 	async getQuestionsByQuiz({ quiz_id }) {
 		const questions = await questionModel
 			.find({ quiz_id })
@@ -49,6 +54,7 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm lấy thông tin chi tiết của quiz
 	async getQuizDetails({ quiz_id }) {
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
@@ -58,6 +64,7 @@ class QuizService {
 		return quiz;
 	}
 
+	// Hàm xóa quiz
 	async deleteQuiz({ quiz_id }) {
 		const quiz = await quizModel.findByIdAndDelete(quiz_id);
 		if (!quiz) {
@@ -66,6 +73,7 @@ class QuizService {
 		return quiz;
 	}
 
+	// Hàm cập nhật thông tin quiz
 	async updateQuiz({
 		quiz_id,
 		quiz_name,
@@ -90,22 +98,20 @@ class QuizService {
 
 		// Cập nhật thông tin cho trường subject_ids
 		if (quiz_subjects && quiz_subjects.length > 0) {
-			// Sử dụng $addToSet để thêm các phần tử mà không có sự trùng lặp
-			await quiz.updateOne({
-				$addToSet: { subject_ids: { $each: quiz_subjects } },
-			});
+			quiz.subject_ids = quiz_subjects;
+			await quiz.save();
 		}
 
 		// Cập nhật thông tin cho trường quiz_status
 		if (quiz_status) {
 			switch (quiz_status) {
-				case 'published':
+				case '0' || 'published':
 					quiz.quiz_status = 'published';
 					break;
-				case 'unpublished':
+				case '1' || 'unpublished':
 					quiz.quiz_status = 'unpublished';
 					break;
-				case 'deleted':
+				case '2' || 'deleted':
 					quiz.quiz_status = 'deleted';
 					break;
 				default:
@@ -117,6 +123,54 @@ class QuizService {
 
 		return quiz;
 	}
+
+	// Hàm upload file ảnh
+	async uploadQuiz(req, res) {
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+		const imageUrl = `http://192.168.1.8:8000/api/v1/uploads/quizzes/${req.file.filename}`;
+		return imageUrl;
+	}
+
+	// Hàm upload file docx
+	async uploadDoc(req, res) {
+		// console.log(req.file);
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+
+		const filePath = req.file.path;
+		const result = await mammoth.extractRawText({ path: filePath });
+		const questions = QuizService.parseQuestionsFromText(result.value);
+		return questions;
+	}
+
+	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
+	static parseQuestionsFromText = (text) => {
+		const lines = text.split('\n');
+		const questions = [];
+		let currentQuestion = null;
+
+		lines.forEach((line) => {
+			if (line.startsWith('Question')) {
+				if (currentQuestion) {
+					questions.push(currentQuestion);
+				}
+				currentQuestion = { question: line, answers: [] };
+			} else if (line.match(/^[A-Z]\./)) {
+				currentQuestion.answers.push(line);
+			} else if (line.startsWith('Correct Answer:')) {
+				currentQuestion.correctAnswer = line.split(': ')[1];
+			}
+		});
+
+		if (currentQuestion) {
+			questions.push(currentQuestion);
+		}
+
+		return questions;
+	};
 }
 
 module.exports = new QuizService();

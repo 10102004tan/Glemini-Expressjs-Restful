@@ -28,25 +28,10 @@ require('./databases/init.mongodb');
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
-
 io.on('connection', socketService.connection);
+/* SOCKET CONNECTION END*/
 
 /* ROUTES START*/
-/* FILES UPLOAD START */
-// Configuring the storage location for the uploaded files for the questions, quizzes
-app.use('/uploads/questions', (req, res) => {
-	const { url } = req;
-	const filePath = path.join(__dirname, `/uploads/questions/${url}`);
-	return res.sendFile(filePath);
-});
-
-app.use('/uploads/quizzes', (req, res) => {
-	const { url } = req;
-	const filePath = path.join(__dirname, `/uploads/quizzes/${url}`);
-	return res.sendFile(filePath);
-});
-/* FILES UPLOAD END */
-
 app.use('/', require('./routes'));
 
 // catch 404 and forward to error handler
