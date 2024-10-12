@@ -26,14 +26,14 @@ var quizSchema = new mongoose.Schema(
 		},
 		shared_user_ids: [
 			{
-				type: [mongoose.Schema.Types.ObjectId],
+				type: mongoose.Schema.Types.ObjectId,
 				ref: 'User', // Liên kết đến bảng User
 				default: [],
 			},
 		],
 		subject_ids: [
 			{
-				type: [mongoose.Schema.Types.ObjectId],
+				type: mongoose.Schema.Types.ObjectId,
 				ref: 'Subject',
 				default: [],
 			},
