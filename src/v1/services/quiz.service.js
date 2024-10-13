@@ -1,4 +1,5 @@
 'use strict';
+const { log } = require('console');
 const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
@@ -40,7 +41,7 @@ class QuizService {
 			.find({ quiz_id })
 			.populate('question_answer_ids')
 			.populate('correct_answer_ids')
-			.exec(); // Sử dụng exec để truy vấn
+			.exec(); 
 
 		if (!questions || questions.length === 0) {
 			throw new BadRequestError('Questions not found');
@@ -49,23 +50,34 @@ class QuizService {
 		return questions;
 	}
 
-	async getQuizzesBySubjectIdPublished({ subjectId = null } = {}) {
-		const query = { quiz_status: 'published' }; 
-	
+	async getQuizzesBySubjectIdPublished({subjectId}) {		
+		let query = {};
 		if (subjectId) {
-			query.subject_ids = subjectId;
+			try {
+				query.subject_ids = { $in: [subjectId] };
+			} catch (error) {
+				throw new BadRequestError('Invalid subject ID format');
+			}
 		}
-	
-		const quizzes = await quizModel.find(query);
-	
-		if (!quizzes || quizzes.length === 0) {
-			throw new BadRequestError('No quizzes found');
+
+		let quizzes = await quizModel.find(query).populate("user_id");
+
+		if (subjectId === null) {
+			quizzes = await quizModel.find({});
 		}
-	
-		return quizzes;
+
+		const publishedQuizzes = quizzes.filter(quiz => quiz.quiz_status === 'published');
+
+		if (publishedQuizzes.length === 0) {
+			throw new BadRequestError('No published quizzes found');
+		}
+
+		return publishedQuizzes;
 	}
-	
-	
+
+
+
+
 
 	async getQuizDetails({ quiz_id }) {
 		console.log(quiz_id)

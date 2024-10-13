@@ -1,6 +1,6 @@
 'use strict';
 const ResultModel = require('../models/result.model');
-const QuestionModel = require('../models/question.model'); 
+const QuestionModel = require('../models/question.model');
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
@@ -29,33 +29,27 @@ class ResultService {
         } else {
             if (result.status === 'Đã hoàn thành') {
                 result.status = 'Đang thực hiện';
+                
+                if (result.result_questions.length > 0) {
+                    result.result_questions = [];
+                }
             }
+
         }
 
-        const questionIndex = result.result_questions.findIndex(
-            (q) => q.question_id.toString() === question_id.toString()
-        );
-
-        if (questionIndex !== -1) {
-            result.result_questions[questionIndex] = {
-                question_id,
-                answer,
-                correct,
-                score,
-            };
-        } else {
-            result.result_questions.push({
-                question_id,
-                answer,
-                correct,
-                score,
-            });
-        }
+        // Thêm câu trả lời mới vào mảng
+        result.result_questions.push({
+            question_id,
+            answer,
+            correct,
+            score,
+        });
 
         await result.save();
 
         return result;
     }
+
 
     static async completeQuiz({ exercise_id, user_id, quiz_id }) {
         const query = {
@@ -87,13 +81,13 @@ class ResultService {
         if (exercise_id) {
             query.exercise_id = exercise_id;
         }
-    
+
         const result = await ResultModel.findOne(query)
             .populate({
                 path: 'result_questions.question_id',
                 model: 'Question',
                 populate: {
-                    path: 'question_answer_ids', // Populate câu trả lời
+                    path: 'question_answer_ids',
                     model: 'Answer'
                 }
             })
@@ -101,14 +95,14 @@ class ResultService {
                 path: 'result_questions.answer',
                 model: 'Answer',
             });
-    
+
         if (!result) {
             throw new BadRequestError('Result not found');
         }
-    
+
         return result;
     }
-    
+
 }
 
 module.exports = ResultService;

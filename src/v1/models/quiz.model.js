@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { type } = require('os');
 
 var quizSchema = new mongoose.Schema(
 	{
@@ -24,16 +25,20 @@ var quizSchema = new mongoose.Schema(
 			type: String,
 			default: '',
 		},
+		quiz_turn: {
+			type: Number,
+			default: 0
+		},
 		shared_user_ids: [
 			{
-				type: [mongoose.Schema.Types.ObjectId],
-				ref: 'User', // Liên kết đến bảng User
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'User', 
 				default: [],
 			},
 		],
 		subject_ids: [
 			{
-				type: [mongoose.Schema.Types.ObjectId],
+				type: mongoose.Schema.Types.ObjectId,
 				ref: 'Subject',
 				default: [],
 			},
