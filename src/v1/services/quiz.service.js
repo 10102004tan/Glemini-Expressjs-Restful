@@ -56,7 +56,7 @@ class QuizService {
 
 	// Hàm lấy thông tin chi tiết của quiz
 	async getQuizDetails({ quiz_id }) {
-		console.log(quiz_id)
+		console.log(quiz_id);
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
 			throw new BadRequestError('Quiz not found');
@@ -105,18 +105,18 @@ class QuizService {
 
 		// Cập nhật thông tin cho trường quiz_status
 		if (quiz_status) {
+			console.log(quiz_status);
 			switch (quiz_status) {
-				case '0' || 'published':
+				case 'published':
 					quiz.quiz_status = 'published';
 					break;
-				case '1' || 'unpublished':
+				case 'unpublished':
 					quiz.quiz_status = 'unpublished';
 					break;
-				case '2' || 'deleted':
+				case 'deleted':
 					quiz.quiz_status = 'deleted';
 					break;
 				default:
-					quiz.quiz_status = 'unpublished';
 					break;
 			}
 			await quiz.save();
