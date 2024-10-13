@@ -1,8 +1,6 @@
 'use strict';
 
 const express = require('express');
-const { type } = require('os');
-const { asynHandler } = require('../auths/utils');
 const router = express.Router();
 const routeAccess = require('./access');
 const routeQuizzes = require('./quizzes');
@@ -20,12 +18,14 @@ router.get('/api/v1/working', (req, res, next) => {
 });
 router.use('/api/v1/', require('./upload'));
 router.use('/api/v1/schools', routeSchool);
+
 router.use('/api/v1/quizzes', routeQuizzes);
 router.use('/api/v1/questions', routeQuestions);
 router.use('/api/v1/subjects', routeSubjects);
 router.use('/api/v1/auth', routeAccess);
 router.use('/api/v1/user', routeUser);
 router.use('/api/v1/result', routeResult);
+router.use('/api/v1/uploads', routerUpload);
 
 
 
