@@ -13,4 +13,3 @@ server.listen(PORT, () => {
 	);
 	console.log();
 });
-// TEST
