@@ -160,6 +160,15 @@ class QuestionService {
 
 		return updatedQuestion;
 	}
+
+	async uploadQuestionImages(req, res) {
+		// console.log(req.file);
+		if (!req.file) {
+			return BadRequestError('File is required');
+		}
+		const imageUrl = `http://192.168.1.8:8000/api/v1/uploads/questions/${req.file.filename}`;
+		return imageUrl;
+	}
 }
 
 module.exports = new QuestionService();

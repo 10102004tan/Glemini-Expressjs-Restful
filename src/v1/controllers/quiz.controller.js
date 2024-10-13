@@ -51,6 +51,20 @@ class QuizController {
 			metadata: await quizService.updateQuiz(req.body),
 		}).send(res);
 	};
+
+	uploadQuiz = async (req, res) => {
+		return new OK({
+			message: 'Quiz uploaded successfully',
+			metadata: await quizService.uploadQuiz(req, res),
+		}).send(res);
+	};
+
+   uploadDoc = async (req, res) => {
+      return new OK({
+         message: 'Document uploaded successfully',
+         metadata: await quizService.uploadDoc(req, res),
+      }).send(res);
+   };
 }
 
 module.exports = new QuizController();

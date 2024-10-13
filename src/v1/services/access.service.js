@@ -1,7 +1,7 @@
 'use strict';
 const { createKeyPair } = require('../auths');
 const { BadRequestError } = require('../cores/error.repsone');
-const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2 } = require('../models/repositories/user.repo');
+const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2, findUserByIdV2 } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId,findKeyTokenByUserIdAndRefreshToken } = require('../models/repositories/keyToken.repo');
 const KeyTokenService = require('./keyToken.service');
 const { UserFactory } = require('./user.service');
@@ -248,8 +248,11 @@ class AccessSevice {
         }
         return status;
     }
-}
 
+    static async forgotPassword({email}){
+    };
+
+}
 
 
 module.exports = AccessSevice;
