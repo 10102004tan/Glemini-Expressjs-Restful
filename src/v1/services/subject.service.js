@@ -12,9 +12,7 @@ class SubjectService {
 				// Nếu chưa có dữ liệu, thêm các subject mặc định
 				await subjectModel.insertMany(defaultSubjects);
 				console.log('Default subjects have been added.');
-			} else {
-				console.log('Subjects already exist in the database.');
-			}
+			} 
 		} catch (error) {
 			console.error('Error initializing subjects:', error);
 		}

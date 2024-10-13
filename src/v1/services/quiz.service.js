@@ -1,5 +1,6 @@
 'use strict';
 const mammoth = require('mammoth');
+const { log } = require('console');
 const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
@@ -45,7 +46,7 @@ class QuizService {
 			.find({ quiz_id })
 			.populate('question_answer_ids')
 			.populate('correct_answer_ids')
-			.exec(); // Sử dụng exec để truy vấn
+			.exec(); 
 
 		if (!questions || questions.length === 0) {
 			throw new BadRequestError('Questions not found');
@@ -53,6 +54,35 @@ class QuizService {
 
 		return questions;
 	}
+
+	async getQuizzesBySubjectIdPublished({subjectId}) {		
+		let query = {};
+		if (subjectId) {
+			try {
+				query.subject_ids = { $in: [subjectId] };
+			} catch (error) {
+				throw new BadRequestError('Invalid subject ID format');
+			}
+		}
+
+		let quizzes = await quizModel.find(query).populate("user_id");
+
+		if (subjectId === null) {
+			quizzes = await quizModel.find({});
+		}
+
+		const publishedQuizzes = quizzes.filter(quiz => quiz.quiz_status === 'published');
+
+		if (publishedQuizzes.length === 0) {
+			throw new BadRequestError('No published quizzes found');
+		}
+
+		return publishedQuizzes;
+	}
+
+
+
+
 
 	// Hàm lấy thông tin chi tiết của quiz
 	async getQuizDetails({ quiz_id }) {
