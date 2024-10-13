@@ -10,14 +10,20 @@ const findUserByEmail = async (email) => {
 
 const findUserByEmailV2 = async (email) => {
     const foundUser = await User.findOne({ user_email: email }).lean();
+    if (!foundUser) return;
     const teacherStatus = await Teacher.findOne({_id:foundUser._id},{teacher_status:1,_id:0}).lean();
-    console.log(foundUser.user_type);
     return (foundUser.user_type==="teacher") ? { ...foundUser, teacher_status:teacherStatus.teacher_status} : foundUser;
 };
 
 const findUserById = async (id) => {
     const foundUser = await User.findById(id);
     return foundUser;
+};
+
+const findUserByIdV2 = async ({id,select={}}) => {
+    const foundUser = await User.findById(id,select).lean();
+    return foundUser;
+   
 };
 
 const updatePasswordByEmail = async ({email, password}) => {
@@ -40,10 +46,17 @@ const findStatusByUserId= async ({id,type}) => {
     }
 };
 
+const findAndUpdateUserById = async ({id,user_fullname,user_email}) => {
+    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email});
+    return updated;
+};
+
 module.exports = {
     findUserByEmail,
     findUserById,
     updatePasswordByEmail,
     findStatusByUserId,
-    findUserByEmailV2
+    findUserByEmailV2,
+    findUserByIdV2,
+    findAndUpdateUserById
 };

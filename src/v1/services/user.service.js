@@ -7,6 +7,7 @@ const Teacher = require('../models/teacher.model');
 const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
 const {uploadDisk} = require('../configs/multer.config');
+const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
 
 class UserFactory {
     static createUser(type, payload) {
@@ -57,6 +58,25 @@ class UserService {
         }
 
         return newUser;
+    }
+
+    static async profile({user_id}){
+        const user = await findUserByIdV2({id:user_id,select:{user_fullname:1,user_email:1}});
+
+        if(!user){
+            throw new BadRequestError("User not found");
+        }
+
+        return user;
+    }
+
+    static async updateProfile({user_id,fullname,email}){
+        // update full name,email
+        const updated = await findAndUpdateUserById({id:user_id,user_fullname:fullname,user_email:email});
+        if (!updated) {
+            throw new BadRequestError("Cannot update user");
+        }
+        return 1;
     }
 }
 
@@ -136,5 +156,6 @@ const newUser = async ({
 
 module.exports = {
     UserFactory,
-    newUser
+    newUser,
+    UserService
 };
