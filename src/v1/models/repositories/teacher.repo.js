@@ -7,6 +7,12 @@ const findImagesVerification = async (user_id) => {
     return foundImages;
 };
 
+const updateStatusTeacher = async (user_id, teacher_status) => {
+    const updatedStatus = await teacherModel.updateOne({ _id: user_id }, { $set: { teacher_status:teacher_status } });
+    return updatedStatus;
+}
+
 module.exports = {
-    findImagesVerification
+    findImagesVerification,
+    updateStatusTeacher
 }

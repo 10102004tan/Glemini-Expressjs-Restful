@@ -50,6 +50,12 @@ const findAndUpdateUserById = async ({id,user_fullname,user_email}) => {
     return updated;
 };
 
+
+const updateStatusUser = async ({user_id, user_status}) => {
+    const updatedStatus = await User.updateOne({ _id: user_id }, { $set: { user_status } });
+    return updatedStatus;
+}
+
 module.exports = {
     findUserByEmail,
     findUserById,
@@ -57,5 +63,6 @@ module.exports = {
     findStatusByUserId,
     findUserByEmailV2,
     findUserByIdV2,
-    findAndUpdateUserById
+    findAndUpdateUserById,
+    updateStatusUser
 };
