@@ -63,6 +63,17 @@ class AccessController {
             metadata: await accessService.getStatus(req.user)
         }).send(res);
     };
+
+    updateStatus = async(req, res, next) => {
+        return new OK({
+            message: "User status successfully",
+            metadata: await accessService.updateStatus({
+                user_id:req.body.user_id,
+                user_status:req.body.user_status,
+                teacher_status:req.body.teacher_status
+            })
+        }).send(res);
+    }
 }
 
 module.exports = new AccessController();

@@ -7,10 +7,13 @@ const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
-const io = require('socket.io')(server);
 const fs = require('fs');
 const path = require('path');
-
+const io = require('socket.io')(server,{
+	cors:{
+		origin: '*',
+	}
+});
 global.__basedir = __dirname;
 global._io = io;
 
@@ -28,7 +31,7 @@ require('./databases/init.mongodb');
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
-io.on('connection', socketService.connection);
+global._io.on('connection', socketService.connection);
 /* SOCKET CONNECTION END*/
 
 /* ROUTES START*/
