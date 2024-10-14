@@ -34,7 +34,9 @@ class QuizController {
 	getQuizzesBySubjectPublished = async (req, res) => {
 		return new OK({
 			message: 'Quizzes fetched successfully',
-			metadata: await quizService.getQuizzesBySubjectIdPublished(req.body),
+			metadata: await quizService.getQuizzesBySubjectIdPublished(
+				req.body
+			),
 		}).send(res);
 	};
 
@@ -59,12 +61,26 @@ class QuizController {
 		}).send(res);
 	};
 
-   uploadDoc = async (req, res) => {
-      return new OK({
-         message: 'Document uploaded successfully',
-         metadata: await quizService.uploadDoc(req, res),
-      }).send(res);
-   };
+	uploadDoc = async (req, res) => {
+		return new OK({
+			message: 'Document uploaded successfully',
+			metadata: await quizService.uploadDoc(req, res),
+		}).send(res);
+	};
+
+	getDocsTemplate = async (req, res) => {
+		return new OK({
+			message: 'Docs fetched successfully',
+			metadata: await quizService.getDocsTemplate(req, res),
+		}).send(res);
+	};
+
+	filterQuizzes = async (req, res) => {
+		return new OK({
+			message: 'Quizzes fetched successfully',
+			metadata: await quizService.filterQuizzes(req.body),
+		}).send(res);
+	};
 }
 
 module.exports = new QuizController();
