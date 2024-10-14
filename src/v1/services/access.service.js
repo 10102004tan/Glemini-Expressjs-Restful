@@ -1,15 +1,17 @@
 'use strict';
 const { createKeyPair } = require('../auths');
 const { BadRequestError } = require('../cores/error.repsone');
-const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2, findUserByIdV2 } = require('../models/repositories/user.repo');
-const { findKeyTokenByUserId,findKeyTokenByUserIdAndRefreshToken } = require('../models/repositories/keyToken.repo');
+const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2, findUserByIdV2, updateStatusUser } = require('../models/repositories/user.repo');
+const { findKeyTokenByUserId, findKeyTokenByUserIdAndRefreshToken } = require('../models/repositories/keyToken.repo');
 const KeyTokenService = require('./keyToken.service');
 const { UserFactory } = require('./user.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const UploadService = require('./upload.service');
+const { updateStatusTeacher } = require('../models/repositories/teacher.repo');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, attributes,files }) {
+    static async signup({ fullname, email, password, type, attributes, files }) {
 
         // check if email is already used
         const foundUser = await findUserByEmail(email);
@@ -23,10 +25,23 @@ class AccessSevice {
         if (!hashPassword) {
             throw new BadRequestError("Sigup failed");
         }
-        if (files) {
+
+
+        // upload images to cloudinary
+        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+            files,
+            folderName: `users/${email}/verification`
+        });
+
+        if (!uploadedUrls) {
+            throw new BadRequestError("Cannot upload images");
+        }
+
+        // save images url to attributes
+        if (uploadedUrls.length) {
             attributes = {
                 ...attributes,
-                file_urls: files.map(file => file.filename)
+                file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
             }
         }
 
@@ -150,7 +165,6 @@ class AccessSevice {
         }
         return true;
     }
-
     static async changePassword({ email, old_password, new_password }) {
 
         const foundUser = await findUserByEmail(email);
@@ -206,12 +220,11 @@ class AccessSevice {
             tokens: tokens
         }
     }
+    static async refresh({ user, refreshToken }) {
 
-    static async refresh({user,refreshToken}) {
-        
-        const keyToken  = await findKeyTokenByUserIdAndRefreshToken(user.user_id,refreshToken);
+        const keyToken = await findKeyTokenByUserIdAndRefreshToken(user.user_id, refreshToken);
 
-        if(!keyToken){
+        if (!keyToken) {
             throw new BadRequestError("User not found");
         }
 
@@ -239,19 +252,44 @@ class AccessSevice {
             tokens: tokens
         }
     }
+    static async getStatus({ user_id, user_type }) {
+        const status = await findStatusByUserId({ id: user_id, type: user_type });
 
-    static async getStatus({user_id,user_type}){
-        const status = await findStatusByUserId({id:user_id,type:user_type});
-
-        if(!status){
+        if (!status) {
             throw new BadRequestError("User not found");
         }
         return status;
     }
-
-    static async forgotPassword({email}){
+    static async forgotPassword({ email }) {
     };
 
+    static async updateStatus({ user_id, user_status, teacher_status }) {
+        // check if user is exist
+        // check type of user
+        // update status
+        const foundUser = await findUserById(user_id);
+
+        if (!foundUser) {
+            throw new BadRequestError("User not found");
+        }
+
+        if (foundUser.user_type === 'teacher' && teacher_status) {
+            const updatedStatus = await updateStatusTeacher(user_id, teacher_status);
+            if (!updatedStatus) {
+                throw new BadRequestError("Update status failed");
+            }
+            _io.emit('update-status', { user_id, teacher_status });
+            return updatedStatus;
+        }
+        if (user_status) {
+            const updatedStatus = await updateStatusUser({ user_id, user_status });
+            if (!updatedStatus) {
+                throw new BadRequestError("Update status failed");
+            }
+            return updatedStatus;
+        }
+
+    }
 }
 
 

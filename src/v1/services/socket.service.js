@@ -1,15 +1,24 @@
 'use strict';
 
 class SocketService {
-   
-    connection({socket}){
+    connection(socket){
+        const generateID = () => Math.random().toString(36).substring(2, 10);
+        console.log(`⚡: ${socket.id} user just connected!`);
+
+        const chatRooms = [];
+
         socket.on('disconnect', () => {
-            console.log('user disconnected');
+            socket.disconnect();
+            console.log('🔥: A user disconnected');
         });
 
-        socket.on('chat message', (msg) => {
-            console.log('message: ' + msg);
-            _io.emit('chat message', msg);
+        socket.on("createRoom", (roomName) => {
+            socket.join(roomName);
+            console.log(`🚪: ${socket.id} joined the room: ${roomName}`);
+            //👇🏻 Adds the new group name to the chat rooms array
+            chatRooms.unshift({ id: generateID(), roomName, messages: [] });
+            //👇🏻 Returns the updated chat rooms via another event
+            socket.emit("roomsList", chatRooms);
         });
     }
    
