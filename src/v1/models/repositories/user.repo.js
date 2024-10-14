@@ -23,7 +23,6 @@ const findUserById = async (id) => {
 const findUserByIdV2 = async ({id,select={}}) => {
     const foundUser = await User.findById(id,select).lean();
     return foundUser;
-   
 };
 
 const updatePasswordByEmail = async ({email, password}) => {

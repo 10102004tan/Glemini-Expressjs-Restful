@@ -3,7 +3,14 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { uploadDisk } = require('../../configs/multer.config');
+const uploadController = require('../../controllers/upload.controller');
 const router = express.Router();
+
+
+// 
+router.post('/upload', uploadDisk.single('file'),uploadController.uploadImageUser);
+router.post('/uploads', uploadDisk.array('files'),uploadController.uploadMultipleImagesUser);
 
 /* FILES UPLOAD START */
 

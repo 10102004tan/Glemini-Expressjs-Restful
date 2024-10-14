@@ -25,7 +25,6 @@ router.use('/api/v1/subjects', routeSubjects);
 router.use('/api/v1/auth', routeAccess);
 router.use('/api/v1/user', routeUser);
 router.use('/api/v1/result', routeResult);
-router.use('/api/v1/uploads', routerUpload);
 
 
 

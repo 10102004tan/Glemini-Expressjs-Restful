@@ -7,6 +7,7 @@ const KeyTokenService = require('./keyToken.service');
 const { UserFactory } = require('./user.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const UploadService = require('./upload.service');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, attributes,files }) {
@@ -23,10 +24,23 @@ class AccessSevice {
         if (!hashPassword) {
             throw new BadRequestError("Sigup failed");
         }
-        if (files) {
+        
+
+        // upload images to cloudinary
+        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+            files,
+            folderName: `users/${email}/verification`
+        });
+
+        if (!uploadedUrls) {
+            throw new BadRequestError("Cannot upload images");
+        }
+
+        // save images url to attributes
+        if (uploadedUrls.length) {
             attributes = {
                 ...attributes,
-                file_urls: files.map(file => file.filename)
+                file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
             }
         }
 
