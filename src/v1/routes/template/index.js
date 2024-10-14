@@ -5,8 +5,6 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 
-/* FILES UPLOAD START */
-
 // Gốc thư mục uploads
 const uploadsDir = path.join(__dirname, '../../uploads');
 
@@ -21,21 +19,10 @@ const sendFileSafely = (res, filePath) => {
 };
 
 // Route cho câu hỏi
-router.get('/questions/:filename', (req, res) => {
+router.get('/template/:filename', (req, res) => {
 	const { filename } = req.params;
-	const filePath = path.join(uploadsDir, 'questions', filename);
+	const filePath = path.join(uploadsDir, 'templates', filename);
 	sendFileSafely(res, filePath);
 });
-
-// Route cho quizzes
-router.get('/quizzes/:filename', (req, res) => {
-	const { filename } = req.params;
-	const filePath = path.join(uploadsDir, 'quizzes', filename);
-	sendFileSafely(res, filePath);
-});
-
-
-
-/* FILES UPLOAD END */
 
 module.exports = router;
