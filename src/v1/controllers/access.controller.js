@@ -83,6 +83,27 @@ class AccessController {
             })
         }).send(res);
     };
+
+    verifyOtp = async(req, res, next) => {
+        return new OK({
+            message: "OTP verified successfully",
+            metadata: await accessService.verifyOtp({
+                email:req.body.email,
+                otp:req.body.otp
+            })
+        }).send(res);
+    }
+
+    resetPassword = async(req, res, next) => {
+        return new OK({
+            message: "Password reset successfully",
+            metadata: await accessService.resetPassword({
+                email:req.body.email,
+                password:req.body.password,
+                otp:req.body.otp
+            })
+        }).send(res);
+    };
 }
 
 module.exports = new AccessController();

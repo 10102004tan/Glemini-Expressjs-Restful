@@ -16,7 +16,7 @@ const findUserByEmailV2 = async (email) => {
 };
 
 const findUserById = async (id) => {
-    const foundUser = await User.findById(id);
+    const foundUser = await User.findById(id).lean();
     return foundUser;
 };
 

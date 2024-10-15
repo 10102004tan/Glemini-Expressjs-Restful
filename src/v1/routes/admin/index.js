@@ -2,9 +2,10 @@
 
 const express = require('express');
 const accessController = require('../../controllers/access.controller');
+const { asynHandler } = require('../../auths/utils');
 const router = express.Router();
 
-router.post('/user/update-status',accessController.updateStatus);
+router.post('/user/update-status',asynHandler(accessController.updateStatus));
 
 //TEMPLATE
 router.use('/template', require('./template'));
