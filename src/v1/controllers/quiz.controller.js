@@ -68,6 +68,13 @@ class QuizController {
 		}).send(res);
 	};
 
+	uploadMd = async (req, res) => {
+		return new OK({
+			message: 'Document uploaded successfully',
+			metadata: await quizService.uploadMd(req, res),
+		}).send(res);
+	};
+
 	getDocsTemplate = async (req, res) => {
 		return new OK({
 			message: 'Docs fetched successfully',

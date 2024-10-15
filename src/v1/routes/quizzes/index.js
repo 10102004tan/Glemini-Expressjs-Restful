@@ -12,8 +12,8 @@ router.post('/update', asynHandler(quizController.updateQuiz));
 router.post('/get-by-user', asynHandler(quizController.getQuizByUser));
 router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
-router.use('/get-docs-template', templateRouter);
 router.post('/filter', asynHandler(quizController.filterQuizzes));
+router.use('/get-templates', templateRouter);
 
 router.post(
 	'/upload',
@@ -25,6 +25,12 @@ router.post(
 	'/docs/upload',
 	uploadDocs.single('file'),
 	asynHandler(quizController.uploadDoc)
+);
+
+router.post(
+	'/md/upload',
+	uploadDocs.single('file'),
+	asynHandler(quizController.uploadMd)
 );
 
 module.exports = router;
