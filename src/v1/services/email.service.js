@@ -103,6 +103,29 @@ class EmailService {
             console.log("Error send email",error);
         }
     }
+
+    static async sendEmailWelcome({email}){
+        try{
+            const template = await TemplateService.getTemplate({
+                tem_name: 'HTML_EMAIL_WELCOME'
+            });
+
+            if (!template) {
+                throw new NotFoundError("Template not found");
+            }
+            
+            
+            this.sendEmailLinkVerification({
+                html: template.tem_html,
+                toEmail: email,
+                subject: "Welcome to Glemini",
+            }).catch(console.error);
+
+            return 1;
+        }catch(error){
+            console.log("Error send email",error);
+        }
+    }
 }
 
 module.exports = EmailService;

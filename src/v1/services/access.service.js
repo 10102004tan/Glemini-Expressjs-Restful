@@ -10,6 +10,8 @@ const crypto = require('crypto');
 const UploadService = require('./upload.service');
 const { updateStatusTeacher } = require('../models/repositories/teacher.repo');
 const EmailService = require('./email.service');
+const OTPService = require('./otp.service');
+const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, attributes, files }) {
@@ -97,6 +99,10 @@ class AccessSevice {
             await KeyTokenService.updateRefreshTokenById({
                 userId: newUser._id,
                 refreshToken: tokens.refreshToken
+            });
+
+            await EmailService.sendEmailWelcome({
+                email: newUser.user_email
             });
 
             return {
@@ -282,8 +288,72 @@ class AccessSevice {
     };
 
     // otp verify
-    static async otpVerify({email,otp}){
+    static async verifyOtp({email,otp}){
+        otp = otp.toString();
+        const verifyOTP = await OTPService.verifyOTP({email,otp});
+        if(!verifyOTP){
+            throw new BadRequestError("OTP is incorrect");
+        }
+        return 1;
+    }
 
+    // reset password
+    static async resetPassword({email,password,otp}){
+
+        const foundUser = await findUserByEmail(email);
+
+        if (!foundUser) {
+            throw new BadRequestError("Account not exist");
+        }
+
+        await OTPService.verifyOTP({email,otp});
+
+        // remove otp
+        const removeOTP = await removeOTPbyEmail(email);
+
+        if(!removeOTP){
+            throw new BadRequestError("OTP is expired, please try again");
+        }
+
+
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        if (!hashPassword) {
+            throw new BadRequestError("Change password failed, please try again");
+        }
+
+
+        const updated = await updatePasswordByEmail({ email, password: hashPassword });
+
+        if (!updated) {
+            throw new BadRequestError("Change password failed, please try again");
+        }
+
+        const keyToken = await findKeyTokenByUserId(foundUser._id);
+
+        // update refresh token
+        const payload = {
+            user_id: foundUser._id,
+            user_email: foundUser.user_email,
+            user_type: foundUser.user_type
+        };
+
+        const tokens = await createKeyPair({ payload, publicKey: keyToken.public_key, privateKey: keyToken.private_key });
+
+        if (!tokens) {
+            throw new BadRequestError("Please try again");
+        }
+
+        // update refresh token
+        await KeyTokenService.updateRefreshTokenById({
+            userId: foundUser._id,
+            refreshToken: tokens.refreshToken
+        });
+
+        return {
+            user: foundUser,
+            tokens: tokens
+        }
     }
 
     static async updateStatus({ user_id, user_status, teacher_status }) {
@@ -301,7 +371,21 @@ class AccessSevice {
             if (!updatedStatus) {
                 throw new BadRequestError("Update status failed");
             }
-            _io.emit('update-status', { user_id, teacher_status });
+            let message;
+            let status;
+            if(teacher_status === 'active'){
+                message = "Your account has been activated";
+                status = "success";
+            }
+            else if(teacher_status === 'inactive'){
+                message = "Your account has been deactivated";
+                status = "warning";
+            }
+            else if(teacher_status === 'suspend'){
+                message = "Your account has been suspended";
+                status = "error";
+            }
+            _io.emit('update-status', { user_id, teacher_status,message});
             return updatedStatus;
         }
         if (user_status) {
