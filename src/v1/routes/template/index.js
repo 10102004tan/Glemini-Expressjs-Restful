@@ -19,8 +19,14 @@ const sendFileSafely = (res, filePath) => {
 };
 
 // Route cho câu hỏi
-router.get('/template/:filename', (req, res) => {
-	const { filename } = req.params;
+router.get('/template_docx', (req, res) => {
+	const filename = 'example.demo.docx';
+	const filePath = path.join(uploadsDir, 'templates', filename);
+	sendFileSafely(res, filePath);
+});
+
+router.get('/template_md', (req, res) => {
+	const filename = 'example.demo.md';
 	const filePath = path.join(uploadsDir, 'templates', filename);
 	sendFileSafely(res, filePath);
 });

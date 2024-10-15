@@ -175,6 +175,18 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm upload file md
+	async uploadMd(req, res) {
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+
+		const filePath = req.file.path;
+		const result = await mammoth.extractRawText({ path: filePath });
+		const questions = QuizService.parseQuestionsFromMd(result.value);
+		return questions;
+	}
+
 	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
 	static parseQuestionsFromText = (text) => {
 		console.log(text);
@@ -196,6 +208,44 @@ class QuizService {
 			}
 		});
 
+		if (currentQuestion) {
+			questions.push(currentQuestion);
+		}
+
+		return questions;
+	};
+
+	static parseQuestionsFromMd = (text) => {
+		const lines = text.split('\n');
+		const questions = [];
+		let currentQuestion = null;
+
+		lines.forEach((line) => {
+			// Kiểm tra tiêu đề câu hỏi
+			if (line.startsWith('## Question')) {
+				// Lưu câu hỏi hiện tại nếu đã có
+				if (currentQuestion) {
+					questions.push(currentQuestion);
+				}
+
+				// Tạo một đối tượng câu hỏi mới
+				currentQuestion = {
+					question: line.replace('## Question ', '').trim(),
+					answers: [],
+					correctAnswer: null,
+				};
+			}
+			// Kiểm tra các lựa chọn trả lời
+			else if (line.match(/^[A-D]\./)) {
+				currentQuestion.answers.push(line.trim());
+			}
+			// Kiểm tra đáp án đúng
+			else if (line.startsWith('**Correct Answer:**')) {
+				currentQuestion.correctAnswer = line.split(': ')[1].trim();
+			}
+		});
+
+		// Thêm câu hỏi cuối cùng vào danh sách
 		if (currentQuestion) {
 			questions.push(currentQuestion);
 		}
