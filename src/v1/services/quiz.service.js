@@ -1,9 +1,9 @@
 'use strict';
 const mammoth = require('mammoth');
-const { log } = require('console');
 const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
+const fs = require('fs');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -177,19 +177,24 @@ class QuizService {
 
 	// Hàm upload file md
 	async uploadMd(req, res) {
+		console.log(req.file);
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
 
-		const filePath = req.file.path;
-		const result = await mammoth.extractRawText({ path: filePath });
-		const questions = QuizService.parseQuestionsFromMd(result.value);
-		return questions;
+		const filePath = req.file.path; // Lấy đường dẫn của tệp đã tải lên
+
+		// Đọc nội dung của tệp Markdown
+		const fileContent = fs.readFileSync(filePath, 'utf-8'); // Đọc tệp và chuyển đổi sang chuỗi
+
+		// Phân tích các câu hỏi từ nội dung tệp Markdown
+		const questions = QuizService.parseQuestionsFromMd(fileContent);
+		return questions; // Trả về các câu hỏi đã phân tích
 	}
 
 	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
 	static parseQuestionsFromText = (text) => {
-		console.log(text);
+		// console.log(text);
 		const lines = text.split('\n');
 		const questions = [];
 		let currentQuestion = null;
@@ -215,43 +220,46 @@ class QuizService {
 		return questions;
 	};
 
-	static parseQuestionsFromMd = (text) => {
-		const lines = text.split('\n');
-		const questions = [];
-		let currentQuestion = null;
+	static parseQuestionsFromMd(text) {
+		const lines = text.split('\n'); // Tách nội dung thành từng dòng
+		const questions = []; // Mảng để lưu trữ các câu hỏi
+		let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
 
 		lines.forEach((line) => {
-			// Kiểm tra tiêu đề câu hỏi
+			// console.log('lien: ' + line);
+			// Kiểm tra dòng bắt đầu bằng '## Question'
 			if (line.startsWith('## Question')) {
-				// Lưu câu hỏi hiện tại nếu đã có
+				// Nếu có câu hỏi hiện tại thì thêm vào mảng câu hỏi
 				if (currentQuestion) {
 					questions.push(currentQuestion);
 				}
-
 				// Tạo một đối tượng câu hỏi mới
 				currentQuestion = {
-					question: line.replace('## Question ', '').trim(),
-					answers: [],
-					correctAnswer: null,
+					question: line.replace('## Question ', '').trim(), // Lấy câu hỏi
+					answers: [], // Mảng để lưu đáp án
 				};
 			}
-			// Kiểm tra các lựa chọn trả lời
-			else if (line.match(/^[A-D]\./)) {
-				currentQuestion.answers.push(line.trim());
+			// Kiểm tra dòng đáp án bắt đầu bằng '-'
+			else if (line.match(/^\-   [A-Z]\./)) {
+				// console.log('LINE MATCH ANSWER');
+				// Lấy đáp án từ dòng bắt đầu bằng '-'
+				const answer = line.replace(/^\-   /, '').trim(); // Loại bỏ ký tự '-' và khoảng trắng
+				currentQuestion.answers.push(answer); // Lưu đáp án vào mảng
 			}
-			// Kiểm tra đáp án đúng
-			else if (line.startsWith('**Correct Answer:**')) {
-				currentQuestion.correctAnswer = line.split(': ')[1].trim();
+			// Kiểm tra dòng có câu trả lời đúng
+			else if (line.startsWith('### Correct Answer')) {
+				// console.log('LINE MATCH CORRECT ANSWER');
+				currentQuestion.correctAnswer = line.split(': ')[1].trim(); // Lấy câu trả lời đúng
 			}
 		});
 
-		// Thêm câu hỏi cuối cùng vào danh sách
+		// Nếu vẫn còn câu hỏi hiện tại thì thêm vào mảng câu hỏi
 		if (currentQuestion) {
 			questions.push(currentQuestion);
 		}
 
-		return questions;
-	};
+		return questions; // Trả về mảng câu hỏi
+	}
 
 	// Hàm lấy template file docx
 	async getDocsTemplate(req, res) {}
