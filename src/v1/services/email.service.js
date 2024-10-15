@@ -53,7 +53,7 @@ class EmailService {
     }){
         try {
             const mailOptions = {
-                from: ' "Support <glemini.dev@gmai.com>" ',
+                from: ' "Glemini <glemini.dev@gmai.com>" ',
                 to: toEmail,
                 subject: subject,
                 text: text,
@@ -74,7 +74,7 @@ class EmailService {
     }
 
     static async sendEmailOTP({
-        email
+        email,name
     }){
         try {
             const token = await OTPService.newOTP(email);
@@ -88,7 +88,7 @@ class EmailService {
             
             const content = replacePlaceHolder(template.tem_html,{
                 otp: token.otp_token,
-                name: "Nguyen Van A"
+                name,
             })
 
             this.sendEmailLinkVerification({

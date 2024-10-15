@@ -74,6 +74,15 @@ class AccessController {
             })
         }).send(res);
     }
+
+    forgotPassword = async(req, res, next) => {
+        return new OK({
+            message: "OTP send successfully",
+            metadata: await accessService.forgotPassword({
+                email:req.body.email
+            })
+        }).send(res);
+    };
 }
 
 module.exports = new AccessController();

@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const UploadService = require('./upload.service');
 const { updateStatusTeacher } = require('../models/repositories/teacher.repo');
+const EmailService = require('./email.service');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, attributes, files }) {
@@ -26,24 +27,26 @@ class AccessSevice {
             throw new BadRequestError("Sigup failed");
         }
 
+        if (type === 'teacher') {
+            // upload images to cloudinary
+            const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+                files,
+                folderName: `users/${email}/verification`
+            });
 
-        // upload images to cloudinary
-        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
-            files,
-            folderName: `users/${email}/verification`
-        });
+            if (!uploadedUrls) {
+                throw new BadRequestError("Cannot upload images");
+            }
 
-        if (!uploadedUrls) {
-            throw new BadRequestError("Cannot upload images");
-        }
-
-        // save images url to attributes
-        if (uploadedUrls.length) {
-            attributes = {
-                ...attributes,
-                file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
+            // save images url to attributes
+            if (uploadedUrls.length) {
+                attributes = {
+                    ...attributes,
+                    file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
+                }
             }
         }
+
 
         const newUser = await UserFactory.createUser(
             type,
@@ -261,7 +264,27 @@ class AccessSevice {
         return status;
     }
     static async forgotPassword({ email }) {
+        //flow : 
+        // check if email is exist
+        // create token
+        // send email with token
+        const foundUser = await findUserByEmail(email);
+
+        if (!foundUser) {
+            throw new BadRequestError("Account not exist");
+        }
+
+        return await EmailService.sendEmailOTP({
+            email,
+            name: foundUser.user_fullname
+        })
+
     };
+
+    // otp verify
+    static async otpVerify({email,otp}){
+
+    }
 
     static async updateStatus({ user_id, user_status, teacher_status }) {
         // check if user is exist

@@ -19,7 +19,7 @@ const otpSchema = new Schema({
     expireAdt:{
         type:Date,
         default:Date.now,
-        expires:60 // co the dung redis
+        expires:180 // 3 minutes
     }
 },{timestamps:true});
 
