@@ -13,6 +13,7 @@ router.post(
 	asynHandler(accessController.signup)
 );
 router.post('/login', asynHandler(accessController.login));
+router.post('/forgot-password', asynHandler(accessController.forgotPassword));
 
 /* AUTHENTICATION */
 router.use(asynHandler(authentication));
