@@ -13,18 +13,14 @@ router.post(
 	asynHandler(accessController.signup)
 );
 router.post('/login', asynHandler(accessController.login));
+router.post('/forgot-password', asynHandler(accessController.forgotPassword));
+router.post('/verify-otp', asynHandler(accessController.verifyOtp));
+router.post('/reset-password', asynHandler(accessController.resetPassword));
 
 /* AUTHENTICATION */
 router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
-router.post(
-	'/me',
-	asynHandler((req, res) => {
-		const user = req.user;
-		res.json(user);
-	})
-);
 router.post('/logout', asynHandler(accessController.logout));
 router.post('/change-password', asynHandler(accessController.changePassword));
 router.post('/refresh-token', asynHandler(accessController.refresh));

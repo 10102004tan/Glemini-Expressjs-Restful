@@ -53,7 +53,7 @@ class EmailService {
     }){
         try {
             const mailOptions = {
-                from: ' "Support <tannguyen.10102004@gmai.com>" ',
+                from: ' "Glemini <glemini.dev@gmai.com>" ',
                 to: toEmail,
                 subject: subject,
                 text: text,
@@ -72,4 +72,60 @@ class EmailService {
             return error;
         }
     }
+
+    static async sendEmailOTP({
+        email,name
+    }){
+        try {
+            const token = await OTPService.newOTP(email);
+            const template = await TemplateService.getTemplate({
+                tem_name: 'HTML_EMAIL_OTP'
+            });
+
+            if (!template) {
+                throw new NotFoundError("Template not found");
+            }
+            
+            const content = replacePlaceHolder(template.tem_html,{
+                otp: token.otp_token,
+                name,
+            })
+
+            this.sendEmailLinkVerification({
+                html: content,
+                toEmail: email,
+                subject: "Forget Password",
+            }).catch(console.error);
+
+            return 1;
+
+        } catch (error) {
+            console.log("Error send email",error);
+        }
+    }
+
+    static async sendEmailWelcome({email}){
+        try{
+            const template = await TemplateService.getTemplate({
+                tem_name: 'HTML_EMAIL_WELCOME'
+            });
+
+            if (!template) {
+                throw new NotFoundError("Template not found");
+            }
+            
+            
+            this.sendEmailLinkVerification({
+                html: template.tem_html,
+                toEmail: email,
+                subject: "Welcome to Glemini",
+            }).catch(console.error);
+
+            return 1;
+        }catch(error){
+            console.log("Error send email",error);
+        }
+    }
 }
+
+module.exports = EmailService;

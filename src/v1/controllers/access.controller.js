@@ -63,6 +63,47 @@ class AccessController {
             metadata: await accessService.getStatus(req.user)
         }).send(res);
     };
+
+    updateStatus = async(req, res, next) => {
+        return new OK({
+            message: "User status successfully",
+            metadata: await accessService.updateStatus({
+                user_id:req.body.user_id,
+                user_status:req.body.user_status,
+                teacher_status:req.body.teacher_status
+            })
+        }).send(res);
+    }
+
+    forgotPassword = async(req, res, next) => {
+        return new OK({
+            message: "OTP send successfully",
+            metadata: await accessService.forgotPassword({
+                email:req.body.email
+            })
+        }).send(res);
+    };
+
+    verifyOtp = async(req, res, next) => {
+        return new OK({
+            message: "OTP verified successfully",
+            metadata: await accessService.verifyOtp({
+                email:req.body.email,
+                otp:req.body.otp
+            })
+        }).send(res);
+    }
+
+    resetPassword = async(req, res, next) => {
+        return new OK({
+            message: "Password reset successfully",
+            metadata: await accessService.resetPassword({
+                email:req.body.email,
+                password:req.body.password,
+                otp:req.body.otp
+            })
+        }).send(res);
+    };
 }
 
 module.exports = new AccessController();

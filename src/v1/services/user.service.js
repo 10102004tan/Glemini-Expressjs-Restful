@@ -8,6 +8,7 @@ const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
 const {uploadDisk} = require('../configs/multer.config');
 const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
+const { findImagesVerification } = require('../models/repositories/teacher.repo');
 
 class UserFactory {
     static createUser(type, payload) {
@@ -126,6 +127,14 @@ class TeacherService extends UserService {
 
         return newUser;
     }
+
+    static async getImagesVerification({user_id}){
+        const images = await findImagesVerification(user_id);
+        if(!images){
+            throw new BadRequestError("User not found");
+        }
+        return images;
+    }
 }
 
 
@@ -157,5 +166,6 @@ const newUser = async ({
 module.exports = {
     UserFactory,
     newUser,
-    UserService
+    UserService,
+    TeacherService,
 };

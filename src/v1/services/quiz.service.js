@@ -47,7 +47,7 @@ class QuizService {
 			.find({ quiz_id })
 			.populate('question_answer_ids')
 			.populate('correct_answer_ids')
-			.exec(); 
+			.exec();
 
 		if (!questions || questions.length === 0) {
 			throw new BadRequestError('Questions not found');
@@ -56,8 +56,7 @@ class QuizService {
 		return questions;
 	}
 
-	// Hàm lấy danh sách bộ quiz công khai theo subject
-	async getQuizzesBySubjectIdPublished({subjectId}) {		
+	async getQuizzesBySubjectIdPublished({ subjectId }) {
 		let query = {};
 		if (subjectId) {
 			try {
@@ -67,13 +66,15 @@ class QuizService {
 			}
 		}
 
-		let quizzes = await quizModel.find(query).populate("user_id");
+		let quizzes = await quizModel.find(query).populate('user_id');
 
 		if (subjectId === null) {
 			quizzes = await quizModel.find({});
 		}
 
-		const publishedQuizzes = quizzes.filter(quiz => quiz.quiz_status === 'published');
+		const publishedQuizzes = quizzes.filter(
+			(quiz) => quiz.quiz_status === 'published'
+		);
 
 		if (publishedQuizzes.length === 0) {
 			throw new BadRequestError('No published quizzes found');
@@ -197,8 +198,21 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm upload file md
+	async uploadMd(req, res) {
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+
+		const filePath = req.file.path;
+		const result = await mammoth.extractRawText({ path: filePath });
+		const questions = QuizService.parseQuestionsFromMd(result.value);
+		return questions;
+	}
+
 	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
 	static parseQuestionsFromText = (text) => {
+		console.log(text);
 		const lines = text.split('\n');
 		const questions = [];
 		let currentQuestion = null;
@@ -208,6 +222,7 @@ class QuizService {
 				if (currentQuestion) {
 					questions.push(currentQuestion);
 				}
+				console.log(line);
 				currentQuestion = { question: line, answers: [] };
 			} else if (line.match(/^[A-Z]\./)) {
 				currentQuestion.answers.push(line);
@@ -222,6 +237,101 @@ class QuizService {
 
 		return questions;
 	};
+
+	static parseQuestionsFromMd = (text) => {
+		const lines = text.split('\n');
+		const questions = [];
+		let currentQuestion = null;
+
+		lines.forEach((line) => {
+			// Kiểm tra tiêu đề câu hỏi
+			if (line.startsWith('## Question')) {
+				// Lưu câu hỏi hiện tại nếu đã có
+				if (currentQuestion) {
+					questions.push(currentQuestion);
+				}
+
+				// Tạo một đối tượng câu hỏi mới
+				currentQuestion = {
+					question: line.replace('## Question ', '').trim(),
+					answers: [],
+					correctAnswer: null,
+				};
+			}
+			// Kiểm tra các lựa chọn trả lời
+			else if (line.match(/^[A-D]\./)) {
+				currentQuestion.answers.push(line.trim());
+			}
+			// Kiểm tra đáp án đúng
+			else if (line.startsWith('**Correct Answer:**')) {
+				currentQuestion.correctAnswer = line.split(': ')[1].trim();
+			}
+		});
+
+		// Thêm câu hỏi cuối cùng vào danh sách
+		if (currentQuestion) {
+			questions.push(currentQuestion);
+		}
+
+		return questions;
+	};
+
+	// Hàm lấy template file docx
+	async getDocsTemplate(req, res) {}
+
+	// Hàm tìm kiếm quiz theo yêu cầu của người dùng
+	async filterQuizzes({
+		user_id,
+		quiz_subjects,
+		quiz_status,
+		quiz_name,
+		start_filter_date,
+		end_filter_date,
+	}) {
+		console.log(
+			user_id,
+			quiz_subjects,
+			quiz_status,
+			quiz_name,
+			start_filter_date,
+			end_filter_date
+		);
+
+		// Kiểm tra nếu không có id người dùng thì trả về lỗi
+		if (!user_id) {
+			throw new BadRequestError('User ID is required');
+		}
+		// Tạo query để tìm kiếm
+		let query = { user_id };
+		// Kiểm tra nếu có tên quiz thì thêm vào query
+		if (quiz_name) {
+			query.quiz_name = { $regex: quiz_name, $options: 'i' };
+		}
+		// Kiểm tra nếu có trạng thái quiz thì thêm vào query
+		if (quiz_status) {
+			query.quiz_status = quiz_status;
+		}
+
+		if (start_filter_date || end_filter_date) {
+			query.createdAt = {};
+			if (start_filter_date)
+				query.createdAt.$gte = new Date(start_filter_date);
+			if (end_filter_date)
+				query.createdAt.$lte = new Date(end_filter_date);
+		}
+
+		// Kiểm tra nếu có danh sách môn học thì thêm vào query
+		if (quiz_subjects && quiz_subjects.length > 0) {
+			query.subject_ids = { $in: quiz_subjects };
+		}
+		// Tìm kiếm quiz theo query
+		const quizzes = await quizModel.find(query);
+
+		if (!quizzes) {
+			throw new BadRequestError('Quizzes not found');
+		}
+		return quizzes;
+	}
 }
 
 module.exports = new QuizService();
