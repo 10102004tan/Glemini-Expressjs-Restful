@@ -3,10 +3,6 @@
 const { model, Schema } = require('mongoose');
 
 const templateSchema = new Schema({
-    tem_id: {
-        type: Number,
-        required: true
-    },
     tem_name: {
         type: String,
         required: true

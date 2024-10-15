@@ -18,6 +18,7 @@ router.get('/api/v1/working', (req, res, next) => {
 		metadata: [],
 	}).status(200);
 });
+router.use('/api/v1',require('./email'));
 // router.use('/api/v1/', require('./upload'));
 router.use('/api/v1/schools', routeSchool);
 router.use('/api/v1/admin', routeAdmin);
