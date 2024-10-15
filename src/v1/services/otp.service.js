@@ -1,10 +1,11 @@
 'use strict';
 const { BadRequestError } = require('../cores/error.repsone');
 const OTP = require('../models/otp.model');
+const crypto = require('crypto');
 
 class OTPService{
     static async generateTokenRandom(){
-        const token  = await crypto.randomInt(0,Math.pow(2,32));
+        const token  = await crypto.randomInt(0,Math.pow(2,16));
         return token;
     }
 

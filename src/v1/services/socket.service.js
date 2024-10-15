@@ -3,7 +3,7 @@
 class SocketService {
     connection(socket){
         const generateID = () => Math.random().toString(36).substring(2, 10);
-        console.log(`⚡: ${socket.id} user just connected!`);
+        console.log(`Socket: ${socket.id} user just connected! ⚡`);
 
         const chatRooms = [];
 
