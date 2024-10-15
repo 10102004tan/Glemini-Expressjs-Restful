@@ -14,6 +14,9 @@ router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
 router.post('/filter', asynHandler(quizController.filterQuizzes));
 router.use('/get-templates', templateRouter);
+router.post('/get-quizpublished', asynHandler(quizController.getQuizzesBySubjectPublished));
+router.post('/get-quizbanner', asynHandler(quizController.getQuizzesBanner));
+router.post('/search', asynHandler(quizController.search));
 
 router.post(
 	'/upload',

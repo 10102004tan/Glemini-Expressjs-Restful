@@ -2,7 +2,7 @@
 
 const Template = require('../models/template.model');
 const { BadRequestError } = require('../cores/error.repsone');
-const { htmlEmailToken, htmlOTP } = require('../utils/tem.html');
+const { htmlEmailToken, htmlOTP, htmlWelcome } = require('../utils/tem.html');
 
 class TemplateService {
     static async newTemplate({
@@ -15,7 +15,7 @@ class TemplateService {
 
         const newTemplate = await Template.create({
             tem_name, // unique
-            tem_html:htmlOTP
+            tem_html:htmlWelcome
         });
 
         if (!newTemplate) {
