@@ -63,7 +63,8 @@ class ResultService {
         const result = await ResultModel.findOneAndUpdate(
             query,
             { status: 'Đã hoàn thành' },
-            { new: true }
+            { new: true },
+            { runValidators: true }
         );
 
         if (!result) {
