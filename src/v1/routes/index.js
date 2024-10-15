@@ -9,6 +9,7 @@ const routeResult = require('./result');
 const routeSubjects = require('./subjects');
 const routeUser = require('./user');
 const routeSchool = require('./school');
+const routerUpload = require('./upload')
 
 router.get('/api/v1/working', (req, res, next) => {
 	res.send({

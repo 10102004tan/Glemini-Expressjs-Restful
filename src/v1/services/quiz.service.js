@@ -4,6 +4,7 @@ const { log } = require('console');
 const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
+const { query } = require('express');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -55,6 +56,7 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm lấy danh sách bộ quiz công khai theo subject
 	async getQuizzesBySubjectIdPublished({subjectId}) {		
 		let query = {};
 		if (subjectId) {
@@ -80,9 +82,27 @@ class QuizService {
 		return publishedQuizzes;
 	}
 
+	// Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
+	async getQuizzesBanner() {
+		const quizzes = await quizModel.find().sort({ quiz_turn: -1 }).limit(3);
+		return quizzes.filter(quiz => quiz.quiz_status === 'published')
+	}
 
+	// Search {name-desc} and filter {quiz_turn, date}
+	async search({key}) {
+		const quizzes = await quizModel.find();
+		if (!quizzes.length < 0) {
+			throw new BadRequestError('Quizzes not found');
+		}
 
+		if (key) {
+			quizzes.filter(quiz => quiz.quiz_name === key)
+		}
 
+		quizzes.filter(quiz => quiz.quiz_status === 'published')
+
+		return quizzes
+	}
 
 	// Hàm lấy thông tin chi tiết của quiz
 	async getQuizDetails({ quiz_id }) {

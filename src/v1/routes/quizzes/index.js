@@ -12,6 +12,9 @@ router.post('/update', asynHandler(quizController.updateQuiz));
 router.post('/get-by-user', asynHandler(quizController.getQuizByUser));
 router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
+router.post('/get-quizpublished', asynHandler(quizController.getQuizzesBySubjectPublished));
+router.post('/get-quizbanner', asynHandler(quizController.getQuizzesBanner));
+router.post('/search', asynHandler(quizController.search));
 
 router.post(
 	'/upload',
