@@ -1,3 +1,5 @@
 /node_modules
 .env
-/src/v1/uploads
+/src/v1/uploads/docs
+/src/v1/uploads/questions
+/src/v1/uploads/quizzes
