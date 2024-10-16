@@ -4,8 +4,7 @@ const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
 const fs = require('fs');
-const { query } = require('express');
-
+const { url } = require('../configs/url.response.config');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -87,23 +86,23 @@ class QuizService {
 	// Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
 	async getQuizzesBanner() {
 		const quizzes = await quizModel.find().sort({ quiz_turn: -1 }).limit(3);
-		return quizzes.filter(quiz => quiz.quiz_status === 'published')
+		return quizzes.filter((quiz) => quiz.quiz_status === 'published');
 	}
 
 	// Search {name-desc} and filter {quiz_turn, date}
-	async search({key}) {
+	async search({ key }) {
 		const quizzes = await quizModel.find();
 		if (!quizzes.length < 0) {
 			throw new BadRequestError('Quizzes not found');
 		}
 
 		if (key) {
-			quizzes.filter(quiz => quiz.quiz_name === key)
+			quizzes.filter((quiz) => quiz.quiz_name === key);
 		}
 
-		quizzes.filter(quiz => quiz.quiz_status === 'published')
+		quizzes.filter((quiz) => quiz.quiz_status === 'published');
 
-		return quizzes
+		return quizzes;
 	}
 
 	// Hàm lấy thông tin chi tiết của quiz
@@ -182,13 +181,12 @@ class QuizService {
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
-		const imageUrl = `http://192.168.1.8:8000/api/v1/uploads/quizzes/${req.file.filename}`;
+		const imageUrl = url + `uploads/quizzes/${req.file.filename}`;
 		return imageUrl;
 	}
 
 	// Hàm upload file docx
 	async uploadDoc(req, res) {
-		// console.log(req.file);
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
@@ -201,7 +199,6 @@ class QuizService {
 
 	// Hàm upload file md
 	async uploadMd(req, res) {
-		console.log(req.file);
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
@@ -297,15 +294,6 @@ class QuizService {
 		start_filter_date,
 		end_filter_date,
 	}) {
-		console.log(
-			user_id,
-			quiz_subjects,
-			quiz_status,
-			quiz_name,
-			start_filter_date,
-			end_filter_date
-		);
-
 		// Kiểm tra nếu không có id người dùng thì trả về lỗi
 		if (!user_id) {
 			throw new BadRequestError('User ID is required');
