@@ -5,6 +5,7 @@ const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
 const fs = require('fs');
 const { url } = require('../configs/url.response.config');
+const UploadService = require('./upload.service');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -156,7 +157,7 @@ class QuizService {
 
 		// Cập nhật thông tin cho trường quiz_status
 		if (quiz_status) {
-			console.log(quiz_status);
+			// console.log(quiz_status);
 			switch (quiz_status) {
 				case 'published':
 					quiz.quiz_status = 'published';
@@ -181,8 +182,13 @@ class QuizService {
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
-		const imageUrl = url + `uploads/quizzes/${req.file.filename}`;
-		return imageUrl;
+
+		const uploadUrl = await UploadService.uploadImageFromOneFile({
+			path: req.file.path,
+			folderName: req.user.user_id + '/quizzes/' + req.file.filename,
+		});
+
+		return uploadUrl;
 	}
 
 	// Hàm upload file docx
@@ -190,6 +196,8 @@ class QuizService {
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
+
+		console.log(req.file);
 
 		const filePath = req.file.path;
 		const result = await mammoth.extractRawText({ path: filePath });
