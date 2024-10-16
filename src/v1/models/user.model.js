@@ -1,6 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
+const { randomHexColor } = require('../utils');
 const { Schema,model } = mongoose;
 
 const userSchema = new Schema({
@@ -36,6 +37,15 @@ const userSchema = new Schema({
     },
 }, {
     timestamps: true
+});
+
+userSchema.pre('save', function(next){
+    // set user avatar
+    if (!this.user_avatar){
+        const firtName = this.user_fullname.split(' ')[0];
+        this.user_avatar = `https://ui-avatars.com/api/?name=${firtName}size=128`;
+    }
+    next();
 });
 
 module.exports = model('User', userSchema);
