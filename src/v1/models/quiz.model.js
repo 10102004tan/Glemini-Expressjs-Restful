@@ -27,18 +27,17 @@ var quizSchema = new mongoose.Schema(
 		},
 		quiz_turn: {
 			type: Number,
-			default: 0
+			default: 0,
 		},
 		shared_user_ids: [
 			{
 				type: mongoose.Schema.Types.ObjectId,
-				ref: 'User', 
+				ref: 'User',
 				default: [],
 			},
 		],
 		subject_ids: [
 			{
-				type: mongoose.Schema.Types.ObjectId,
 				type: mongoose.Schema.Types.ObjectId,
 				ref: 'Subject',
 				default: [],
