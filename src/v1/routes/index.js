@@ -11,7 +11,7 @@ const routeUser = require('./user');
 const routeSchool = require('./school');
 const routerUpload = require('./upload');
 const routeAdmin = require('./admin');
-
+const routeCollection = require('./collection');
 router.get('/api/v1/working', (req, res, next) => {
 	res.send({
 		message: 'It works!',
@@ -24,6 +24,7 @@ router.use('/api/v1/schools', routeSchool);
 router.use('/api/v1/admin', routeAdmin);
 router.use('/api/v1/auth', routeAccess);
 router.use('/api/v1/quizzes', routeQuizzes);
+router.use('/api/v1/collections', routeCollection);
 router.use('/api/v1/questions', routeQuestions);
 router.use('/api/v1/subjects', routeSubjects);
 router.use('/api/v1/user', routeUser);
