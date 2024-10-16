@@ -10,7 +10,7 @@ const uploadMemory = multer({
 const uploadDisk = multer({
 	storage: multer.diskStorage({
 		destination: (req, file, cb) => {
-			cb(null, './src/v1/uploads/test');
+			cb(null, './src/v1/uploads/users');
 		},
 		filename: (req, file, cb) => {
 			cb(null, `${Date.now()}-${file.originalname}`);

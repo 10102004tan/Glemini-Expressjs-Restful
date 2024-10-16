@@ -45,8 +45,8 @@ const findStatusByUserId= async ({id,type}) => {
     }
 };
 
-const findAndUpdateUserById = async ({id,user_fullname,user_email}) => {
-    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email});
+const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar}) => {
+    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email,user_avatar});
     return updated;
 };
 

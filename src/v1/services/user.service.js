@@ -9,6 +9,7 @@ const { OK } = require('../utils/statusCode');
 const {uploadDisk} = require('../configs/multer.config');
 const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
 const { findImagesVerification } = require('../models/repositories/teacher.repo');
+const UploadService = require('./upload.service');
 
 class UserFactory {
     static createUser(type, payload) {
@@ -71,13 +72,26 @@ class UserService {
         return user;
     }
 
-    static async updateProfile({user_id,fullname,email}){
-        // update full name,email
-        const updated = await findAndUpdateUserById({id:user_id,user_fullname:fullname,user_email:email});
+    static async updateProfile({user_id,fullname,email,avatar}) {
+        // update full name,email,avatar
+        const uploadUrl = await UploadService.uploadImageFromOneFile({
+            path: avatar,
+            folderName: `users/${user_id}/avatars`
+        });
+
+        if (!uploadUrl) {
+            throw new BadRequestError("Cannot upload avatar");
+        }
+
+        const updated = await findAndUpdateUserById({id:user_id,user_fullname:fullname,user_email:email,user_avatar:uploadUrl.thumbnail});
         if (!updated) {
             throw new BadRequestError("Cannot update user");
         }
-        return 1;
+        return {
+            user_fullname: fullname,
+            user_email: email,
+            user_avatar: uploadUrl.thumbnail
+        };
     }
 }
 
