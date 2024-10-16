@@ -1,7 +1,7 @@
 'use strict';
 
 const dev = {
-	url: 'http://172.16.28.100:8000/api/v1/',
+	url: 'http://192.168.247.116:3000/api/v1/',
 };
 
 const prod = {
