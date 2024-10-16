@@ -1,4 +1,9 @@
 'use strict';
+const _ = require('lodash');
+
+const getInfoData = ({fields=[],object={}}) => {
+    return _.pick(object,fields);
+}
 
 const HEADER = {
 	AUTHORIZATION: 'authorization',
@@ -16,4 +21,5 @@ const replacePlaceHolder = (template, params) => {
 module.exports = {
 	HEADER,
 	replacePlaceHolder,
+	getInfoData
 };
