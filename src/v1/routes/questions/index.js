@@ -4,6 +4,10 @@ const router = express.Router();
 const { asynHandler } = require('../../auths/utils');
 const questionController = require('../../controllers/question.controller');
 const { uploadQuestions } = require('../../configs/multer.config');
+const { authentication } = require('../../auths');
+
+router.use(asynHandler(authentication));
+
 router.post('/create', asynHandler(questionController.create));
 router.post('/get', asynHandler(questionController.get));
 router.post('/update', asynHandler(questionController.update));

@@ -2,6 +2,7 @@ const { BadRequestError } = require('../cores/error.repsone');
 const answerModel = require('../models/answer.model');
 const questionModel = require('../models/question.model');
 const { url } = require('../configs/url.response.config');
+const UploadService = require('./upload.service');
 class QuestionService {
 	async create(body) {
 		// console.log(body);
@@ -29,7 +30,7 @@ class QuestionService {
 		const correctAnswerIds = [];
 
 		const promises = body.question_answer_ids.map(async (answer, index) => {
-			console.log(index);
+			// console.log(index);
 			const answerData = await answerModel.create({
 				text: answer.text,
 				image: answer.image,
@@ -165,8 +166,13 @@ class QuestionService {
 		if (!req.file) {
 			return BadRequestError('File is required');
 		}
-		const imageUrl = url + `uploads/questions/${req.file.filename}`;
-		return imageUrl;
+
+		const uploadUrl = await UploadService.uploadImageFromOneFile({
+			path: req.file.path,
+			folderName: req.user.user_id + '/questions/' + req.file.filename,
+		});
+
+		return uploadUrl;
 	}
 }
 

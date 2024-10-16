@@ -5,6 +5,9 @@ const { asynHandler } = require('../../auths/utils');
 const quizController = require('../../controllers/quiz.controller');
 const { uploadQuizzes, uploadDocs } = require('../../configs/multer.config');
 const templateRouter = require('../template');
+const { authentication } = require('../../auths');
+
+router.use(asynHandler(authentication));
 
 router.post('/create', asynHandler(quizController.createQuiz));
 router.post('/delete', asynHandler(quizController.deleteQuiz));
@@ -14,7 +17,10 @@ router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
 router.post('/filter', asynHandler(quizController.filterQuizzes));
 router.use('/get-templates', templateRouter);
-router.post('/published', asynHandler(quizController.getQuizzesBySubjectPublished));
+router.post(
+	'/published',
+	asynHandler(quizController.getQuizzesBySubjectPublished)
+);
 router.post('/banner', asynHandler(quizController.getQuizzesBanner));
 router.post('/search', asynHandler(quizController.search));
 
