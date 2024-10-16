@@ -1,11 +1,10 @@
-const questionController = require('../controllers/question.controller');
 const { BadRequestError } = require('../cores/error.repsone');
 const answerModel = require('../models/answer.model');
 const questionModel = require('../models/question.model');
-const { getQuestionsByQuiz } = require('./quiz.service');
+const { url } = require('../configs/url.response.config');
 class QuestionService {
 	async create(body) {
-		console.log(body);
+		// console.log(body);
 		// fake quiz id: 66fba5626870c1fb0f276b7a
 
 		const question = await questionModel.create({
@@ -47,9 +46,9 @@ class QuestionService {
 		// wait for all promises to resolve
 		await Promise.all(promises);
 
-		console.log('update');
-		console.log(questionAnswerIds);
-		console.log(correctAnswerIds);
+		// console.log('update');
+		// console.log(questionAnswerIds);
+		// console.log(correctAnswerIds);
 
 		// update question with answer ids
 		const updatedQuestion = await questionModel.findOneAndUpdate(
@@ -166,7 +165,7 @@ class QuestionService {
 		if (!req.file) {
 			return BadRequestError('File is required');
 		}
-		const imageUrl = `http://192.168.1.8:8000/api/v1/uploads/questions/${req.file.filename}`;
+		const imageUrl = url + `uploads/questions/${req.file.filename}`;
 		return imageUrl;
 	}
 }
