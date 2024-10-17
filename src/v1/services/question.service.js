@@ -65,6 +65,10 @@ class QuestionService {
 
 	async getQuestionsByQuizId({ quiz_id }) {
 		const questions = await questionModel.find({ quiz_id: quiz_id });
+		if (!questions || questions.length === 0) {
+			console.log('Questions not found');
+			throw new BadRequestError('Questions not found');
+		}
 		return questions;
 	}
 
@@ -148,6 +152,9 @@ class QuestionService {
 
 		// wait for all promises to resolve
 		await Promise.all(promises);
+
+		console.log('updated Array: ');
+		console.log(correctAnswerIds);
 
 		// update question with answer ids
 		const updatedQuestion = await questionModel.findOneAndUpdate(
