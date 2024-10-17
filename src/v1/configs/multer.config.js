@@ -74,17 +74,16 @@ const fileFilter = (req, file, cb) => {
 
 const uploadQuestions = multer({
 	storage: storageQuestions,
-	// fileFilter: fileFilter,
+	fileFilter: fileFilter,
 });
 
 const uploadQuizzes = multer({
 	storage: storageQuizzes,
-	// fileFilter: fileFilter,
+	fileFilter: fileFilter,
 });
 
 const uploadDocs = multer({
 	storage: storageDocs,
-	// fileFilter: fileFilter,
 });
 
 module.exports = {

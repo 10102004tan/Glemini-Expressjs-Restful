@@ -50,7 +50,7 @@ class QuizService {
 			.populate('correct_answer_ids')
 			.exec();
 
-		if (!questions || questions.length === 0) {
+		if (!questions) {
 			throw new BadRequestError('Questions not found');
 		}
 
@@ -185,7 +185,7 @@ class QuizService {
 
 		const uploadUrl = await UploadService.uploadImageFromOneFile({
 			path: req.file.path,
-			folderName: req.user.user_id + '/quizzes/' + req.file.filename,
+			folderName: '/quizzes/' + req.file.filename,
 		});
 
 		return uploadUrl;
