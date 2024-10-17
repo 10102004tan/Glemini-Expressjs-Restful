@@ -16,14 +16,13 @@ const findUserByEmailV2 = async (email) => {
 };
 
 const findUserById = async (id) => {
-    const foundUser = await User.findById(id);
+    const foundUser = await User.findById(id).lean();
     return foundUser;
 };
 
 const findUserByIdV2 = async ({id,select={}}) => {
     const foundUser = await User.findById(id,select).lean();
     return foundUser;
-   
 };
 
 const updatePasswordByEmail = async ({email, password}) => {
@@ -46,10 +45,16 @@ const findStatusByUserId= async ({id,type}) => {
     }
 };
 
-const findAndUpdateUserById = async ({id,user_fullname,user_email}) => {
-    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email});
+const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar}) => {
+    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email,user_avatar});
     return updated;
 };
+
+
+const updateStatusUser = async ({user_id, user_status}) => {
+    const updatedStatus = await User.updateOne({ _id: user_id }, { $set: { user_status } });
+    return updatedStatus;
+}
 
 module.exports = {
     findUserByEmail,
@@ -58,5 +63,6 @@ module.exports = {
     findStatusByUserId,
     findUserByEmailV2,
     findUserByIdV2,
-    findAndUpdateUserById
+    findAndUpdateUserById,
+    updateStatusUser
 };

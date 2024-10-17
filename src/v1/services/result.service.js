@@ -19,7 +19,7 @@ class ResultService {
             result = new ResultModel({
                 user_id,
                 quiz_id,
-                status: 'Đang thực hiện',
+                status: 'doing',
                 result_questions: [],
             });
 
@@ -27,8 +27,8 @@ class ResultService {
                 result.exercise_id = exercise_id;
             }
         } else {
-            if (result.status === 'Đã hoàn thành') {
-                result.status = 'Đang thực hiện';
+            if (result.status === 'completed') {
+                result.status = 'doing';
                 
                 if (result.result_questions.length > 0) {
                     result.result_questions = [];
@@ -62,8 +62,9 @@ class ResultService {
 
         const result = await ResultModel.findOneAndUpdate(
             query,
-            { status: 'Đã hoàn thành' },
-            { new: true }
+            { status: 'completed' },
+            { new: true },
+            { runValidators: true }
         );
 
         if (!result) {

@@ -58,7 +58,6 @@ const authentication = async (req, res, next) => {
                     throw new UnauthorizedError("Invalid refresh token 1");
                 }
             }
-            console.log(decoded);
             if (decoded.user_id !== userId) {
                 throw new UnauthorizedError("Invalid refresh token 2");
             }

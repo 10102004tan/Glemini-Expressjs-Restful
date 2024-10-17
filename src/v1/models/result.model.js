@@ -20,8 +20,8 @@ const resultSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ['Đang thực hiện', 'Đã hoàn thành', 'Bị hủy'],
-            default: 'Đang thực hiện',
+            enum: ['doing', 'completed', 'cancel'],
+            default: 'doing',
         },
         result_questions: [
             {
