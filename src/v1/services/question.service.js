@@ -66,7 +66,7 @@ class QuestionService {
 	async getQuestionsByQuizId({ quiz_id }) {
 		const questions = await questionModel.find({ quiz_id: quiz_id });
 		if (!questions || questions.length === 0) {
-			console.log('Questions not found');
+			// console.log('Questions not found');
 			throw new BadRequestError('Questions not found');
 		}
 		return questions;
@@ -100,12 +100,12 @@ class QuestionService {
 			...question._doc,
 			question_answer_ids: result,
 		};
-		console.log(data);
+		// console.log(data);
 		return data;
 	}
 
 	async update(question) {
-		console.log(question);
+		// console.log(question);
 		const questionUpdate = await questionModel.findOneAndUpdate(
 			{ _id: question._id },
 			{
@@ -153,8 +153,8 @@ class QuestionService {
 		// wait for all promises to resolve
 		await Promise.all(promises);
 
-		console.log('updated Array: ');
-		console.log(correctAnswerIds);
+		// console.log('updated Array: ');
+		// console.log(correctAnswerIds);
 
 		// update question with answer ids
 		const updatedQuestion = await questionModel.findOneAndUpdate(
@@ -176,7 +176,7 @@ class QuestionService {
 
 		const uploadUrl = await UploadService.uploadImageFromOneFile({
 			path: req.file.path,
-			folderName: req.user.user_id + '/questions/' + req.file.filename,
+			folderName: 'questions/' + req.file.filename,
 		});
 
 		return uploadUrl;

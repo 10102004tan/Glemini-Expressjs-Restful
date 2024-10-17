@@ -2,6 +2,7 @@
 
 const User = require('../../models/user.model');
 const Teacher = require('../../models/teacher.model');
+const { BadRequestError } = require('../../cores/error.repsone');
 
 const findUserByEmail = async (email) => {
     const foundUser = await User.findOne({ user_email: email }).lean();
@@ -46,7 +47,10 @@ const findStatusByUserId= async ({id,type}) => {
 };
 
 const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar}) => {
-    const updated = await User.findByIdAndUpdate(id, {user_fullname,user_email,user_avatar});
+    //  find email
+    const found = await User.findOne({ user_email}).lean();
+    if(found) throw new BadRequestError("Email already exists");
+    const updated = (user_avatar) ? await User.updateOne({ _id: id }, { $set: { user_fullname, user_email, user_avatar } }) : await User.updateOne({ _id: id }, { $set: { user_fullname, user_email } });
     return updated;
 };
 

@@ -1,6 +1,6 @@
 # Quiz Title: Bộ câu hỏi về môn toán
 
-## Question 1: 3 + 5 bằng bao nhiêu?
+## Question: 3 + 5 bằng bao nhiêu?
 
 -   A. 7
 -   B. 8
@@ -9,7 +9,7 @@
 
 ### Correct Answer: B
 
-## Question 2: 10 - 7 bằng bao nhiêu?
+## Question: 10 - 7 bằng bao nhiêu?
 
 -   A. 2
 -   B. 4
@@ -18,7 +18,7 @@
 
 ### Correct Answer: C
 
-## Question 3: Số nào là số chẵn?
+## Question: Số nào là số chẵn?
 
 -   A. 3
 -   B. 5
@@ -27,7 +27,7 @@
 
 ### Correct Answer: C
 
-## Question 4: 4 × 2 bằng bao nhiêu?
+## Question: 4 × 2 bằng bao nhiêu?
 
 -   A. 6
 -   B. 7
@@ -36,7 +36,7 @@
 
 ### Correct Answer: C
 
-## Question 5: 16 ÷ 4 bằng bao nhiêu?
+## Question: 16 ÷ 4 bằng bao nhiêu?
 
 -   A. 4
 -   B. 3
@@ -45,7 +45,7 @@
 
 ### Correct Answer: A
 
-## Question 6: 12 + 8 bằng bao nhiêu?
+## Question: 12 + 8 bằng bao nhiêu?
 
 -   A. 18
 -   B. 19
@@ -54,7 +54,7 @@
 
 ### Correct Answer: C
 
-## Question 7: Hình nào có 4 cạnh bằng nhau?
+## Question: Hình nào có 4 cạnh bằng nhau?
 
 -   A. Hình tròn
 -   B. Hình tam giác
@@ -63,7 +63,7 @@
 
 ### Correct Answer: D
 
-## Question 8: Số có hai chữ số nhỏ nhất là số nào?
+## Question: Số có hai chữ số nhỏ nhất là số nào?
 
 -   A. 12
 -   B. 11
@@ -72,7 +72,7 @@
 
 ### Correct Answer: C
 
-## Question 9: Một tuần có bao nhiêu ngày?
+## Question: Một tuần có bao nhiêu ngày?
 
 -   A. 5
 -   B. 6
@@ -81,7 +81,7 @@
 
 ### Correct Answer: C
 
-## Question 10: Một nửa của 20 là bao nhiêu?
+## Question: Một nửa của 20 là bao nhiêu?
 
 -   A. 5
 -   B. 10
@@ -90,7 +90,7 @@
 
 ### Correct Answer: B
 
-## Question 11: 9 + 6 bằng bao nhiêu?
+## Question: 9 + 6 bằng bao nhiêu?
 
 -   A. 15
 -   B. 16
@@ -99,7 +99,7 @@
 
 ### Correct Answer: A
 
-## Question 12: Hình ngũ giác có bao nhiêu cạnh?
+## Question: Hình ngũ giác có bao nhiêu cạnh?
 
 -   A. 4
 -   B. 5
@@ -108,7 +108,7 @@
 
 ### Correct Answer: B
 
-## Question 13: Số nào đứng sau 99?
+## Question: Số nào đứng sau 99?
 
 -   A. 98
 -   B. 101
@@ -117,7 +117,7 @@
 
 ### Correct Answer: C
 
-## Question 14: 25 - 8 bằng bao nhiêu?
+## Question: 25 - 8 bằng bao nhiêu?
 
 -   A. 15
 -   B. 17
@@ -126,7 +126,7 @@
 
 ### Correct Answer: B
 
-## Question 15: Tích của 6 × 3 là bao nhiêu?
+## Question: Tích của 6 × 3 là bao nhiêu?
 
 -   A. 16
 -   B. 18
@@ -135,7 +135,7 @@
 
 ### Correct Answer: B
 
-## Question 16: Một ngày có bao nhiêu giờ?
+## Question: Một ngày có bao nhiêu giờ?
 
 -   A. 12
 -   B. 24
@@ -144,7 +144,7 @@
 
 ### Correct Answer: B
 
-## Question 17: Số nào là bội số của 10?
+## Question: Số nào là bội số của 10?
 
 -   A. 15
 -   B. 20
@@ -153,7 +153,7 @@
 
 ### Correct Answer: B
 
-## Question 18: 5 × 0 bằng bao nhiêu?
+## Question: 5 × 0 bằng bao nhiêu?
 
 -   A. 0
 -   B. 5
@@ -162,7 +162,7 @@
 
 ### Correct Answer: A
 
-## Question 19: 1 mét có bao nhiêu cm?
+## Question: 1 mét có bao nhiêu cm?
 
 -   A. 10
 -   B. 100
@@ -171,7 +171,7 @@
 
 ### Correct Answer: B
 
-## Question 20: 7 + 3 + 2 bằng bao nhiêu?
+## Question: 7 + 3 + 2 bằng bao nhiêu?
 
 -   A. 10
 -   B. 11

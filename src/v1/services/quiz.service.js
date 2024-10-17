@@ -24,7 +24,7 @@ class QuizService {
 
 	// Hàm lấy danh sách quiz theo user
 	async getQuizByUser({ user_id }) {
-		console.log(user_id);
+		// console.log(user_id);
 		const quizzies = await quizModel.find({ user_id });
 		if (!quizzies) {
 			throw new BadRequestError('Quiz not found');
@@ -108,7 +108,7 @@ class QuizService {
 
 	// Hàm lấy thông tin chi tiết của quiz
 	async getQuizDetails({ quiz_id }) {
-		console.log(quiz_id);
+		// console.log(quiz_id);
 		const quiz = await quizModel.findById(quiz_id);
 		if (!quiz) {
 			throw new BadRequestError('Quiz not found');
@@ -188,6 +188,8 @@ class QuizService {
 			folderName: '/quizzes/' + req.file.filename,
 		});
 
+		console.log(uploadUrl);
+
 		return uploadUrl;
 	}
 
@@ -197,7 +199,7 @@ class QuizService {
 			throw new BadRequestError('No file uploaded');
 		}
 
-		console.log(req.file);
+		// console.log(req.file);
 
 		const filePath = req.file.path;
 		const result = await mammoth.extractRawText({ path: filePath });
@@ -229,12 +231,14 @@ class QuizService {
 		let currentQuestion = null;
 
 		lines.forEach((line) => {
-			if (line.startsWith('Question')) {
+			if (line.startsWith('Question:')) {
 				if (currentQuestion) {
 					questions.push(currentQuestion);
 				}
-				console.log(line);
-				currentQuestion = { question: line, answers: [] };
+				currentQuestion = {
+					question: line.split('Question:')[1].trim(),
+					answers: [],
+				};
 			} else if (line.match(/^[A-Z]\./)) {
 				currentQuestion.answers.push(line);
 			} else if (line.startsWith('Correct Answer:')) {
@@ -257,14 +261,14 @@ class QuizService {
 		lines.forEach((line) => {
 			// console.log('lien: ' + line);
 			// Kiểm tra dòng bắt đầu bằng '## Question'
-			if (line.startsWith('## Question')) {
+			if (line.startsWith('## Question:')) {
 				// Nếu có câu hỏi hiện tại thì thêm vào mảng câu hỏi
 				if (currentQuestion) {
 					questions.push(currentQuestion);
 				}
 				// Tạo một đối tượng câu hỏi mới
 				currentQuestion = {
-					question: line.replace('## Question ', '').trim(), // Lấy câu hỏi
+					question: line.split('## Question:')[1].trim(), // Lấy câu hỏi
 					answers: [], // Mảng để lưu đáp án
 				};
 			}
@@ -276,7 +280,7 @@ class QuizService {
 				currentQuestion.answers.push(answer); // Lưu đáp án vào mảng
 			}
 			// Kiểm tra dòng có câu trả lời đúng
-			else if (line.startsWith('### Correct Answer')) {
+			else if (line.startsWith('### Correct Answer:')) {
 				// console.log('LINE MATCH CORRECT ANSWER');
 				currentQuestion.correctAnswer = line.split(': ')[1].trim(); // Lấy câu trả lời đúng
 			}
