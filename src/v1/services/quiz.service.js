@@ -188,6 +188,8 @@ class QuizService {
 			folderName: '/quizzes/' + req.file.filename,
 		});
 
+		console.log(uploadUrl);
+
 		return uploadUrl;
 	}
 

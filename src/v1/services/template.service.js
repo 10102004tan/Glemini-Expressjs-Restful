@@ -15,7 +15,7 @@ class TemplateService {
 
         const newTemplate = await Template.create({
             tem_name, // unique
-            tem_html:htmlOTP
+            tem_html:htmlWelcome
         });
 
         if (!newTemplate) {

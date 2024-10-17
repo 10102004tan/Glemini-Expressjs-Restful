@@ -21,12 +21,12 @@ class UserController {
     }
 
     updateProfile = async (req, res) => {
-        console.log(req.file.path);
+        const avatar = req.file ? req.file.path : null;
         return new OK({
             message: "Update Profile",
             metadata: await UserService.updateProfile({
-                ...req,
-                avatar:req.file.path,
+                ...req.body,
+                avatar,
                 user_id: req.user.user_id
             })
         }).send(res);
