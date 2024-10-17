@@ -15,7 +15,7 @@ router.post('/get-details', asynHandler(questionController.getDetails));
 
 router.post(
 	'/upload',
-	uploadQuestions.single('question_image'),
+	uploadQuestions.single('file'),
 	asynHandler(questionController.uploadQuizIamges)
 );
 

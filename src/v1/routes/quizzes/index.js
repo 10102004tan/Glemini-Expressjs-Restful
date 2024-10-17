@@ -7,6 +7,12 @@ const { uploadQuizzes, uploadDocs } = require('../../configs/multer.config');
 const templateRouter = require('../template');
 const { authentication } = require('../../auths');
 
+router.use('/get-templates', templateRouter);
+
+// AUTHENTICATION
+router.use(asynHandler(authentication));
+// AUTHENTICATION
+
 router.post(
 	'/upload',
 	uploadQuizzes.single('file'),
@@ -24,12 +30,6 @@ router.post(
 	uploadDocs.single('file'),
 	asynHandler(quizController.uploadMd)
 );
-
-router.use('/get-templates', templateRouter);
-
-// AUTHENTICATION
-router.use(asynHandler(authentication));
-// AUTHENTICATION
 
 router.post('/create', asynHandler(quizController.createQuiz));
 router.post('/delete', asynHandler(quizController.deleteQuiz));
