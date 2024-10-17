@@ -48,9 +48,14 @@ const findStatusByUserId= async ({id,type}) => {
 
 const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar}) => {
     //  find email
-    const found = await User.findOne({ user_email}).lean();
-    if(found) throw new BadRequestError("Email already exists");
-    const updated = (user_avatar) ? await User.updateOne({ _id: id }, { $set: { user_fullname, user_email, user_avatar } }) : await User.updateOne({ _id: id }, { $set: { user_fullname, user_email } });
+    if (user_email) {
+        const found = await User.findOne({ user_email}).lean();
+        if(found) throw new BadRequestError("Email already exists");
+    }
+    const updateData = {user_fullname};
+    if(user_email) updateData.user_email = user_email;
+    if(user_avatar) updateData.user_avatar = user_avatar;
+    const updated = await User.updateOne({_id:id}, updateData);
     return updated;
 };
 
