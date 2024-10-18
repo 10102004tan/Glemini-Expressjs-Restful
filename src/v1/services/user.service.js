@@ -97,6 +97,8 @@ class UserService {
             user_avatar: (uploadUrl && uploadUrl.thumbnail)
         };
     }
+
+
 }
 
 class StudentService extends UserService {
@@ -152,6 +154,12 @@ class TeacherService extends UserService {
             throw new BadRequestError("User not found");
         }
         return images;
+    }
+
+    // update files teacher
+    static async updateFilesTeacher({ user_id, file_urls }) {
+        console.log(file_urls);
+        return 1;
     }
 }
 

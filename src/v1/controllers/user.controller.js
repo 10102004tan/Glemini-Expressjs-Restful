@@ -43,6 +43,19 @@ class UserController {
     }
 
 
+    // update files teacher
+
+    updateFilesTeacher = async (req, res) => {
+        return new OK({
+            message: "Update Files Teacher",
+            metadata: await TeacherService.updateFilesTeacher({
+                user_id: req.user.user_id,
+                file_urls: req.file.file_urls
+            })
+        }).send(res);
+    }
+
+
 }
 
 module.exports = new UserController();
