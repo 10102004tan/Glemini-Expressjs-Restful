@@ -12,6 +12,7 @@ router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 router.post('/profile', asynHandler(userController.profile));
 router.put('/profile',uploadDisk.single("avatar"), asynHandler(userController.updateProfile));
+router.post('/profile/verification', asynHandler(userController.updateFilesTeacher));
 router.post('/profile/verification/images', asynHandler(userController.getImagesVerification));
 
 module.exports = router;
