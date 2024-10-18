@@ -24,8 +24,11 @@ class QuizService {
 
 	// Hàm lấy danh sách quiz theo user
 	async getQuizByUser({ user_id }) {
-		// console.log(user_id);
-		const quizzies = await quizModel.find({ user_id });
+		const quizzies = await quizModel.find({
+			user_id,
+			quiz_status: { $ne: 'deleted' }, // Lấy các quiz mà quiz_status khác 'deleted'
+		});
+
 		if (!quizzies) {
 			throw new BadRequestError('Quiz not found');
 		}
@@ -119,7 +122,9 @@ class QuizService {
 
 	// Hàm xóa quiz
 	async deleteQuiz({ quiz_id }) {
-		const quiz = await quizModel.findByIdAndDelete(quiz_id);
+		const quiz = await quizModel.findByIdAndUpdate(quiz_id, {
+			quiz_status: 'deleted',
+		});
 		if (!quiz) {
 			throw new BadRequestError('Quiz not found');
 		}
