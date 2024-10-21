@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@google/generative-ai": "^0.20.0",
+    "amqplib": "^0.10.4",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.0",
     "compression": "^1.7.4",
@@ -10,6 +11,7 @@
     "glemini-backend": "file:",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
     "mammoth": "^1.8.0",
     "mongoose": "^8.7.0",

@@ -1,0 +1,20 @@
+{
+  "name": "sys_message_queue_glemini",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "kafkajs": "^2.2.4",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.7.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
