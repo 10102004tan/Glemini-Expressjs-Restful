@@ -6,6 +6,7 @@ const quizModel = require('../models/quiz.model');
 const fs = require('fs');
 const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
+const { model } = require('../configs/gemini.config');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -345,6 +346,18 @@ class QuizService {
 			throw new BadRequestError('Quizzes not found');
 		}
 		return quizzes;
+	}
+
+	// Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
+	async geminiCreateQuestionByPrompt({ prompt }) {
+		// Kiểm tra nếu không có prompt thì trả về lỗi
+		if (!prompt) {
+			throw new BadRequestError('Prompt is required');
+		}
+		// Tạo câu hỏi từ prompt
+		const result = await model.generateContent(prompt);
+		// Trả về câu hỏi vừa tạo
+		return JSON.parse(result.response.text());
 	}
 }
 
