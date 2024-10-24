@@ -73,6 +73,7 @@ const model = genAI.getGenerativeModel({
 	generationConfig: {
 		responseMimeType: 'application/json',
 		responseSchema: schema,
+      
 	},
 });
 
