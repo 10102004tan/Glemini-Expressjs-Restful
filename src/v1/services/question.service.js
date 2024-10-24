@@ -5,9 +5,19 @@ const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 class QuestionService {
 	async create(body) {
-		// console.log(body);
-		// fake quiz id: 66fba5626870c1fb0f276b7a
+      console.log(body)
+		// Kiểm tra đầu vào
+		if (
+			!body.quiz_id ||
+			!Array.isArray(body.question_answer_ids) ||
+			body.question_answer_ids.length === 0
+		) {
+			throw new BadRequestError(
+				'Invalid input: Missing required fields or question_answer_ids is not an array.'
+			);
+		}
 
+		// Tạo câu hỏi
 		const question = await questionModel.create({
 			quiz_id: body.quiz_id,
 			question_excerpt: body.question_excerpt,
@@ -22,15 +32,19 @@ class QuestionService {
 		});
 
 		if (!question) {
-			return BadRequestError('Create question failed');
+			throw new BadRequestError('Create question failed');
 		}
 
-		// create answers
+		// Tạo câu trả lời
 		const questionAnswerIds = [];
 		const correctAnswerIds = [];
 
-		const promises = body.question_answer_ids.map(async (answer, index) => {
-			// console.log(index);
+		const promises = body.question_answer_ids.map(async (answer) => {
+			if (!answer.text) {
+				// Kiểm tra tính hợp lệ của từng câu trả lời
+				throw new BadRequestError('Answer text is required.');
+			}
+
 			const answerData = await answerModel.create({
 				text: answer.text,
 				image: answer.image,
@@ -44,21 +58,22 @@ class QuestionService {
 			}
 		});
 
-		// wait for all promises to resolve
+		// Chờ tất cả các câu trả lời được tạo xong
 		await Promise.all(promises);
 
-		// console.log('update');
-		// console.log(questionAnswerIds);
-		// console.log(correctAnswerIds);
-
-		// update question with answer ids
+		// Cập nhật câu hỏi với danh sách ID câu trả lời
 		const updatedQuestion = await questionModel.findOneAndUpdate(
 			{ _id: question._id },
 			{
 				question_answer_ids: questionAnswerIds,
 				correct_answer_ids: correctAnswerIds,
-			}
-		);
+			},
+			{ new: true } // Trả về phiên bản đã cập nhật
+		).populate('question_answer_ids');
+
+		if (!updatedQuestion) {
+			throw new BadRequestError('Update question failed');
+		}
 
 		return updatedQuestion;
 	}

@@ -6,6 +6,7 @@ const quizController = require('../../controllers/quiz.controller');
 const { uploadQuizzes, uploadDocs } = require('../../configs/multer.config');
 const templateRouter = require('../template');
 const { authentication } = require('../../auths');
+const { model } = require('../../configs/gemini.config');
 
 router.use('/get-templates', templateRouter);
 
