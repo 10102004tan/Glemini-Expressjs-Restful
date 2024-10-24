@@ -6,7 +6,7 @@ const Student = require('../models/student.model');
 const Teacher = require('../models/teacher.model');
 const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
-const {uploadDisk} = require('../configs/multer.config');
+const { uploadDisk } = require('../configs/multer.config');
 const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
 const { findImagesVerification } = require('../models/repositories/teacher.repo');
 const UploadService = require('./upload.service');
@@ -36,7 +36,7 @@ class UserService {
         user_type,
         user_phone,
         user_avatar,
-        user_status='active',
+        user_status = 'active',
         user_attributes = {}
     }) {
         this.user_fullname = user_fullname;
@@ -62,37 +62,43 @@ class UserService {
         return newUser;
     }
 
-    static async profile({user_id}){
-        const user = await findUserByIdV2({id:user_id,select:{user_fullname:1,user_email:1}});
+    static async profile({ user_id }) {
+        const user = await findUserByIdV2({ id: user_id, select: { user_fullname: 1, user_email: 1 } });
 
-        if(!user){
+        if (!user) {
             throw new BadRequestError("User not found");
         }
 
         return user;
     }
 
-    static async updateProfile({user_id,fullname,email,avatar}) {
+    static async updateProfile({ user_id, fullname, email, avatar }) {
         // update full name,email,avatar
-        const uploadUrl = await UploadService.uploadImageFromOneFile({
-            path: avatar,
-            folderName: `users/${user_id}/avatars`
-        });
+        console.log(fullname);
+        let uploadUrl = null;
+        if (avatar) {
+            uploadUrl = await UploadService.uploadImageFromOneFile({
+                path: avatar,
+                folderName: `users/${user_id}/avatars`
+            });
 
-        if (!uploadUrl) {
-            throw new BadRequestError("Cannot upload avatar");
+            if (!uploadUrl) {
+                throw new BadRequestError("Cannot upload avatar");
+            }
         }
 
-        const updated = await findAndUpdateUserById({id:user_id,user_fullname:fullname,user_email:email,user_avatar:uploadUrl.thumbnail});
+        const updated = await findAndUpdateUserById({ id: user_id, user_fullname: fullname, user_email: email, user_avatar: (uploadUrl && uploadUrl.thumbnail) });
         if (!updated) {
             throw new BadRequestError("Cannot update user");
         }
         return {
             user_fullname: fullname,
             user_email: email,
-            user_avatar: uploadUrl.thumbnail
+            user_avatar: (uploadUrl && uploadUrl.thumbnail)
         };
     }
+
+
 }
 
 class StudentService extends UserService {
@@ -100,7 +106,7 @@ class StudentService extends UserService {
     // 1. create student
     // 2.create user
     async createUser() {
-        console.log(`attributes::`+this.user_attributes);
+        console.log(`attributes::` + this.user_attributes);
         const newStudent = await Student.create({
             ...this.user_attributes
         });
@@ -142,20 +148,26 @@ class TeacherService extends UserService {
         return newUser;
     }
 
-    static async getImagesVerification({user_id}){
+    static async getImagesVerification({ user_id }) {
         const images = await findImagesVerification(user_id);
-        if(!images){
+        if (!images) {
             throw new BadRequestError("User not found");
         }
         return images;
+    }
+
+    // update files teacher
+    static async updateFilesTeacher({ user_id, file_urls }) {
+        console.log(file_urls);
+        return 1;
     }
 }
 
 
 const newUser = async ({
-    email=null,
-    captcha=null
-}) =>{
+    email = null,
+    captcha = null
+}) => {
     // 1. check email
     const foundUser = await User.findOne({
         user_email: email
@@ -170,7 +182,7 @@ const newUser = async ({
 
     return new OK({
         message: "Send email success",
-        metadata:{
+        metadata: {
             token
         }
 

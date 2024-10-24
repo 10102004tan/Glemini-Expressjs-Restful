@@ -21,12 +21,12 @@ class UserController {
     }
 
     updateProfile = async (req, res) => {
-        console.log(req.file.path);
+        const avatar = req.file ? req.file.path : null;
         return new OK({
             message: "Update Profile",
             metadata: await UserService.updateProfile({
-                ...req,
-                avatar:req.file.path,
+                ...req.body,
+                avatar,
                 user_id: req.user.user_id
             })
         }).send(res);
@@ -38,6 +38,19 @@ class UserController {
             message: "Get Images Verification",
             metadata: await TeacherService.getImagesVerification({
                 user_id: req.user.user_id
+            })
+        }).send(res);
+    }
+
+
+    // update files teacher
+
+    updateFilesTeacher = async (req, res) => {
+        return new OK({
+            message: "Update Files Teacher",
+            metadata: await TeacherService.updateFilesTeacher({
+                user_id: req.user.user_id,
+                file_urls: req.file.file_urls
             })
         }).send(res);
     }

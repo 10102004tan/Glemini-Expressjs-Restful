@@ -1,6 +1,6 @@
 'use strict';
 const ResultModel = require('../models/result.model');
-const QuestionModel = require('../models/question.model');
+const QuizModel = require('../models/quiz.model');
 const { BadRequestError } = require('../cores/error.repsone');
 
 class ResultService {
@@ -29,7 +29,7 @@ class ResultService {
         } else {
             if (result.status === 'completed') {
                 result.status = 'doing';
-                
+
                 if (result.result_questions.length > 0) {
                     result.result_questions = [];
                 }
@@ -70,6 +70,13 @@ class ResultService {
         if (!result) {
             throw new BadRequestError('Result not found');
         }
+
+        // Cập nhật lượt chơi
+        await QuizModel.findOneAndUpdate(
+            { _id: quiz_id },
+            { $inc: { quiz_turn: 1 } }, 
+            { new: true, runValidators: true }
+        );
 
         return result;
     }

@@ -58,18 +58,20 @@ class CollectionSevice {
   static async removeQuizFromCollection({ collection_id, quiz_id }) {
     const collection = await collectionModel.findById(collection_id);
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      throw new BadRequestError("Collection not found");
     }
 
     if (!quiz_id) {
-      return new BadRequestError("Quiz Id not found");
+      throw new BadRequestError("Quiz Id not found");
     }
 
-    collection.quizzes = collection.quizzes.filter((quiz) => quiz !== quiz_id);
+    collection.quizzes = collection.quizzes.filter(
+      (quiz) => quiz.toString() !== quiz_id.toString()
+    );
 
     console.log(collection.quizzes);
 
-    collection.save();
+    await collection.save();
     return collection;
   }
 
