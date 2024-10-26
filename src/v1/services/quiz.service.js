@@ -346,17 +346,41 @@ class QuizService {
     return quizzes;
   }
 
-  // Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
-  async geminiCreateQuestionByPrompt({ prompt }) {
-    // Kiểm tra nếu không có prompt thì trả về lỗi
-    if (!prompt) {
-      throw new BadRequestError("Prompt is required");
-    }
-    // Tạo câu hỏi từ prompt
-    const result = await model.generateContent(prompt);
-    // Trả về câu hỏi vừa tạo
-    return JSON.parse(result.response.text());
-  }
+	// Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
+	async geminiCreateQuestionByPrompt({ prompt }) {
+		// Kiểm tra nếu không có prompt thì trả về lỗi
+		if (!prompt) {
+			throw new BadRequestError('Prompt is required');
+		}
+		// Tạo câu hỏi từ prompt
+		const result = await model.generateContent(prompt);
+		// Trả về câu hỏi vừa tạo
+		return JSON.parse(result.response.text());
+	}
+
+	// Hàm tạo câu hỏi từ gemini AI theo prompt dữ liệu trả về dạng stream
+	geminiCreateQuestionByPromptStream = async (req, res) => {
+		const { prompt } = req.body;
+
+		// Kiểm tra nếu không có prompt
+		if (!prompt) {
+			throw new Error('Prompt is required');
+		}
+
+		try {
+			// Giả lập quá trình tạo câu hỏi từ Gemini AI theo từng phần
+			const questions = await model.generateContent(prompt);
+
+			for (const question of questions) {
+				// Gửi từng chunk dữ liệu đến client
+				res.write(`data: ${JSON.stringify(question)}\n\n`);
+				// Giả lập độ trễ giữa các lần gửi
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+		} catch (err) {
+			throw err;
+		}
+	};
 }
 
 module.exports = new QuizService();

@@ -117,6 +117,34 @@ class QuizController {
 			metadata: await quizService.geminiCreateQuestionByPrompt(req.body),
 		}).send(res);
 	};
+
+	geminiCreateQuestionByPromptStream = async (req, res) => {
+		// Thiết lập header cho stream
+		res.setHeader('Content-Type', 'text/event-stream');
+		res.setHeader('Cache-Control', 'no-cache');
+		res.setHeader('Connection', 'keep-alive');
+
+		const { prompt } = req.body;
+
+		if (!prompt) {
+			res.write('data: {"error": "Prompt is required"}\n\n');
+			res.end();
+			return;
+		}
+
+		try {
+			// Gọi hàm từ service để thực hiện stream dữ liệu
+			await quizService.geminiCreateQuestionByPromptStream(req, res);
+
+			// Khi hàm xử lý xong, đảm bảo gửi tín hiệu kết thúc stream
+			res.write('data: [END]\n\n');
+			res.end();
+		} catch (err) {
+			// Trả về lỗi nếu có sự cố
+			res.write(`data: {"error": "${err.message}"}\n\n`);
+			res.end();
+		}
+	};
 }
 
 module.exports = new QuizController();
