@@ -48,6 +48,7 @@ class QuizService {
 
 	// Hàm lấy danh sách câu hỏi theo quiz
 	async getQuestionsByQuiz({ quiz_id }) {
+		console.log(quiz_id);
 		const questions = await questionModel
 			.find({ quiz_id })
 			.populate('question_answer_ids')
@@ -61,6 +62,7 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm lấy danh sách quiz theo môn học
 	async getQuizzesBySubjectIdPublished({ subjectId }) {
 		let query = {};
 		if (subjectId) {
@@ -259,6 +261,7 @@ class QuizService {
 		return questions;
 	};
 
+	// Hàm phân tích nội dung và tạo câu hỏi từ file md
 	static parseQuestionsFromMd(text) {
 		const lines = text.split('\n'); // Tách nội dung thành từng dòng
 		const questions = []; // Mảng để lưu trữ các câu hỏi
@@ -383,6 +386,18 @@ class QuizService {
 			throw err;
 		}
 	};
+
+	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
+	async geminiCreateQuestionByImages(req) {
+		// Kiểm tra nếu không có file ảnh thì trả về lỗi
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+      // Tạo câu hỏi từ hình ảnh
+
+	}
+
+   
 }
 
 module.exports = new QuizService();

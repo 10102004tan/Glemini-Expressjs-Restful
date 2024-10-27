@@ -3,13 +3,13 @@ const { CREATED, OK } = require('../cores/success.response');
 const { UserService, TeacherService } = require('../services/user.service');
 
 class UserController {
-    
+
     newUser = async (req, res) => {
 
     }
 
     checkRegisterEmailToken = async (req, res) => {
-        
+
     }
 
 
@@ -53,6 +53,14 @@ class UserController {
                 file_urls: req.file.file_urls
             })
         }).send(res);
+    }
+
+    // Check email exsist
+    checkExsitsEmail = async (req, res) => {
+         return new OK({
+               message: "Check Email Exsist",
+               metadata: await UserService.checkExsitsEmail(req.body)
+         }).send(res);
     }
 
 

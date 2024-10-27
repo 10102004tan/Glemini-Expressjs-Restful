@@ -14,5 +14,6 @@ router.post('/profile', asynHandler(userController.profile));
 router.put('/profile',uploadDisk.single("avatar"), asynHandler(userController.updateProfile));
 router.post('/profile/verification', asynHandler(userController.updateFilesTeacher));
 router.post('/profile/verification/images', asynHandler(userController.getImagesVerification));
+router.post('/check-email', asynHandler(userController.checkExsitsEmail));
 
 module.exports = router;
