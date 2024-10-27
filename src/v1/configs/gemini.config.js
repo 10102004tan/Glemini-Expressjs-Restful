@@ -11,6 +11,12 @@ const schema = {
 	items: {
 		type: SchemaType.OBJECT,
 		properties: {
+			quizBanner: {
+				type: SchemaType.STRING,
+				description:
+					'Please provide an image for this quiz based on the quiz content title',
+				nullable: false,
+			},
 			questionName: {
 				type: SchemaType.STRING,
 				description: 'Name of the question',
@@ -64,6 +70,7 @@ const schema = {
 			'questionImage',
 			'questionType',
 			'questionExplanation',
+			'quizBanner',
 		],
 	},
 };
@@ -73,7 +80,6 @@ const model = genAI.getGenerativeModel({
 	generationConfig: {
 		responseMimeType: 'application/json',
 		responseSchema: schema,
-      
 	},
 });
 
