@@ -24,7 +24,7 @@ class UserFactory {
         }
     }
 
-    // get status 
+    // get status
 }
 
 class UserService {
@@ -98,11 +98,22 @@ class UserService {
         };
     }
 
+    // check email exists
+      static async checkExsitsEmail({email}) {
+         const user = User.findOne({user_email: email});
+
+         if(user){
+             throw new BadRequestError("Email is already exists");
+         }
+
+         return user;
+      }
+
 
 }
 
 class StudentService extends UserService {
-    //TODO: 
+    //TODO:
     // 1. create student
     // 2.create user
     async createUser() {

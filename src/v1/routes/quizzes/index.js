@@ -46,6 +46,10 @@ router.post(
 	asynHandler(quizController.geminiCreateQuestionByPrompt)
 );
 router.post(
+	'/gemini/generate/images',
+	asynHandler(quizController.geminiCreateQuestionByImages)
+);
+router.post(
 	'/published',
 	asynHandler(quizController.getQuizzesBySubjectPublished)
 );
