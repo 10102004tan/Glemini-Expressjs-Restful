@@ -114,28 +114,6 @@ class EmailService {
       console.log("Error send email", error);
     }
   }
-  
-  // static async sendQuizToTeacherByEmail({ email, quiz }) {
-  //   try {
-  //     const template = await TemplateService.getTemplate({
-  //       tem_name: "HTML_EMAIL_QUIZ",
-  //     });
-
-  //     if (!template) {
-  //       throw new NotFoundError("Template not found");
-  //     }
-
-  //     this.sendEmailLinkVerification({
-  //       html: content,
-  //       toEmail: email,
-  //       subject: "New Quiz",
-  //     }).catch(console.error);
-
-  //     return 1;
-  //   } catch (error) {
-  //     console.log("Error send email", error);
-  //   }
-  // }
 }
 
 module.exports = EmailService;
