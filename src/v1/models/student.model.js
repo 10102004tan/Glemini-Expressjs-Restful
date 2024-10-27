@@ -13,14 +13,16 @@ const studentSchema = new Schema({
         default: null,
         ref: 'School'
     },
-    student_parent_email:{
-        type:String,
-        default:''
+    student_parent_email: {
+        type: String,
+        default: ''
     },
-    class_ids:{
-        type:Array,
-        default:[]
-    }
+    classroom_ids: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Classroom'
+        }
+    ],
 }, {
     timestamps: true
 });

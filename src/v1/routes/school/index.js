@@ -1,26 +1,14 @@
 'use strict';
-
 const express = require('express');
-const route = express.Router();
+const router = express.Router();
+const { authentication } = require('../../auths');
+const { asynHandler } = require('../../auths/utils');
+const schoolController = require('../../controllers/school.controller');
 
-route.get('/', (req,res)=>{
-    res.send({
-        message: 'It works!',
-        metadata: [
-            {
-                value:"School 1",
-                key:1
-            },
-            {
-                value:"School 2",
-                key:2
-            },
-            {
-                value:"School 3",
-                key:3
-            },
-        ],
-    })
-});
+/* AUTHENTICATION */
+// router.use(asynHandler(authentication));
+/* AUTHENTICATION */
 
-module.exports = route;
+router.post('', schoolController.getAllSchools);
+
+module.exports = router;
