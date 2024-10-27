@@ -14,6 +14,8 @@ const classroomController = require('../../controllers/classroom.controller');
 router.post('/create', asynHandler(classroomController.createClassroom));
 router.post('/info', asynHandler(classroomController.getClassroomById));
 router.post('/teacher', asynHandler(classroomController.getClassroomsByTeacherId));
+router.post('/student', asynHandler(classroomController.getClassroomsByStudentId));
+router.delete('/rm-student/:classroomId/students/:studentId', asynHandler(classroomController.removeStudent));
 
 router.post('/upload', 
     uploadExcel.single('file'), 

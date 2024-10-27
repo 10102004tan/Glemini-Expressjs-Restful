@@ -34,6 +34,16 @@ class ClassroomController {
 
     }
 
+    async getClassroomsByStudentId(req, res, next) {
+
+        const classrooms = await classroomService.getClassroomsByStudentId(req.body);
+        return new OK({
+            message: 'Fetch data classrooms by student successfully!',
+            metadata: classrooms,
+        }).send(res);
+
+    }
+
     // API thêm học sinh vào lớp học
     uploadExcel = async (req, res) => {
 		return new OK({
@@ -41,6 +51,15 @@ class ClassroomController {
 			metadata: await classroomService.uploadExcel(req,res),
 		}).send(res);
 	};
+
+    async removeStudent(req, res, next) {
+        const { classroomId, studentId } = req.params;
+        const result = await classroomService.removeStudentFromClass(classroomId, studentId);
+        return new OK({
+            message: 'Deleted student from classroom successfully',
+            metadata: result,
+        }).send(res);
+    }
 }
 
 module.exports = new ClassroomController();
