@@ -3,10 +3,13 @@ const express = require('express');
 const router = express.Router();
 const { asynHandler } = require('../../auths/utils');
 const quizController = require('../../controllers/quiz.controller');
-const { uploadQuizzes, uploadDocs } = require('../../configs/multer.config');
+const {
+	uploadQuizzes,
+	uploadDocs,
+	uploadGenimiRequestImage,
+} = require('../../configs/multer.config');
 const templateRouter = require('../template');
 const { authentication } = require('../../auths');
-const { model } = require('../../configs/gemini.config');
 
 router.use('/get-templates', templateRouter);
 
@@ -47,6 +50,7 @@ router.post(
 );
 router.post(
 	'/gemini/generate/images',
+	uploadGenimiRequestImage.single('file'),
 	asynHandler(quizController.geminiCreateQuestionByImages)
 );
 router.post(

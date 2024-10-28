@@ -52,6 +52,13 @@ class QuestionController {
 			metadata: await questionService.uploadQuestionImages(req.body),
 		}).send(res);
 	}
+
+	async delete(req, res) {
+		return new OK({
+			message: 'Question fetched successfully',
+			metadata: await questionService.delete(req.body),
+		}).send(res);
+	}
 }
 
 module.exports = new QuestionController();

@@ -4,9 +4,9 @@ const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
 const fs = require('fs');
-const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 const { model } = require('../configs/gemini.config');
+const { dirname } = require('path');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -390,14 +390,32 @@ class QuizService {
 	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
 	async geminiCreateQuestionByImages(req) {
 		// Kiểm tra nếu không có file ảnh thì trả về lỗi
-		if (!req.file) {
+		const file = req.file;
+		console.log(file);
+		if (!file) {
 			throw new BadRequestError('No file uploaded');
 		}
-      // Tạo câu hỏi từ hình ảnh
 
+		const fileName = req.file.filename;
+		const prompt = req.body.prompt;
+
+		if (!prompt) {
+			throw new BadRequestError('Prompt is required');
+		}
+
+		const image = {
+			inlineData: {
+				data: Buffer.from(
+					fs.readFileSync('src/v1/uploads/geminies/' + fileName)
+				).toString('base64'),
+				mimeType: file.mimetype,
+			},
+		};
+
+		const result = await model.generateContent([prompt, image]);
+		const response = JSON.parse(result.response.text());
+		return response;
 	}
-
-   
 }
 
 module.exports = new QuizService();
