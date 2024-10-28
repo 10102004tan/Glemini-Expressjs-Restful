@@ -11,6 +11,13 @@ class QuestionController {
 		}).send(res);
 	}
 
+	async creates(req, res) {
+		return new CREATED({
+			message: 'Question created successfully',
+			metadata: await questionService.creates(req.body),
+		}).send(res);
+	}
+
 	async update(req, res) {
 		return new OK({
 			message: 'Question created successfully',

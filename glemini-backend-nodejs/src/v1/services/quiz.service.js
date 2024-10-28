@@ -6,6 +6,7 @@ const quizModel = require('../models/quiz.model');
 const fs = require('fs');
 const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
+const { model } = require('../configs/gemini.config');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -47,6 +48,7 @@ class QuizService {
 
 	// Hàm lấy danh sách câu hỏi theo quiz
 	async getQuestionsByQuiz({ quiz_id }) {
+		console.log(quiz_id);
 		const questions = await questionModel
 			.find({ quiz_id })
 			.populate('question_answer_ids')
@@ -60,6 +62,7 @@ class QuizService {
 		return questions;
 	}
 
+	// Hàm lấy danh sách quiz theo môn học
 	async getQuizzesBySubjectIdPublished({ subjectId }) {
 		let query = {};
 		if (subjectId) {
@@ -258,6 +261,7 @@ class QuizService {
 		return questions;
 	};
 
+	// Hàm phân tích nội dung và tạo câu hỏi từ file md
 	static parseQuestionsFromMd(text) {
 		const lines = text.split('\n'); // Tách nội dung thành từng dòng
 		const questions = []; // Mảng để lưu trữ các câu hỏi
@@ -346,6 +350,54 @@ class QuizService {
 		}
 		return quizzes;
 	}
+
+	// Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
+	async geminiCreateQuestionByPrompt({ prompt }) {
+		// Kiểm tra nếu không có prompt thì trả về lỗi
+		if (!prompt) {
+			throw new BadRequestError('Prompt is required');
+		}
+		// Tạo câu hỏi từ prompt
+		const result = await model.generateContent(prompt);
+		// Trả về câu hỏi vừa tạo
+		return JSON.parse(result.response.text());
+	}
+
+	// Hàm tạo câu hỏi từ gemini AI theo prompt dữ liệu trả về dạng stream
+	geminiCreateQuestionByPromptStream = async (req, res) => {
+		const { prompt } = req.body;
+
+		// Kiểm tra nếu không có prompt
+		if (!prompt) {
+			throw new Error('Prompt is required');
+		}
+
+		try {
+			// Giả lập quá trình tạo câu hỏi từ Gemini AI theo từng phần
+			const questions = await model.generateContent(prompt);
+
+			for (const question of questions) {
+				// Gửi từng chunk dữ liệu đến client
+				res.write(`data: ${JSON.stringify(question)}\n\n`);
+				// Giả lập độ trễ giữa các lần gửi
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+		} catch (err) {
+			throw err;
+		}
+	};
+
+	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
+	async geminiCreateQuestionByImages(req) {
+		// Kiểm tra nếu không có file ảnh thì trả về lỗi
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+      // Tạo câu hỏi từ hình ảnh
+
+	}
+
+   
 }
 
 module.exports = new QuizService();

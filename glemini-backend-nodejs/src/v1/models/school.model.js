@@ -8,16 +8,17 @@ const schoolSchema = new Schema({
         type: String,
         required: true
     },
-    school_location:{
+    address:{
         type:String,
         required:true
     },
-    school_description:{
+    school_code:{
         type:String,
     },
     teacher_ids:{
         type:Array,
-        default:[]
+        default:[],
+        ref: 'Teacher'
     }
 }, {
     timestamps: true

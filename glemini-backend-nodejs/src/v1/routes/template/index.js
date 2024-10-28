@@ -31,4 +31,10 @@ router.get('/template_md', (req, res) => {
 	sendFileSafely(res, filePath);
 });
 
+router.get('/template_excel', (req, res) => {
+	const filename = 'example.demo.xlsx';
+	const filePath = path.join(uploadsDir, 'templates', filename);
+	sendFileSafely(res, filePath);
+});
+
 module.exports = router;

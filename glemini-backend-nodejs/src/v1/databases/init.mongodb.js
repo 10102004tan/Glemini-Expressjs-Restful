@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { host, port, name } = require('../configs/mongodb.config');
 const colors = require('../configs/colors.config');
 const subjectService = require('../services/subject.service');
+const schoolService = require('../services/school.service');
 class Database {
 	constructor() {
 		this.connect();
@@ -20,8 +21,8 @@ class Database {
 					colors.reset
 				);
 				// Khởi tạo dữ liệu mẫu
-				subjectService.initialize();
-				console.log();
+				// subjectService.initialize();
+				// schoolService.initialize();
 			})
 			.catch((err) => {
 				console.log(

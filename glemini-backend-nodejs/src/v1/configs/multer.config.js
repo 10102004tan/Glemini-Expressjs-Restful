@@ -44,6 +44,19 @@ const storageQuizzes = multer.diskStorage({
 	},
 });
 
+// Cấu hình storage cho multer để lưu file danh sách sinh viên dạng Excel
+const storageStudents = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './src/v1/uploads/excels');
+	},
+	filename: function (req, file, cb) {
+		cb(
+			null,
+			file.fieldname + '-' + Date.now() + path.extname(file.originalname)
+		); // Rename file
+	},
+});
+
 // Cấu hình storage cho multer để lưu các file template của Quiz
 const storageDocs = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -82,6 +95,10 @@ const uploadQuizzes = multer({
 	fileFilter: fileFilter,
 });
 
+const uploadExcel = multer({
+	storage: storageStudents,
+});
+
 const uploadDocs = multer({
 	storage: storageDocs,
 });
@@ -92,4 +109,5 @@ module.exports = {
 	uploadQuestions,
 	uploadQuizzes,
 	uploadDocs,
+	uploadExcel
 };

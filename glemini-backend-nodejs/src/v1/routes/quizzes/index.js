@@ -6,6 +6,7 @@ const quizController = require('../../controllers/quiz.controller');
 const { uploadQuizzes, uploadDocs } = require('../../configs/multer.config');
 const templateRouter = require('../template');
 const { authentication } = require('../../auths');
+const { model } = require('../../configs/gemini.config');
 
 router.use('/get-templates', templateRouter);
 
@@ -38,11 +39,19 @@ router.post('/get-by-user', asynHandler(quizController.getQuizByUser));
 router.post('/get-details', asynHandler(quizController.getQuizDetails));
 router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
 router.post('/filter', asynHandler(quizController.filterQuizzes));
+router.post('/banner', asynHandler(quizController.getQuizzesBanner));
+router.post('/search', asynHandler(quizController.search));
+router.post(
+	'/gemini/generate/prompt',
+	asynHandler(quizController.geminiCreateQuestionByPrompt)
+);
+router.post(
+	'/gemini/generate/images',
+	asynHandler(quizController.geminiCreateQuestionByImages)
+);
 router.post(
 	'/published',
 	asynHandler(quizController.getQuizzesBySubjectPublished)
 );
-router.post('/banner', asynHandler(quizController.getQuizzesBanner));
-router.post('/search', asynHandler(quizController.search));
 
 module.exports = router;

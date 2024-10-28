@@ -40,7 +40,7 @@ router.post('/test',async(req,res)=>{
             somePushTokens.push(token);
         });
         // store notification
-        await pushNotiForSys({
+        const noti = await pushNotiForSys({
             type: 'SYS-002',
             receiverId: item.user_id,
             senderId: '671df08d23841e253cc38506',
@@ -50,6 +50,9 @@ router.post('/test',async(req,res)=>{
             //     room_id:'AZXROM'
             // }
         });
+
+        _io.emit(`notification${1001}`,noti);
+
     });
 
     pushNoti({somePushTokens,data});

@@ -1,13 +1,22 @@
 const { BadRequestError } = require('../cores/error.repsone');
 const answerModel = require('../models/answer.model');
 const questionModel = require('../models/question.model');
-const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 class QuestionService {
 	async create(body) {
-		// console.log(body);
-		// fake quiz id: 66fba5626870c1fb0f276b7a
+		console.log(body);
+		// Kiểm tra đầu vào
+		if (
+			!body.quiz_id ||
+			!Array.isArray(body.question_answer_ids) ||
+			body.question_answer_ids.length === 0
+		) {
+			throw new BadRequestError(
+				'Invalid input: Missing required fields or question_answer_ids is not an array.'
+			);
+		}
 
+		// Tạo câu hỏi
 		const question = await questionModel.create({
 			quiz_id: body.quiz_id,
 			question_excerpt: body.question_excerpt,
@@ -22,15 +31,19 @@ class QuestionService {
 		});
 
 		if (!question) {
-			return BadRequestError('Create question failed');
+			throw new BadRequestError('Create question failed');
 		}
 
-		// create answers
+		// Tạo câu trả lời
 		const questionAnswerIds = [];
 		const correctAnswerIds = [];
 
-		const promises = body.question_answer_ids.map(async (answer, index) => {
-			// console.log(index);
+		const promises = body.question_answer_ids.map(async (answer) => {
+			if (!answer.text) {
+				// Kiểm tra tính hợp lệ của từng câu trả lời
+				throw new BadRequestError('Answer text is required.');
+			}
+
 			const answerData = await answerModel.create({
 				text: answer.text,
 				image: answer.image,
@@ -44,28 +57,76 @@ class QuestionService {
 			}
 		});
 
-		// wait for all promises to resolve
+		// Chờ tất cả các câu trả lời được tạo xong
 		await Promise.all(promises);
 
-		// console.log('update');
-		// console.log(questionAnswerIds);
-		// console.log(correctAnswerIds);
+		// Cập nhật câu hỏi với danh sách ID câu trả lời
+		const updatedQuestion = await questionModel
+			.findOneAndUpdate(
+				{ _id: question._id },
+				{
+					question_answer_ids: questionAnswerIds,
+					correct_answer_ids: correctAnswerIds,
+				},
+				{ new: true } // Trả về phiên bản đã cập nhật
+			)
+			.populate('question_answer_ids');
 
-		// update question with answer ids
-		const updatedQuestion = await questionModel.findOneAndUpdate(
-			{ _id: question._id },
-			{
-				question_answer_ids: questionAnswerIds,
-				correct_answer_ids: correctAnswerIds,
-			}
-		);
+		if (!updatedQuestion) {
+			throw new BadRequestError('Update question failed');
+		}
 
 		return updatedQuestion;
 	}
 
+	async creates({ questions }) {
+		console.log(JSON.stringify(questions, null, 2));
+		// thực hiện chèn nhiều câu hỏi cùng lúc dùng insertMany
+
+		// tạo ra các mảng đán án và đán án đúng cho từng câu hỏi
+		const wait = questions.map(async (question) => {
+			const questionAnswerIds = [];
+			const correctAnswerIds = [];
+
+			const promises = question.question_answer_ids.map(
+				async (answer, index) => {
+					const answerData = await answerModel.create({
+						text: answer.text,
+						image: answer.image,
+					});
+
+					if (answerData) {
+						questionAnswerIds.push(answerData._id);
+						if (answer.correct) {
+							correctAnswerIds.push(answerData._id);
+						}
+					}
+				}
+			);
+
+			await Promise.all(promises);
+			// reset lại mảng đáp án và đáp án đúng
+			question.question_answer_ids = questionAnswerIds;
+			question.correct_answer_ids = correctAnswerIds;
+		});
+
+		await Promise.all(wait);
+
+		// console.log(JSON.stringify(questions, null, 2));
+
+		// thực hiện chèn nhiều câu hỏi cùng lúc dùng insertMany
+		const createdQuestions = await questionModel.insertMany(questions);
+
+		if (!createdQuestions) {
+			throw new BadRequestError('Create questions failed');
+		}
+
+		return createdQuestions;
+	}
+
 	async getQuestionsByQuizId({ quiz_id }) {
 		const questions = await questionModel.find({ quiz_id: quiz_id });
-		if (!questions || questions.length === 0) {
+		if (!questions) {
 			// console.log('Questions not found');
 			throw new BadRequestError('Questions not found');
 		}

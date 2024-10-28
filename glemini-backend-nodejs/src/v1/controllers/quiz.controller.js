@@ -116,6 +116,20 @@ class QuizController {
 			metadata: await quizService.filterQuizzes(req.body),
 		}).send(res);
 	};
+
+	geminiCreateQuestionByPrompt = async (req, res) => {
+		return new OK({
+			message: 'Question created successfully',
+			metadata: await quizService.geminiCreateQuestionByPrompt(req.body),
+		}).send(res);
+	};
+
+	geminiCreateQuestionByImages = async (req, res) => {
+		return new OK({
+			message: 'Question created successfully',
+			metadata: await quizService.geminiCreateQuestionByImages(req),
+		}).send(res);
+	};
 }
 
 module.exports = new QuizController();

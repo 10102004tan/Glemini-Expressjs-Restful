@@ -13,6 +13,7 @@ const routerUpload = require('./upload');
 const routeAdmin = require('./admin');
 
 const routeCollection = require('./collection');
+const routeClassroom = require('./classroom');
 router.get('/api/v1/working', (req, res, next) => {
 	res.send({
 		message: 'It works!',
@@ -30,5 +31,6 @@ router.use('/api/v1/questions', routeQuestions);
 router.use('/api/v1/subjects', routeSubjects);
 router.use('/api/v1/user', routeUser);
 router.use('/api/v1/result', routeResult);
+router.use('/api/v1/classroom', routeClassroom);
 
 module.exports = router;

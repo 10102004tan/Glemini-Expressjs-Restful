@@ -31,9 +31,9 @@ require('./databases/init.mongodb');
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
+
 global._io.on('connection', socketService.connection);
 /* SOCKET CONNECTION END*/
-
 /* ROUTES START*/
 app.use('/', require('./routes'));
 
