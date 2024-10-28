@@ -9,5 +9,6 @@ router.post('/user/update-status',asynHandler(accessController.updateStatus));
 
 //TEMPLATE
 router.use('/template', require('./template'));
+router.use('/notification', require('./notifications'));
 
 module.exports = router;

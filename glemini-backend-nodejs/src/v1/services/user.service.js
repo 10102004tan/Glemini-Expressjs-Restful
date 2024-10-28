@@ -10,6 +10,7 @@ const { uploadDisk } = require('../configs/multer.config');
 const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
 const { findImagesVerification } = require('../models/repositories/teacher.repo');
 const UploadService = require('./upload.service');
+const { getNotificationReceiverIdService } = require('./notification.service');
 
 class UserFactory {
     static createUser(type, payload) {
@@ -37,7 +38,7 @@ class UserService {
         user_phone,
         user_avatar,
         user_status = 'active',
-        user_attributes = {}
+        user_attributes = {},
     }) {
         this.user_fullname = user_fullname;
         this.user_email = user_email;
@@ -98,7 +99,9 @@ class UserService {
         };
     }
 
-
+    static async findNotificationByReceiverId({ user_id }) {
+        return await getNotificationReceiverIdService(user_id);
+    }
 }
 
 class StudentService extends UserService {

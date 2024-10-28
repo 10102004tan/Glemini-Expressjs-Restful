@@ -11,6 +11,7 @@ const routeUser = require('./user');
 const routeSchool = require('./school');
 const routerUpload = require('./upload');
 const routeAdmin = require('./admin');
+
 const routeCollection = require('./collection');
 router.get('/api/v1/working', (req, res, next) => {
 	res.send({

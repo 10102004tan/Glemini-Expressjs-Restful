@@ -15,6 +15,7 @@ class AccessController {
                 email: req.body.email,
                 password: req.body.password,
                 type: req.body.type,
+                user_expotoken: req.body.expo_push_token,
                 attributes: req.body.attributes,
                 files: req.files
             })
@@ -24,14 +25,22 @@ class AccessController {
     login = async (req, res, next) => {
         return new OK({
             message: "User LOGIN successfully",
-            metadata: await accessService.login(req.body)
+            metadata: await accessService.login({
+                email: req.body.email,
+                password: req.body.password,
+                user_expotoken: req.body.user_push_token
+            })
         }).send(res);
     }
 
     logout = async (req, res, next) => {
+        console.log(req.user);
         return new OK({
             message: "User LOGOUT successfully",
-            metadata: await accessService.logout(req.user)
+            metadata: await accessService.logout({
+                user_id:req.user.user_id,
+                user_expotoken:req.body.expo_push_token
+            })
         }).send(res);
     }
 

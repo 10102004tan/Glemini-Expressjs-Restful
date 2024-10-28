@@ -56,6 +56,15 @@ class UserController {
     }
 
 
+    // get notification
+    getNotification = async (req, res) => {
+        return new OK({
+            message: "Get Notification",
+            metadata: await UserService.findNotificationByReceiverId({
+                user_id: req.user.user_id
+            })
+        }).send(res);
+    }
 }
 
 module.exports = new UserController();

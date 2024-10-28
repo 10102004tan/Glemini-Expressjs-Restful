@@ -12,9 +12,18 @@ const { updateStatusTeacher } = require('../models/repositories/teacher.repo');
 const EmailService = require('./email.service');
 const OTPService = require('./otp.service');
 const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
+const { pushNoti } = require('./expo.service');
+const { producerQueue } = require('./producerQueue.service');
+const { storeNewExpoToken, removeExpoToken } = require('./expoToken.service');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, attributes, files }) {
+    static async signup({ fullname, email, password, type, user_expotoken, attributes, files }) {
+
+
+        //
+        if (!user_expotoken) {
+            user_expotoken = null;
+        }
 
         // check if email is already used
         const foundUser = await findUserByEmail(email);
@@ -49,7 +58,6 @@ class AccessSevice {
             }
         }
 
-
         const newUser = await UserFactory.createUser(
             type,
             {
@@ -57,6 +65,7 @@ class AccessSevice {
                 user_email: email,
                 user_password: hashPassword,
                 user_attributes: attributes,
+                user_expotoken,
                 user_type: type
             }
         );
@@ -105,6 +114,39 @@ class AccessSevice {
                 email: newUser.user_email
             });
 
+
+            // send notification to expo server
+
+            // if(user_expotoken){
+            //     const queueName = 'notificationQueue';
+            //     const message = {
+            //         to: user_expotoken,
+            //         title: `Welcome ${newUser.user_fullname} to Glemini`,
+            //         body: 'Thank you for joining us'
+            //     }
+
+            //     producerQueue(queueName, message).then(()=>{
+            //         console.log('Message sent');
+            //     }).catch(console.error);
+
+            // }
+
+
+
+            // add user_expotoken to expoToken
+            const storeExpoToken = await storeNewExpoToken(newUser._id, user_expotoken);
+            
+            if (!storeExpoToken) {
+                throw new BadRequestError("Cannot store expo token");
+            }
+
+            const data = {
+                title: `Welcome ${newUser.user_fullname} to Glemini`,
+                body: 'Thank you for joining us'
+            }
+
+            pushNoti({ data, somePushTokens: [user_expotoken] });
+
             return {
                 user: newUser,
                 tokens: tokens
@@ -112,7 +154,7 @@ class AccessSevice {
         }
 
     }
-    static async login({ email, password }) {
+    static async login({ email, password,user_expotoken }) {
         const foundUser = await findUserByEmailV2(email);
 
         if (!foundUser) {
@@ -161,17 +203,24 @@ class AccessSevice {
             refreshToken: tokens.refreshToken
         });
 
+
+        // add user_expotoken to expoToken
+        await storeNewExpoToken(foundUser._id, user_expotoken);
+
         return {
             user: foundUser,
             tokens: tokens
         }
 
     }
-    static async logout({ user_id }) {
+    static async logout({ user_id,user_expotoken }) {
         const del = await KeyTokenService.removeRefreshTokenById(user_id);
         if (!del) {
             throw new BadRequestError("Logout failed");
         }
+
+        await removeExpoToken(user_id, user_expotoken);
+
         return true;
     }
     static async changePassword({ email, old_password, new_password }) {
@@ -288,17 +337,17 @@ class AccessSevice {
     };
 
     // otp verify
-    static async verifyOtp({email,otp}){
+    static async verifyOtp({ email, otp }) {
         otp = otp.toString();
-        const verifyOTP = await OTPService.verifyOTP({email,otp});
-        if(!verifyOTP){
+        const verifyOTP = await OTPService.verifyOTP({ email, otp });
+        if (!verifyOTP) {
             throw new BadRequestError("OTP is incorrect");
         }
         return 1;
     }
 
     // reset password
-    static async resetPassword({email,password,otp}){
+    static async resetPassword({ email, password, otp }) {
 
         const foundUser = await findUserByEmail(email);
 
@@ -306,12 +355,12 @@ class AccessSevice {
             throw new BadRequestError("Account not exist");
         }
 
-        await OTPService.verifyOTP({email,otp});
+        await OTPService.verifyOTP({ email, otp });
 
         // remove otp
         const removeOTP = await removeOTPbyEmail(email);
 
-        if(!removeOTP){
+        if (!removeOTP) {
             throw new BadRequestError("OTP is expired, please try again");
         }
 
@@ -366,6 +415,7 @@ class AccessSevice {
             throw new BadRequestError("User not found");
         }
 
+
         if (foundUser.user_type === 'teacher' && teacher_status) {
             const updatedStatus = await updateStatusTeacher(user_id, teacher_status);
             if (!updatedStatus) {
@@ -373,19 +423,19 @@ class AccessSevice {
             }
             let message;
             let status;
-            if(teacher_status === 'active'){
+            if (teacher_status === 'active') {
                 message = "Your account has been activated";
                 status = "success";
             }
-            else if(teacher_status === 'inactive'){
+            else if (teacher_status === 'inactive') {
                 message = "Your account has been deactivated";
                 status = "warning";
             }
-            else if(teacher_status === 'suspend'){
+            else if (teacher_status === 'suspend') {
                 message = "Your account has been suspended";
                 status = "error";
             }
-            _io.emit('update-status', { user_id, teacher_status,message});
+            _io.emit('update-status', { user_id, teacher_status, message });
             return updatedStatus;
         }
         if (user_status) {

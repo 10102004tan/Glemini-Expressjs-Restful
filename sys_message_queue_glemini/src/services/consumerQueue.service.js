@@ -2,12 +2,13 @@
 
 const { consumerQueue, connectToRabbitMQ } = require("../dbs/init.rabbitmq");
 
+
+
 const messageService = {
     consumerQueue: async (queueName) => {
         try {
             const {channel,connection} = await connectToRabbitMQ();
-            await consumerQueue(channel,queueName);
-            // if error => DLX 
+            return await consumerQueue(channel,queueName);
         } catch (error) {
             console.error(error);
         }

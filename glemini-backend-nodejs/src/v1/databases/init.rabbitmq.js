@@ -1,7 +1,6 @@
 'use strict';
 
 const amqplib = require('amqplib');
-const { pushNotiForUser } = require('../services/expo.service');
 
 
 const connectToRabbitMQ = async () => {
@@ -24,9 +23,7 @@ const consumerQueue = async (channel,queueName) =>{
 
         // consume message from producer
         channel.consume(queueName, (message) => {
-            // console.log(`Received message: ${message.content.toString()}`);
-            // return message.content.toString();
-            pushNotiForUser(JSON.parse(message.content.toString()));
+            console.log(`Received message: ${message.content.toString()}`);
         },{
             noAck:true
         });
@@ -36,7 +33,22 @@ const consumerQueue = async (channel,queueName) =>{
     }
 }
 
+const producerQueue = async (channel,queueName,message) =>{
+    try {
+        await channel.assertQueue(queueName, { durable: true });
+
+        channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)),{
+           persistent: true,
+            contentType: 'application/json'
+        });
+    } catch (error) {
+        console.error(error);
+        throw new Error('Failed to send message to queue');
+    }
+}
+
 module.exports = {
     connectToRabbitMQ,
-    consumerQueue
+    consumerQueue,
+    producerQueue
 };

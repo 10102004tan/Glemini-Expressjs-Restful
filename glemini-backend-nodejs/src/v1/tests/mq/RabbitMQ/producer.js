@@ -1,6 +1,6 @@
 'use strict';
 const amqplib = require('amqplib');
-const message = "Hello glemini";
+const message = "Hello tandev";
 
 const runProducer = async () => {
     try {

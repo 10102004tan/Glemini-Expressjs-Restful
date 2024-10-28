@@ -8,6 +8,7 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
+    "expo-server-sdk": "^3.11.0",
     "glemini-backend": "file:",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
