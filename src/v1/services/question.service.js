@@ -1,11 +1,10 @@
 const { BadRequestError } = require('../cores/error.repsone');
 const answerModel = require('../models/answer.model');
 const questionModel = require('../models/question.model');
-const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 class QuestionService {
 	async create(body) {
-      console.log(body)
+		console.log(body);
 		// Kiểm tra đầu vào
 		if (
 			!body.quiz_id ||
@@ -62,14 +61,16 @@ class QuestionService {
 		await Promise.all(promises);
 
 		// Cập nhật câu hỏi với danh sách ID câu trả lời
-		const updatedQuestion = await questionModel.findOneAndUpdate(
-			{ _id: question._id },
-			{
-				question_answer_ids: questionAnswerIds,
-				correct_answer_ids: correctAnswerIds,
-			},
-			{ new: true } // Trả về phiên bản đã cập nhật
-		).populate('question_answer_ids');
+		const updatedQuestion = await questionModel
+			.findOneAndUpdate(
+				{ _id: question._id },
+				{
+					question_answer_ids: questionAnswerIds,
+					correct_answer_ids: correctAnswerIds,
+				},
+				{ new: true } // Trả về phiên bản đã cập nhật
+			)
+			.populate('question_answer_ids');
 
 		if (!updatedQuestion) {
 			throw new BadRequestError('Update question failed');
@@ -78,9 +79,54 @@ class QuestionService {
 		return updatedQuestion;
 	}
 
+	async creates({ questions }) {
+		console.log(JSON.stringify(questions, null, 2));
+		// thực hiện chèn nhiều câu hỏi cùng lúc dùng insertMany
+
+		// tạo ra các mảng đán án và đán án đúng cho từng câu hỏi
+		const wait = questions.map(async (question) => {
+			const questionAnswerIds = [];
+			const correctAnswerIds = [];
+
+			const promises = question.question_answer_ids.map(
+				async (answer, index) => {
+					const answerData = await answerModel.create({
+						text: answer.text,
+						image: answer.image,
+					});
+
+					if (answerData) {
+						questionAnswerIds.push(answerData._id);
+						if (answer.correct) {
+							correctAnswerIds.push(answerData._id);
+						}
+					}
+				}
+			);
+
+			await Promise.all(promises);
+			// reset lại mảng đáp án và đáp án đúng
+			question.question_answer_ids = questionAnswerIds;
+			question.correct_answer_ids = correctAnswerIds;
+		});
+
+		await Promise.all(wait);
+
+		// console.log(JSON.stringify(questions, null, 2));
+
+		// thực hiện chèn nhiều câu hỏi cùng lúc dùng insertMany
+		const createdQuestions = await questionModel.insertMany(questions);
+
+		if (!createdQuestions) {
+			throw new BadRequestError('Create questions failed');
+		}
+
+		return createdQuestions;
+	}
+
 	async getQuestionsByQuizId({ quiz_id }) {
 		const questions = await questionModel.find({ quiz_id: quiz_id });
-		if (!questions || questions.length === 0) {
+		if (!questions) {
 			// console.log('Questions not found');
 			throw new BadRequestError('Questions not found');
 		}

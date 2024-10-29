@@ -46,13 +46,14 @@ class QuizService {
     return quiz;
   }
 
-  // Hàm lấy danh sách câu hỏi theo quiz
-  async getQuestionsByQuiz({ quiz_id }) {
-    const questions = await questionModel
-      .find({ quiz_id })
-      .populate("question_answer_ids")
-      .populate("correct_answer_ids")
-      .exec();
+	// Hàm lấy danh sách câu hỏi theo quiz
+	async getQuestionsByQuiz({ quiz_id }) {
+		console.log(quiz_id);
+		const questions = await questionModel
+			.find({ quiz_id })
+			.populate('question_answer_ids')
+			.populate('correct_answer_ids')
+			.exec();
 
     if (!questions) {
       throw new BadRequestError("Questions not found");
@@ -61,15 +62,16 @@ class QuizService {
     return questions;
   }
 
-  async getQuizzesBySubjectIdPublished({ subjectId }) {
-    let query = {};
-    if (subjectId) {
-      try {
-        query.subject_ids = { $in: [subjectId] };
-      } catch (error) {
-        throw new BadRequestError("Invalid subject ID format");
-      }
-    }
+	// Hàm lấy danh sách quiz theo môn học
+	async getQuizzesBySubjectIdPublished({ subjectId }) {
+		let query = {};
+		if (subjectId) {
+			try {
+				query.subject_ids = { $in: [subjectId] };
+			} catch (error) {
+				throw new BadRequestError('Invalid subject ID format');
+			}
+		}
 
     let quizzes = await quizModel.find(query).populate("user_id");
 
@@ -259,10 +261,11 @@ class QuizService {
     return questions;
   };
 
-  static parseQuestionsFromMd(text) {
-    const lines = text.split("\n"); // Tách nội dung thành từng dòng
-    const questions = []; // Mảng để lưu trữ các câu hỏi
-    let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
+	// Hàm phân tích nội dung và tạo câu hỏi từ file md
+	static parseQuestionsFromMd(text) {
+		const lines = text.split('\n'); // Tách nội dung thành từng dòng
+		const questions = []; // Mảng để lưu trữ các câu hỏi
+		let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
 
     lines.forEach((line) => {
       // console.log('lien: ' + line);
@@ -381,6 +384,18 @@ class QuizService {
 			throw err;
 		}
 	};
+
+	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
+	async geminiCreateQuestionByImages(req) {
+		// Kiểm tra nếu không có file ảnh thì trả về lỗi
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+      // Tạo câu hỏi từ hình ảnh
+
+	}
+
+   
 }
 
 module.exports = new QuizService();
