@@ -16,7 +16,8 @@
     "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
     "mongoose": "^8.7.2",
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^6.9.15",
+    "sys_message_queue_glemini": "file:"
   },
   "devDependencies": {
     "jest": "^29.7.0"

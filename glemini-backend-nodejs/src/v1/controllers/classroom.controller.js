@@ -60,6 +60,14 @@ class ClassroomController {
             metadata: result,
         }).send(res);
     }
+
+    async addStudent(req, res, next) {
+        const result = await classroomService.addStudent(req.body);
+        return new OK({
+            message: 'Add student for classroom successfully',
+            metadata: result,
+        }).send(res);
+    }
 }
 
 module.exports = new ClassroomController();

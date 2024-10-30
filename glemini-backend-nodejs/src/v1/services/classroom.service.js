@@ -130,16 +130,17 @@ class ClassroomService {
     }
 
     // Hàm thêm một học sinh
-    static addStudent = async (classroomId) => {
+    async addStudent ({classroomId, user_email}) {
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
 
-        let user = await userModel.findOne({ user_email: student.email });
-
+        let user = await userModel.findOne({ user_email: user_email });
+        
         if (!user) {
+            const fullname = user_email.split('@')[0]
             const signupData = {
-                fullname: student.fullname,
-                email: student.email,
+                fullname: fullname,
+                email: user_email,
                 password: '12345678',
                 type: 'student',
                 attributes: {}
@@ -159,7 +160,6 @@ class ClassroomService {
                 { upsert: true }
             );
         }
-
 
         await classroom.save();
         return classroom;
