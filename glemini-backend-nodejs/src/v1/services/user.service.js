@@ -121,10 +121,10 @@ class UserService {
 		const user = await User.findOne({ user_email: email });
 
 		if (user) {
-			throw new BadRequestError('Email is already exists');
+			return 'Email is already exists';
 		}
 
-		return 'Email is not exists';
+		throw new BadRequestError('Email is not exists');
 	}
 }
 
