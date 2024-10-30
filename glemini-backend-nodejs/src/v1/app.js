@@ -7,7 +7,7 @@ const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
-const fs = require('fs');
+const fs = require('fs');  
 const path = require('path');
 const io = require('socket.io')(server,{
 	cors:{
