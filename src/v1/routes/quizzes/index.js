@@ -35,6 +35,12 @@ router.post(
 	asynHandler(quizController.uploadMd)
 );
 
+router.post(
+	'/txt/upload',
+	uploadDocs.single('file'),
+	asynHandler(quizController.uploadTxt)
+);
+
 router.post('/create', asynHandler(quizController.createQuiz));
 router.post('/delete', asynHandler(quizController.deleteQuiz));
 router.post('/update', asynHandler(quizController.updateQuiz));

@@ -6,7 +6,6 @@ const quizModel = require('../models/quiz.model');
 const fs = require('fs');
 const UploadService = require('./upload.service');
 const { model } = require('../configs/gemini.config');
-const { dirname } = require('path');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -186,7 +185,8 @@ class QuizService {
 	}
 
 	// Hàm upload file ảnh
-	async uploadQuiz(req, res) {
+	async uploadQuiz(req) {
+		console.log(req.file);
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
@@ -195,8 +195,6 @@ class QuizService {
 			path: req.file.path,
 			folderName: '/quizzes/' + req.file.filename,
 		});
-
-		console.log(uploadUrl);
 
 		return uploadUrl;
 	}
@@ -231,14 +229,31 @@ class QuizService {
 		return questions; // Trả về các câu hỏi đã phân tích
 	}
 
+	// Hàm upload file md
+	async uploadTxt(req, res) {
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+
+		const filePath = req.file.path; // Lấy đường dẫn của tệp đã tải lên
+
+		// Đọc nội dung của tệp Markdown
+		const fileContent = fs.readFileSync(filePath, 'utf-8'); // Đọc tệp và chuyển đổi sang chuỗi
+
+		// Phân tích các câu hỏi từ nội dung tệp Markdown
+		const questions = QuizService.parseQuestionsFromText(fileContent);
+		return questions; // Trả về các câu hỏi đã phân tích
+	}
+
 	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
 	static parseQuestionsFromText = (text) => {
-		// console.log(text);
+		console.log(text);
 		const lines = text.split('\n');
 		const questions = [];
 		let currentQuestion = null;
 
 		lines.forEach((line) => {
+			line = line.replace('\r', '');
 			if (line.startsWith('Question:')) {
 				if (currentQuestion) {
 					questions.push(currentQuestion);
@@ -247,8 +262,8 @@ class QuizService {
 					question: line.split('Question:')[1].trim(),
 					answers: [],
 				};
-			} else if (line.match(/^[A-Z]\./)) {
-				currentQuestion.answers.push(line);
+			} else if (line.startsWith('Answer: ')) {
+				currentQuestion.answers.push(line.split('Answer: ')[1]);
 			} else if (line.startsWith('Correct Answer:')) {
 				currentQuestion.correctAnswer = line.split(': ')[1];
 			}
@@ -342,6 +357,8 @@ class QuizService {
 		if (quiz_subjects && quiz_subjects.length > 0) {
 			query.subject_ids = { $in: quiz_subjects };
 		}
+
+		query.quiz_status = { $ne: 'deleted' }; // Lấy các quiz mà quiz_status khác 'deleted'
 		// Tìm kiếm quiz theo query
 		const quizzes = await quizModel.find(query);
 
