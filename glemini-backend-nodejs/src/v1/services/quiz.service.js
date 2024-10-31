@@ -63,7 +63,7 @@ class QuizService {
 	}
 
 	// Hàm lấy danh sách quiz theo môn học
-	async getQuizzesBySubjectIdPublished({ subjectId }) {
+	async getQuizzesBySubjectIdPublished({ subjectId,limit=20,skip=0 }) {
 		let query = {};
 		if (subjectId) {
 			try {
@@ -73,7 +73,7 @@ class QuizService {
 			}
 		}
 
-		let quizzes = await quizModel.find(query).populate('user_id');
+		let quizzes = await quizModel.find(query).populate('user_id').sort({createdAt: -1}).skip(skip).limit(limit);
 
 		if (subjectId === null) {
 			quizzes = await quizModel.find({});
@@ -97,18 +97,13 @@ class QuizService {
 	}
 
 	// Search {name-desc} and filter {quiz_turn, date}
-	async search({ key }) {
-		const quizzes = await quizModel.find();
-		if (!quizzes.length < 0) {
-			throw new BadRequestError('Quizzes not found');
-		}
-
+	async search({ key,skip=0,limit=20,sort={createdAt: -1} }) {
+		const query = {};
 		if (key) {
-			quizzes.filter((quiz) => quiz.quiz_name === key);
+			query.quiz_name = { $regex: key, $options: 'i' };
 		}
 
-		quizzes.filter((quiz) => quiz.quiz_status === 'published');
-
+		const quizzes = await quizModel.find(query).sort(sort).skip(skip).limit(limit);
 		return quizzes;
 	}
 

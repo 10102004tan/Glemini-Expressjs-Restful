@@ -11,6 +11,7 @@ const routeUser = require('./user');
 const routeSchool = require('./school');
 const routerUpload = require('./upload');
 const routeAdmin = require('./admin');
+const routeNotification = require('./notification');
 
 const routeCollection = require('./collection');
 const routeClassroom = require('./classroom');
@@ -25,6 +26,7 @@ router.use('/api/v1/uploads', routerUpload);
 router.use('/api/v1/schools', routeSchool);
 router.use('/api/v1/admin', routeAdmin);
 router.use('/api/v1/auth', routeAccess);
+router.use('/api/v1/notification', routeNotification);
 router.use('/api/v1/quizzes', routeQuizzes);
 router.use('/api/v1/collections', routeCollection);
 router.use('/api/v1/questions', routeQuestions);

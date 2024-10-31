@@ -69,7 +69,34 @@ class UserController {
         return new OK({
             message: "Get Notification",
             metadata: await UserService.findNotificationByReceiverId({
-                user_id: req.user.user_id
+                user_id: req.user.user_id,
+                skip: req.body.skip,
+                limit: req.body.limit
+            })
+        }).send(res);
+    }
+
+
+    // get all teacher
+    getAllTeacher = async (req, res) => {
+        return new OK({
+            message: "Get All Teacher",
+            metadata: await TeacherService.getAllTeachersAccount({
+                skip: req.body.skip,
+                limit: req.body.limit
+            })
+        }).send(res);
+    }
+
+
+    // re upload images
+    updateFilesTeacher = async (req, res) => {
+        return new OK({
+            message: "Re Upload Images",
+            metadata: await TeacherService.reUploadImages({
+                user_id: req.user.user_id,
+                files: req.files,
+                email: req.user.user_email
             })
         }).send(res);
     }

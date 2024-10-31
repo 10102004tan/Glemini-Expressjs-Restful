@@ -8,7 +8,7 @@ const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
 const { uploadDisk } = require('../configs/multer.config');
 const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
-const { findImagesVerification } = require('../models/repositories/teacher.repo');
+const { findImagesVerification, updateImagesVerification, updateStatusTeacher } = require('../models/repositories/teacher.repo');
 const UploadService = require('./upload.service');
 const { getNotificationReceiverIdService } = require('./notification.service');
 
@@ -99,18 +99,35 @@ class UserService {
         };
     }
 
-    static async findNotificationByReceiverId({ user_id }) {
-        return await getNotificationReceiverIdService(user_id);
+    static async findNotificationByReceiverId({ user_id, skip, limit }) {
+        return await getNotificationReceiverIdService({ userId: user_id, skip, limit });
     }
     // check email exists
-    static async checkExsitsEmail({email}) {
-         const user = User.findOne({user_email: email});
-         if(user){
-             throw new BadRequestError("Email is already exists");
-         }
+    static async checkExsitsEmail({ email }) {
+        const user = User.findOne({ user_email: email });
+        if (user) {
+            throw new BadRequestError("Email is already exists");
+        }
 
-         return user;
-      }
+        return user;
+    }
+
+    static async getAllTeachersAccount({ skip, limit }) {
+        const teachers = await Teacher.aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+        ])
+        if (!teachers) {
+            throw new BadRequestError("Cannot get teachers");
+        }
+        return teachers;
+    }
 }
 
 class StudentService extends UserService {
@@ -172,6 +189,32 @@ class TeacherService extends UserService {
     static async updateFilesTeacher({ user_id, file_urls }) {
         console.log(file_urls);
         return 1;
+    }
+
+
+    // re upload images
+    static async reUploadImages({ user_id, email, files }) {
+        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+            files,
+            folderName: `users/${email}/verification`
+        });
+
+        if (!uploadedUrls) {
+            throw new BadRequestError("Cannot upload images");
+        }
+
+        // update images
+
+        const updated = await updateImagesVerification(user_id, uploadedUrls.map(imageUrl => imageUrl.image_url));
+
+        if (!updated) {
+            throw new BadRequestError("Cannot update images");
+        }
+
+        // update status teacher to pending
+        await updateStatusTeacher(user_id, 'pedding');
+
+        return uploadedUrls.map(imageUrl => imageUrl.image_url);
     }
 }
 
