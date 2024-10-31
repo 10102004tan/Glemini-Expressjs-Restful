@@ -9,7 +9,7 @@ class SchoolService {
 			if (count === 0) {
 				await schoolModels.insertMany(defaultSchools);
 				console.log('Default schools have been added.');
-			}
+			} 
 		} catch (error) {
 			console.error('Error initializing subjects:', error);
 		}
