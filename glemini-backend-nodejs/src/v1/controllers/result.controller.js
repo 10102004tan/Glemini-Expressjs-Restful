@@ -28,6 +28,13 @@ class ResultController {
             metadata: await resultService.review(req.body),
         }).send(res);
     };
+
+    async getResultsByUserId(req, res) {
+        return new OK({
+            message: 'Read result successfully!',
+            metadata: await resultService.getResultsByUserId(req.body)
+        }).send(res);
+    }
 }
 
 module.exports = new ResultController();

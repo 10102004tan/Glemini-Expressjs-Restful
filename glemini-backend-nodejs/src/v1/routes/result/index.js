@@ -9,6 +9,7 @@ const resultController = require('../../controllers/result.controller');
 router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
+router.post('', resultController.getResultsByUserId);
 router.post('/save-question', resultController.saveQuestion);
 router.post('/complete-quiz', resultController.completeQuiz);
 router.post('/review', resultController.review);

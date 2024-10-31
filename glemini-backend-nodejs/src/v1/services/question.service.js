@@ -242,6 +242,22 @@ class QuestionService {
 
 		return uploadUrl;
 	}
+
+	async delete({ question_id, quiz_id }) {
+		const question = await questionModel.findOneAndDelete({
+			_id: question_id,
+		});
+		if (!question) {
+			throw new BadRequestError('Question not found');
+		}
+
+		// Delete all answers
+		const deleteAnswers = await answerModel.deleteMany({
+			_id: { $in: question.question_answer_ids },
+		});
+
+		return question;
+	}
 }
 
 module.exports = new QuestionService();

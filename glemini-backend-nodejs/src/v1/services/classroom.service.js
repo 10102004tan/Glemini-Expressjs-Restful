@@ -1,7 +1,9 @@
 const classroomModel = require('../models/classroom.model');
 const studentModel = require('../models/student.model');
+const quizModel = require('../models/quiz.model');
 const schoolModel = require('../models/school.model');
 const subjectModel = require('../models/subject.model');
+const exerciseModel = require('../models/exercise.model');
 const AccessService = require('../services/access.service');
 const userModel = require('../models/user.model');
 const { BadRequestError } = require('../cores/error.repsone');
@@ -11,9 +13,9 @@ const xlsx = require('xlsx');
 class ClassroomService {
 
     // Hàm lấy lớp theo học sinh
-    async getClassroomsByStudentId(user_id) {
-        
-        const student = await studentModel.findById(user_id)
+    async getClassroomsByStudentId({user_id}) {
+
+        const classrooms = await studentModel.findById(user_id)
             .populate({
                 path: 'classroom_ids',
                 populate: [
@@ -22,8 +24,8 @@ class ClassroomService {
                         select: 'user_fullname user_email user_avatar',
                     },
                     {
-                        path: 'quizzes',
-                        select: '_id',
+                        path: 'exercises',
+                        select: 'quiz_id'
                     },
                     {
                         path: 'school',
@@ -34,16 +36,45 @@ class ClassroomService {
                         select: 'name',
                     },
                 ],
-                select: 'class_name subject_id school_id students',
             });
 
-        return student ? student.classroom_ids : [];
+        return classrooms.classroom_ids;
     }
 
+    // hàm chia bộ quizz vào lớp
+    async addQuizToClassroom({ name, classroomId, quizId, start, deadline }) {
+        const quizExists = await quizModel.exists({ _id: quizId });
+        if (!quizExists) throw new BadRequestError('Quiz không tồn tại');
+
+        const classroom = await classroomModel.findById(classroomId);
+        if (!classroom) throw new BadRequestError('Classroom không tồn tại');
+
+        const existingExercise = await exerciseModel.findOne({
+            quiz_id: quizId,
+            classroom_id: classroomId
+        });
+        if (existingExercise) {
+            throw new BadRequestError('Quiz đã tồn tại trong lớp học');
+        }
+
+        const newExercise = await exerciseModel.create({
+            name: name,
+            quiz_id: quizId,
+            classroom_id: classroomId,
+            date_start: start || new Date(),
+            date_end: deadline
+        });
+
+        classroom.exercises.push(newExercise._id);
+        await classroom.save();
+
+        await classroom.populate('exercises');
+        return classroom;
+    }
 
     // Hàm tạo lớp học mới
     async createClassroom(classData) {
-        const { class_name, user_id, quizzes, school_id, subject_id, students } = classData;
+        const { class_name, user_id, school_id, subject_id, students } = classData;
 
         const school = await schoolModel.findById(school_id);
         if (!school) throw new BadRequestError('School not found');
@@ -55,7 +86,7 @@ class ClassroomService {
 
         const classroom = await classroomModel.create({
             class_name,
-            quizzes: quizzes || [],
+            exercises: [],
             school: school._id,
             subject: subject._id,
             user_id: teacher._id,
@@ -68,7 +99,7 @@ class ClassroomService {
     // Hàm lấy thông tin lớp học
     async getClassroomById(classroomId) {
         const classroom = await classroomModel.findById(classroomId)
-            .populate('quizzes')
+            .populate('exercises')
             .populate('school')
             .populate('subject')
             .populate('students');
@@ -83,7 +114,10 @@ class ClassroomService {
     async getClassroomsByTeacherId({ user_id }) {
         const classrooms = await classroomModel.find({ user_id })
             .populate('user_id')
-            .populate('quizzes')
+            .populate({
+                path: 'exercises',
+                populate: { path: 'classroom_id' },
+            })
             .populate('school')
             .populate('subject')
             .populate('students')
@@ -130,12 +164,12 @@ class ClassroomService {
     }
 
     // Hàm thêm một học sinh
-    async addStudent ({classroomId, user_email}) {
+    async addStudent({ classroomId, user_email }) {
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
 
         let user = await userModel.findOne({ user_email: user_email });
-        
+
         if (!user) {
             const fullname = user_email.split('@')[0]
             const signupData = {
