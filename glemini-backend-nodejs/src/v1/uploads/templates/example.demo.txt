@@ -1,0 +1,90 @@
+Question: Trái Đất quay quanh mặt trời trong bao nhiêu ngày?
+Answer: A. 300 ngày
+Answer: B. 365 ngày
+Answer: C. 400 ngày
+Answer: D. 500 ngày
+Correct Answer: B
+Question: Nguyên tố hóa học nào có ký hiệu là O?
+Answer: A. Vàng
+Answer: B. Bạc
+Answer: C. Oxy
+Answer: D. Hydro
+Correct Answer: C
+Question: Nước được tạo thành từ những nguyên tố nào?
+Answer: A. Oxy và Sắt
+Answer: B. Hydro và Oxy
+Answer: C. Carbon và Nitơ
+Answer: D. Hydro và Nitơ
+Correct Answer: B
+Question: Ánh sáng di chuyển với vận tốc bao nhiêu trong chân không?
+Answer: A. 300,000 km/s
+Answer: B. 150,000 km/s
+Answer: C. 500,000 km/s
+Answer: D. 1,000,000 km/s
+Correct Answer: A
+Question: Hành tinh lớn nhất trong Hệ Mặt Trời là gì?
+Answer: A. Trái Đất
+Answer: B. Sao Hỏa
+Answer: C. Sao Mộc
+Answer: D. Sao Thủy
+Correct Answer: C
+Question: Trong cơ thể người, cơ quan nào có chức năng bơm máu?
+Answer: A. Phổi
+Answer: B. Gan
+Answer: C. Tim
+Answer: D. Dạ dày
+Correct Answer: C
+Question: Tế bào nào trong cơ thể người chịu trách nhiệm mang oxy?
+Answer: A. Bạch cầu
+Answer: B. Hồng cầu
+Answer: C. Tiểu cầu
+Answer: D. Tế bào da
+Correct Answer: B
+Question: Lớp khí quyển nào của Trái Đất nằm gần bề mặt nhất?
+Answer: A. Mesosphere
+Answer: B. Stratosphere
+Answer: C. Thermosphere
+Answer: D. Troposphere
+Correct Answer: D
+Question: Nguyên tố nào phổ biến nhất trong vũ trụ?
+Answer: A. Helium
+Answer: B. Oxy
+Answer: C. Nitơ
+Answer: D. Hydro
+Correct Answer: D
+Question: Hiện tượng vật lý nào xảy ra khi ánh sáng đi qua lăng kính và bị tách thành các màu sắc khác nhau?
+Answer: A. Khúc xạ
+Answer: B. Tán sắc
+Answer: C. Phản xạ
+Answer: D. Giao thoa
+Correct Answer: B
+Question: Loài động vật nào có khả năng phát ra sóng siêu âm để định vị con mồi?
+Answer: A. Chim đại bàng
+Answer: B. Cá mập
+Answer: C. Dơi
+Answer: D. Hươu cao cổ
+Correct Answer: C
+Question: Nhiệt độ sôi của nước ở áp suất bình thường là bao nhiêu?
+Answer: A. 50°C
+Answer: B. 100°C
+Answer: C. 150°C
+Answer: D. 200°C
+Correct Answer: B
+Question: Albert Einstein được biết đến nhiều nhất với định luật nào?
+Answer: A. Định luật Newton
+Answer: B. Định luật nhiệt động lực học
+Answer: C. Thuyết tương đối
+Answer: D. Định luật quang học
+Correct Answer: C
+Question: Nguyên lý Archimedes liên quan đến điều gì?
+Answer: A. Khối lượng
+Answer: B. Lực đẩy
+Answer: C. Năng lượng
+Answer: D. Nhiệt độ
+Correct Answer: B
+Question: Tia X được phát hiện bởi nhà khoa học nào?
+Answer: A. Isaac Newton
+Answer: B. Marie Curie
+Answer: C. Wilhelm Conrad Röntgen
+Answer: D. Thomas Edison
+Correct Answer: C

@@ -15,6 +15,8 @@ router.post('/create', asynHandler(classroomController.createClassroom));
 router.post('/info', asynHandler(classroomController.getClassroomById));
 router.post('/teacher', asynHandler(classroomController.getClassroomsByTeacherId));
 router.post('/student', asynHandler(classroomController.getClassroomsByStudentId));
+router.post('/add-student', asynHandler(classroomController.addStudent));
+router.post('/add-quiz', asynHandler(classroomController.addQuizToClassroom));
 router.delete('/rm-student/:classroomId/students/:studentId', asynHandler(classroomController.removeStudent));
 
 router.post('/upload', 

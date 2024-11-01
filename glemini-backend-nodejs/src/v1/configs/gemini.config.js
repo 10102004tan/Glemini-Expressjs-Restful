@@ -19,7 +19,7 @@ const schema = {
 			},
 			questionName: {
 				type: SchemaType.STRING,
-				description: 'Name of the question',
+				description: 'Content of the question',
 				nullable: false,
 			},
 			questionImage: {
