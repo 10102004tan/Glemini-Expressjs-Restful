@@ -10,8 +10,8 @@ class Database {
 	}
 
 	connect() {
-		// const connectString = `mongodb://${host}:${port}/${name}`;
-		const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
+		const connectString = `mongodb://${host}:${port}/${name}`;
+		// const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
 		mongoose
 			.connect(connectString)
 			.then(() => {
@@ -21,8 +21,8 @@ class Database {
 					colors.reset
 				);
 				// Khởi tạo dữ liệu mẫu
-				// subjectService.initialize();
-				// schoolService.initialize();
+				subjectService.initialize();
+				schoolService.initialize();
 			})
 			.catch((err) => {
 				console.log(

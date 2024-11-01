@@ -8,7 +8,7 @@ const { uploadExcel } = require('../../configs/multer.config');
 const classroomController = require('../../controllers/classroom.controller');
 
 /* AUTHENTICATION */
-// router.use(asynHandler(authentication));
+router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
 router.post('/create', asynHandler(classroomController.createClassroom));
