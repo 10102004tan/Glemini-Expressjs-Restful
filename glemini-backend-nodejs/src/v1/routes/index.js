@@ -14,6 +14,8 @@ const routeAdmin = require('./admin');
 const routeCollection = require('./collection');
 const routeClassroom = require('./classroom');
 const routeExercise = require('./exercise');
+const routeRoom = require('./room');
+
 router.get('/api/v1/working', (req, res, next) => {
 	res.send({
 		message: 'It works!',
@@ -33,5 +35,6 @@ router.use('/api/v1/user', routeUser);
 router.use('/api/v1/result', routeResult);
 router.use('/api/v1/classroom', routeClassroom);
 router.use('/api/v1/exercise', routeExercise);
+router.use('/api/v1/room', routeRoom);
 
 module.exports = router;
