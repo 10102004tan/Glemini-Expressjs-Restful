@@ -15,7 +15,7 @@
     "expo-server-sdk": "^3.11.0",
     "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
-    "mongoose": "^8.7.2",
+    "mongoose": "^8.7.3",
     "nodemailer": "^6.9.15"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
 const { default: Expo } = require('expo-server-sdk');
 const expo = require('../configs/expo.sdk.config');
 
-const pushNoti = ({somePushTokens=[],body='Default'}) => {
+const pushNoti = ({somePushTokens=[],body='Default',title,}) => {
     let messages = [];
     for (let pushToken of somePushTokens) {
         // Check that all your push tokens appear to be valid Expo push tokens
@@ -17,6 +17,7 @@ const pushNoti = ({somePushTokens=[],body='Default'}) => {
             to: pushToken,
             sound: 'default',
             body,
+            title,
             data: { withSome: 'data' },
         })
     }

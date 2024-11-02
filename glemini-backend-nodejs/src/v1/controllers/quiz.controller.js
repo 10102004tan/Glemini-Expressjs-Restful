@@ -64,7 +64,7 @@ class QuizController {
 	search = async (req, res) => {
 		return new OK({
 			message: 'Search successfully',
-			metadata: await quizService.search(req.query),
+			metadata: await quizService.search(req.body),
 		}).send(res);
 	};
 
