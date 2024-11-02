@@ -7,14 +7,9 @@ const Teacher = require('../models/teacher.model');
 const userConfig = require('../utils/userConfig');
 const { OK } = require('../utils/statusCode');
 const { uploadDisk } = require('../configs/multer.config');
-const {
-	findUserByIdV2,
-	findUserById,
-	findAndUpdateUserById,
-} = require('../models/repositories/user.repo');
-const {
-	findImagesVerification,
-} = require('../models/repositories/teacher.repo');
+const { findUserByIdV2, findUserById, findAndUpdateUserById } = require('../models/repositories/user.repo');
+const { findImagesVerification, updateImagesVerification, updateStatusTeacher } = require('../models/repositories/teacher.repo');
+
 const UploadService = require('./upload.service');
 const { getNotificationReceiverIdService } = require('./notification.service');
 
@@ -116,16 +111,36 @@ class UserService {
 		return await getNotificationReceiverIdService(user_id);
 	}
 
-	// check email exists
-	static async checkExsitsEmail({ email }) {
-		const user = await User.findOne({ user_email: email });
+    static async findNotificationByReceiverId({ user_id, skip, limit }) {
+        return await getNotificationReceiverIdService({ userId: user_id, skip, limit });
+    }
+    // check email exists
+    static async checkExsitsEmail({ email }) {
+        const user = User.findOne({ user_email: email });
+        if (user) {
+            throw new BadRequestError("Email is already exists");
+        }
 
-		if (user) {
-			return 'Email is already exists';
-		}
+        return user;
+    }
 
-		throw new BadRequestError('Email is not exists');
-	}
+    static async getAllTeachersAccount({ skip, limit }) {
+        const teachers = await Teacher.aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+        ])
+        if (!teachers) {
+            throw new BadRequestError("Cannot get teachers");
+        }
+        return teachers;
+    }
+
 }
 
 class StudentService extends UserService {
@@ -182,11 +197,46 @@ class TeacherService extends UserService {
 		return images;
 	}
 
-	// update files teacher
-	static async updateFilesTeacher({ user_id, file_urls }) {
-		console.log(file_urls);
-		return 1;
-	}
+    static async getImagesVerification({ user_id }) {
+        const images = await findImagesVerification(user_id);
+        if (!images) {
+            throw new BadRequestError("User not found");
+        }
+        return images;
+    }
+
+    // update files teacher
+    static async updateFilesTeacher({ user_id, file_urls }) {
+        console.log(file_urls);
+        return 1;
+    }
+
+
+    // re upload images
+    static async reUploadImages({ user_id, email, files }) {
+        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+            files,
+            folderName: `users/${email}/verification`
+        });
+
+        if (!uploadedUrls) {
+            throw new BadRequestError("Cannot upload images");
+        }
+
+        // update images
+
+        const updated = await updateImagesVerification(user_id, uploadedUrls.map(imageUrl => imageUrl.image_url));
+
+        if (!updated) {
+            throw new BadRequestError("Cannot update images");
+        }
+
+        // update status teacher to pending
+        await updateStatusTeacher(user_id, 'pedding');
+
+        return uploadedUrls.map(imageUrl => imageUrl.image_url);
+    }
+
 }
 
 const newUser = async ({ email = null, captcha = null }) => {
