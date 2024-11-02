@@ -122,28 +122,38 @@ class ResultService {
         return result;
     }
 
-    async getResultsByUserId(userId, status) {
-
-        if (!['doing', 'completed'].includes(status)) {
-            throw new Error('Invalid status');
+    static async getResultsByUserId({ userId }) {
+        if (!userId) {
+            throw new BadRequestError('User ID is required');
         }
-
-        const results = await ResultModel.find({ user_id: userId, status })
-        .populate({
-            path: 'result_questions.question_id',
-            model: 'Question',
-            populate: {
-                path: 'question_answer_ids',
-                model: 'Answer'
-            }
-        })
-        .populate({
-            path: 'result_questions.answer',
-            model: 'Answer',
-        });
-
-        return results;
+    
+        const results = await ResultModel.find({ user_id: userId })
+            .populate({
+                path: 'quiz_id',
+                select: 'quiz_name quiz_thumb'
+            })
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: {
+                    path: 'question_answer_ids',
+                    model: 'Answer',
+                },
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
+    
+        // Nhóm các kết quả theo trạng thái
+        const categorizedResults = {
+            completed: results.filter(result => result.status === 'completed'),
+            doing: results.filter(result => result.status === 'doing'),
+        };
+    
+        return categorizedResults;
     }
+    
 }
 
 module.exports = ResultService;
