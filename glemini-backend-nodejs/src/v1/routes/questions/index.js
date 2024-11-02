@@ -10,6 +10,7 @@ router.use(asynHandler(authentication));
 
 router.post('/create', asynHandler(questionController.create));
 router.post('/creates', asynHandler(questionController.creates));
+router.post('/delete', asynHandler(questionController.delete));
 router.post('/get', asynHandler(questionController.get));
 router.post('/update', asynHandler(questionController.update));
 router.post('/get-details', asynHandler(questionController.getDetails));

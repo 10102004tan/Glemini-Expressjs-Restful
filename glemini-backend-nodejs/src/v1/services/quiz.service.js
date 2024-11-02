@@ -4,7 +4,6 @@ const { BadRequestError } = require('../cores/error.repsone');
 const questionModel = require('../models/question.model');
 const quizModel = require('../models/quiz.model');
 const fs = require('fs');
-const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 const { model } = require('../configs/gemini.config');
 
@@ -181,7 +180,8 @@ class QuizService {
 	}
 
 	// Hàm upload file ảnh
-	async uploadQuiz(req, res) {
+	async uploadQuiz(req) {
+		console.log(req.file);
 		if (!req.file) {
 			throw new BadRequestError('No file uploaded');
 		}
@@ -190,8 +190,6 @@ class QuizService {
 			path: req.file.path,
 			folderName: '/quizzes/' + req.file.filename,
 		});
-
-		console.log(uploadUrl);
 
 		return uploadUrl;
 	}
@@ -226,14 +224,31 @@ class QuizService {
 		return questions; // Trả về các câu hỏi đã phân tích
 	}
 
+	// Hàm upload file md
+	async uploadTxt(req, res) {
+		if (!req.file) {
+			throw new BadRequestError('No file uploaded');
+		}
+
+		const filePath = req.file.path; // Lấy đường dẫn của tệp đã tải lên
+
+		// Đọc nội dung của tệp Markdown
+		const fileContent = fs.readFileSync(filePath, 'utf-8'); // Đọc tệp và chuyển đổi sang chuỗi
+
+		// Phân tích các câu hỏi từ nội dung tệp Markdown
+		const questions = QuizService.parseQuestionsFromText(fileContent);
+		return questions; // Trả về các câu hỏi đã phân tích
+	}
+
 	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
 	static parseQuestionsFromText = (text) => {
-		// console.log(text);
+		console.log(text);
 		const lines = text.split('\n');
 		const questions = [];
 		let currentQuestion = null;
 
 		lines.forEach((line) => {
+			line = line.replace('\r', '');
 			if (line.startsWith('Question:')) {
 				if (currentQuestion) {
 					questions.push(currentQuestion);
@@ -242,8 +257,8 @@ class QuizService {
 					question: line.split('Question:')[1].trim(),
 					answers: [],
 				};
-			} else if (line.match(/^[A-Z]\./)) {
-				currentQuestion.answers.push(line);
+			} else if (line.startsWith('Answer: ')) {
+				currentQuestion.answers.push(line.split('Answer: ')[1]);
 			} else if (line.startsWith('Correct Answer:')) {
 				currentQuestion.correctAnswer = line.split(': ')[1];
 			}
@@ -337,6 +352,8 @@ class QuizService {
 		if (quiz_subjects && quiz_subjects.length > 0) {
 			query.subject_ids = { $in: quiz_subjects };
 		}
+
+		query.quiz_status = { $ne: 'deleted' }; // Lấy các quiz mà quiz_status khác 'deleted'
 		// Tìm kiếm quiz theo query
 		const quizzes = await quizModel.find(query);
 
@@ -385,14 +402,32 @@ class QuizService {
 	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
 	async geminiCreateQuestionByImages(req) {
 		// Kiểm tra nếu không có file ảnh thì trả về lỗi
-		if (!req.file) {
+		const file = req.file;
+		console.log(file);
+		if (!file) {
 			throw new BadRequestError('No file uploaded');
 		}
-      // Tạo câu hỏi từ hình ảnh
 
+		const fileName = req.file.filename;
+		const prompt = req.body.prompt;
+
+		if (!prompt) {
+			throw new BadRequestError('Prompt is required');
+		}
+
+		const image = {
+			inlineData: {
+				data: Buffer.from(
+					fs.readFileSync('src/v1/uploads/geminies/' + fileName)
+				).toString('base64'),
+				mimeType: file.mimetype,
+			},
+		};
+
+		const result = await model.generateContent([prompt, image]);
+		const response = JSON.parse(result.response.text());
+		return response;
 	}
-
-   
 }
 
 module.exports = new QuizService();

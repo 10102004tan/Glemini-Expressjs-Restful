@@ -57,6 +57,19 @@ const storageStudents = multer.diskStorage({
 	},
 });
 
+// Cấu hình storage cho multer để lưu file ảnh của người dùng yêu cầu GEMINI tạo ra các câu hỏi từ ảnh đó
+const storageGenimiRequestImage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './src/v1/uploads/geminies');
+	},
+	filename: function (req, file, cb) {
+		cb(
+			null,
+			file.fieldname + '-' + Date.now() + path.extname(file.originalname)
+		); // Rename file
+	},
+});
+
 // Cấu hình storage cho multer để lưu các file template của Quiz
 const storageDocs = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -90,6 +103,11 @@ const uploadQuestions = multer({
 	fileFilter: fileFilter,
 });
 
+const uploadGenimiRequestImage = multer({
+	storage: storageGenimiRequestImage,
+	fileFilter: fileFilter,
+});
+
 const uploadQuizzes = multer({
 	storage: storageQuizzes,
 	fileFilter: fileFilter,
@@ -109,5 +127,6 @@ module.exports = {
 	uploadQuestions,
 	uploadQuizzes,
 	uploadDocs,
-	uploadExcel
+	uploadExcel,
+	uploadGenimiRequestImage,
 };

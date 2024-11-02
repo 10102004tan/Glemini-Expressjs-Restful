@@ -21,8 +21,8 @@ class Database {
 					colors.reset
 				);
 				// Khởi tạo dữ liệu mẫu
-				// subjectService.initialize();
-				// schoolService.initialize();
+				subjectService.initialize();
+				schoolService.initialize();
 			})
 			.catch((err) => {
 				console.log(

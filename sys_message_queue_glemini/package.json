@@ -15,8 +15,14 @@
     "expo-server-sdk": "^3.11.0",
     "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
+<<<<<<< HEAD
     "mongoose": "^8.7.3",
     "nodemailer": "^6.9.15"
+=======
+    "mongoose": "^8.7.2",
+    "nodemailer": "^6.9.15",
+    "sys_message_queue_glemini": "file:"
+>>>>>>> a45d5e16814662134ef2078bede32448d25b014d
   },
   "devDependencies": {
     "jest": "^29.7.0"
