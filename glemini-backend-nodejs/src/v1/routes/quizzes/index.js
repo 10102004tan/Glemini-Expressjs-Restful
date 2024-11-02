@@ -1,67 +1,71 @@
-'use strict';
-const express = require('express');
+"use strict";
+const express = require("express");
 const router = express.Router();
-const { asynHandler } = require('../../auths/utils');
-const quizController = require('../../controllers/quiz.controller');
+const { asynHandler } = require("../../auths/utils");
+const quizController = require("../../controllers/quiz.controller");
 const {
-	uploadQuizzes,
-	uploadDocs,
-	uploadGenimiRequestImage,
-} = require('../../configs/multer.config');
-const templateRouter = require('../template');
-const { authentication } = require('../../auths');
+  uploadQuizzes,
+  uploadDocs,
+  uploadGenimiRequestImage,
+} = require("../../configs/multer.config");
+const templateRouter = require("../template");
+const { authentication } = require("../../auths");
 
-router.use('/get-templates', templateRouter);
+router.use("/get-templates", templateRouter);
 
 // AUTHENTICATION
 router.use(asynHandler(authentication));
 // AUTHENTICATION
 
 router.post(
-	'/upload',
-	uploadQuizzes.single('file'),
-	asynHandler(quizController.uploadQuiz)
+  "/upload",
+  uploadQuizzes.single("file"),
+  asynHandler(quizController.uploadQuiz)
 );
 
 router.post(
-	'/docs/upload',
-	uploadDocs.single('file'),
-	asynHandler(quizController.uploadDoc)
+  "/docs/upload",
+  uploadDocs.single("file"),
+  asynHandler(quizController.uploadDoc)
 );
 
 router.post(
-	'/md/upload',
-	uploadDocs.single('file'),
-	asynHandler(quizController.uploadMd)
+  "/md/upload",
+  uploadDocs.single("file"),
+  asynHandler(quizController.uploadMd)
 );
 
 router.post(
-	'/txt/upload',
-	uploadDocs.single('file'),
-	asynHandler(quizController.uploadTxt)
+  "/txt/upload",
+  uploadDocs.single("file"),
+  asynHandler(quizController.uploadTxt)
 );
 
-router.post('/create', asynHandler(quizController.createQuiz));
-router.post('/delete', asynHandler(quizController.deleteQuiz));
-router.post('/update', asynHandler(quizController.updateQuiz));
-router.post('/get-by-user', asynHandler(quizController.getQuizByUser));
-router.post('/get-details', asynHandler(quizController.getQuizDetails));
-router.post('/get-questions', asynHandler(quizController.getQuestionsByQuiz));
-router.post('/filter', asynHandler(quizController.filterQuizzes));
-router.post('/banner', asynHandler(quizController.getQuizzesBanner));
-router.post('/search', asynHandler(quizController.search));
+router.post("/create", asynHandler(quizController.createQuiz));
+router.post("/delete", asynHandler(quizController.deleteQuiz));
+router.post("/update", asynHandler(quizController.updateQuiz));
+router.post("/get-by-user", asynHandler(quizController.getQuizByUser));
+router.post("/get-details", asynHandler(quizController.getQuizDetails));
+router.post("/get-questions", asynHandler(quizController.getQuestionsByQuiz));
+router.post("/filter", asynHandler(quizController.filterQuizzes));
+router.post("/banner", asynHandler(quizController.getQuizzesBanner));
+router.post("/search", asynHandler(quizController.search));
 router.post(
-	'/gemini/generate/prompt',
-	asynHandler(quizController.geminiCreateQuestionByPrompt)
+  "/gemini/generate/prompt",
+  asynHandler(quizController.geminiCreateQuestionByPrompt)
 );
 router.post(
-	'/gemini/generate/images',
-	uploadGenimiRequestImage.single('file'),
-	asynHandler(quizController.geminiCreateQuestionByImages)
+  "/gemini/generate/images",
+  uploadGenimiRequestImage.single("file"),
+  asynHandler(quizController.geminiCreateQuestionByImages)
 );
 router.post(
-	'/published',
-	asynHandler(quizController.getQuizzesBySubjectPublished)
+  "/published",
+  asynHandler(quizController.getQuizzesBySubjectPublished)
+);
+router.post(
+  "/get-all-quizzes-shared",
+  asynHandler(quizController.getAllQuizShared)
 );
 
 module.exports = router;
