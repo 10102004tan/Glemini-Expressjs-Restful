@@ -25,7 +25,6 @@ const quizModel = require("../models/quiz.model");
 const ExpoToken = require("../models/expoToken.model");
 const notificationModel = require("../models/notification.model");
 
-
 class UserFactory {
   static createUser(type, payload) {
     console.log(type);
@@ -159,36 +158,39 @@ class UserService {
     //gửi thông báo qua socket
     _io.emit(`${user._id}`, noti);
   }
-    static async findNotificationByReceiverId({ user_id, skip, limit }) {
-        return await getNotificationReceiverIdService({ userId: user_id, skip, limit });
-    }
-    // check email exists
-    static async checkExsitsEmail({ email }) {
-        const user = User.findOne({ user_email: email });
-        if (user) {
-            throw new BadRequestError("Email is already exists");
-        }
-
-        return user;
-    }
-
-    static async getAllTeachersAccount({ skip, limit }) {
-        const teachers = await Teacher.aggregate([
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            },
-        ])
-        if (!teachers) {
-            throw new BadRequestError("Cannot get teachers");
-        }
-        return teachers;
+  static async findNotificationByReceiverId({ user_id, skip, limit }) {
+    return await getNotificationReceiverIdService({
+      userId: user_id,
+      skip,
+      limit,
+    });
+  }
+  // check email exists
+  static async checkExsitsEmail({ email }) {
+    const user = User.findOne({ user_email: email });
+    if (user) {
+      throw new BadRequestError("Email is already exists");
     }
 
+    return user;
+  }
+
+  static async getAllTeachersAccount({ skip, limit }) {
+    const teachers = await Teacher.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+    ]);
+    if (!teachers) {
+      throw new BadRequestError("Cannot get teachers");
+    }
+    return teachers;
+  }
 }
 
 class StudentService extends UserService {
@@ -245,47 +247,47 @@ class TeacherService extends UserService {
     return images;
   }
 
+  static async getImagesVerification({ user_id }) {
+    const images = await findImagesVerification(user_id);
+    if (!images) {
+      throw new BadRequestError("User not found");
+    }
+    return images;
+  }
 
-    static async getImagesVerification({ user_id }) {
-        const images = await findImagesVerification(user_id);
-        if (!images) {
-            throw new BadRequestError("User not found");
-        }
-        return images;
+  // update files teacher
+  static async updateFilesTeacher({ user_id, file_urls }) {
+    console.log(file_urls);
+    return 1;
+  }
+
+  // re upload images
+  static async reUploadImages({ user_id, email, files }) {
+    const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+      files,
+      folderName: `users/${email}/verification`,
+    });
+
+    if (!uploadedUrls) {
+      throw new BadRequestError("Cannot upload images");
     }
 
-    // update files teacher
-    static async updateFilesTeacher({ user_id, file_urls }) {
-        console.log(file_urls);
-        return 1;
+    // update images
+
+    const updated = await updateImagesVerification(
+      user_id,
+      uploadedUrls.map((imageUrl) => imageUrl.image_url)
+    );
+
+    if (!updated) {
+      throw new BadRequestError("Cannot update images");
     }
 
+    // update status teacher to pending
+    await updateStatusTeacher(user_id, "pedding");
 
-    // re upload images
-    static async reUploadImages({ user_id, email, files }) {
-        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
-            files,
-            folderName: `users/${email}/verification`
-        });
-
-        if (!uploadedUrls) {
-            throw new BadRequestError("Cannot upload images");
-        }
-
-        // update images
-
-        const updated = await updateImagesVerification(user_id, uploadedUrls.map(imageUrl => imageUrl.image_url));
-
-        if (!updated) {
-            throw new BadRequestError("Cannot update images");
-        }
-
-        // update status teacher to pending
-        await updateStatusTeacher(user_id, 'pedding');
-
-        return uploadedUrls.map(imageUrl => imageUrl.image_url);
-    }
-
+    return uploadedUrls.map((imageUrl) => imageUrl.image_url);
+  }
 }
 
 const newUser = async ({ email = null, captcha = null }) => {
