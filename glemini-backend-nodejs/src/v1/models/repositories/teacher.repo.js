@@ -15,10 +15,15 @@ const updateStatusTeacher = async (user_id, teacher_status) => {
     }catch(err){
         throw new BadRequestError(`${teacher_status} is not a valid status`);
     }
-   
 }
+
+const updateImagesVerification = async (user_id, file_urls) => {
+    const updatedImages = await teacherModel.updateOne({ _id: user_id }, { $set: { file_urls: file_urls } });
+    return updatedImages;
+};
 
 module.exports = {
     findImagesVerification,
-    updateStatusTeacher
+    updateStatusTeacher,
+    updateImagesVerification
 }

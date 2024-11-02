@@ -26,3 +26,4 @@ class SchoolService {
 }
 
 module.exports = new SchoolService();
+

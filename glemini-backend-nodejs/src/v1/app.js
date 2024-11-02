@@ -20,7 +20,11 @@ global._io = io;
 /* MIDDLEWARES START*/
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(require('cors')());
+app.use(require('cors')({
+	// set origin to http://localhost:8888 for development 
+	origin: 'http://localhost:8888',
+	credentials: true,
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(compression());
