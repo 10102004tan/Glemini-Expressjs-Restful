@@ -1,6 +1,7 @@
 'use strict';
 
 const {model,Schema} = require('mongoose');
+const { type } = require('os');
 
 const DOCUMENT_NAME = 'Notification';
 const COLLECTION_NAME = 'notifications';
@@ -29,6 +30,11 @@ const notificationSchema = new Schema({
     noti_content:{
         type:String,
         required:true
+    },
+    noti_status:{
+        type:String,
+        enum:['read','unread'],
+        default:'unread'
     },
     noti_options:{
         type:Object,

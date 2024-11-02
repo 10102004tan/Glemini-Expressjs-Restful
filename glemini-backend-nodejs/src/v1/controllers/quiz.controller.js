@@ -1,6 +1,6 @@
-'use strict';
-const { CREATED, OK } = require('../cores/success.response');
-const quizService = require('../services/quiz.service');
+"use strict";
+const { CREATED, OK } = require("../cores/success.response");
+const quizService = require("../services/quiz.service");
 
 class QuizController {
   createQuiz = async (req, res) => {

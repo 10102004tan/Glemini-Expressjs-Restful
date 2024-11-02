@@ -11,7 +11,8 @@ const {
 const templateRouter = require("../template");
 const { authentication } = require("../../auths");
 
-router.use("/get-templates", templateRouter);
+router.use('/get-templates', templateRouter);
+router.post('/search', asynHandler(quizController.search));
 
 // AUTHENTICATION
 router.use(asynHandler(authentication));
@@ -49,7 +50,6 @@ router.post("/get-details", asynHandler(quizController.getQuizDetails));
 router.post("/get-questions", asynHandler(quizController.getQuestionsByQuiz));
 router.post("/filter", asynHandler(quizController.filterQuizzes));
 router.post("/banner", asynHandler(quizController.getQuizzesBanner));
-router.post("/search", asynHandler(quizController.search));
 router.post(
   "/gemini/generate/prompt",
   asynHandler(quizController.geminiCreateQuestionByPrompt)
