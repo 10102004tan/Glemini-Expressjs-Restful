@@ -1,6 +1,7 @@
 'use strict';
 const ResultModel = require('../models/result.model');
 const QuizModel = require('../models/quiz.model');
+const QuestionModel = require('../models/question.model');
 const exerciseModel = require('../models/exercise.model');
 const { BadRequestError } = require('../cores/error.repsone');
 
@@ -122,28 +123,69 @@ class ResultService {
         return result;
     }
 
-    async getResultsByUserId(userId, status) {
-
-        if (!['doing', 'completed'].includes(status)) {
-            throw new Error('Invalid status');
+    static async getResultsByUserId({ userId }) {
+        if (!userId) {
+            throw new BadRequestError('User ID is required');
         }
-
-        const results = await ResultModel.find({ user_id: userId, status })
-        .populate({
-            path: 'result_questions.question_id',
-            model: 'Question',
-            populate: {
-                path: 'question_answer_ids',
-                model: 'Answer'
+    
+        const results = await ResultModel.find({ user_id: userId })
+            .populate({
+                path: 'quiz_id',
+                select: 'quiz_name quiz_thumb user_id',
+                populate: {
+                    path: 'user_id',
+                    select: 'user_fullname'
+                    
+                },
+            })
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: {
+                    path: 'question_answer_ids',
+                    model: 'Answer',
+                },
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
+    
+        // Nhóm các kết quả theo trạng thái
+        const categorizedResults = {
+            completed: [],
+            doing: []
+        };
+    
+        // Lấy số lượng câu hỏi cho từng quiz và phân loại kết quả
+        for (const result of results) {
+            const quiz = result.quiz_id;
+            if (quiz) {
+                // Tính số lượng câu hỏi cho quiz
+                const questionCount = await QuestionModel.countDocuments({ quiz_id: quiz._id });
+                quiz.questionCount = questionCount; // Gán số lượng câu hỏi vào quiz
+    
+                // Tạo một bản sao của result để thêm questionCount
+                const resultWithQuestionCount = {
+                    ...result.toObject(), // Convert to plain object to manipulate it
+                    quiz_id: {
+                        ...quiz.toObject(), // Convert quiz to plain object
+                        questionCount // Thêm số lượng câu hỏi vào quiz
+                    }
+                };
+    
+                // Phân loại kết quả
+                if (result.status === 'completed') {
+                    categorizedResults.completed.push(resultWithQuestionCount);
+                } else {
+                    categorizedResults.doing.push(resultWithQuestionCount);
+                }
             }
-        })
-        .populate({
-            path: 'result_questions.answer',
-            model: 'Answer',
-        });
-
-        return results;
+        }
+    
+        return categorizedResults;
     }
+        
 }
 
 module.exports = ResultService;
