@@ -15,7 +15,6 @@ const { getNotificationReceiverIdService } = require('./notification.service');
 
 class UserFactory {
 	static createUser(type, payload) {
-		console.log(type);
 		switch (type) {
 			case 'student':
 				return new StudentService(payload).createUser();
