@@ -1,6 +1,5 @@
 "use strict";
 
-
 const { BadRequestError } = require("../cores/error.repsone");
 const User = require("../models/user.model");
 const Student = require("../models/student.model");
@@ -68,63 +67,114 @@ class UserService {
       _id: user_id,
     });
 
-		if (!newUser) {
-			throw new BadRequestError('Cannot create user');
-		}
-
-		return newUser;
-	}
-
-	static async profile({ user_id }) {
-		const user = await findUserByIdV2({
-			id: user_id,
-			select: { user_fullname: 1, user_email: 1 },
-		});
-
-		if (!user) {
-			throw new BadRequestError('User not found');
-		}
-
-		return user;
-	}
-
-	static async updateProfile({ user_id, fullname, email, avatar }) {
-		// update full name,email,avatar
-		console.log(fullname);
-		let uploadUrl = null;
-		if (avatar) {
-			uploadUrl = await UploadService.uploadImageFromOneFile({
-				path: avatar,
-				folderName: `users/${user_id}/avatars`,
-			});
-
-			if (!uploadUrl) {
-				throw new BadRequestError('Cannot upload avatar');
-			}
-		}
-
-		const updated = await findAndUpdateUserById({
-			id: user_id,
-			user_fullname: fullname,
-			user_email: email,
-			user_avatar: uploadUrl && uploadUrl.thumbnail,
-		});
-		if (!updated) {
-			throw new BadRequestError('Cannot update user');
-		}
-		return {
-			user_fullname: fullname,
-			user_email: email,
-			user_avatar: uploadUrl && uploadUrl.thumbnail,
-		};
-	}
-
-
-    static async findNotificationByReceiverId({ user_id, skip, limit }) {
-        return await getNotificationReceiverIdService({ userId: user_id, skip, limit });
+    if (!newUser) {
+      throw new BadRequestError("Cannot create user");
     }
 
-  // check email exists
+    return newUser;
+  }
+
+  static async profile({ user_id }) {
+    const user = await findUserByIdV2({
+      id: user_id,
+      select: { user_fullname: 1, user_email: 1 },
+    });
+
+    if (!user) {
+      throw new BadRequestError("User not found");
+    }
+
+    return user;
+  }
+
+  static async updateProfile({ user_id, fullname, email, avatar }) {
+    // update full name,email,avatar
+    console.log(fullname);
+    let uploadUrl = null;
+    if (avatar) {
+      uploadUrl = await UploadService.uploadImageFromOneFile({
+        path: avatar,
+        folderName: `users/${user_id}/avatars`,
+      });
+
+      if (!uploadUrl) {
+        throw new BadRequestError("Cannot upload avatar");
+      }
+    }
+
+    const updated = await findAndUpdateUserById({
+      id: user_id,
+      user_fullname: fullname,
+      user_email: email,
+      user_avatar: uploadUrl && uploadUrl.thumbnail,
+    });
+    if (!updated) {
+      throw new BadRequestError("Cannot update user");
+    }
+    return {
+      user_fullname: fullname,
+      user_email: email,
+      user_avatar: uploadUrl && uploadUrl.thumbnail,
+    };
+  }
+
+  static async findNotificationByReceiverId({ user_id, skip, limit }) {
+    return await getNotificationReceiverIdService({
+      userId: user_id,
+      skip,
+      limit,
+    });
+  }
+
+  static async profile({ user_id }) {
+    const user = await findUserByIdV2({
+      id: user_id,
+      select: { user_fullname: 1, user_email: 1 },
+    });
+
+    if (!user) {
+      throw new BadRequestError("User not found");
+    }
+
+    return user;
+  }
+
+  static async updateProfile({ user_id, fullname, email, avatar }) {
+    // update full name,email,avatar
+    console.log(fullname);
+    let uploadUrl = null;
+    if (avatar) {
+      uploadUrl = await UploadService.uploadImageFromOneFile({
+        path: avatar,
+        folderName: `users/${user_id}/avatars`,
+      });
+
+      if (!uploadUrl) {
+        throw new BadRequestError("Cannot upload avatar");
+      }
+    }
+
+    const updated = await findAndUpdateUserById({
+      id: user_id,
+      user_fullname: fullname,
+      user_email: email,
+      user_avatar: uploadUrl && uploadUrl.thumbnail,
+    });
+    if (!updated) {
+      throw new BadRequestError("Cannot update user");
+    }
+    return {
+      user_fullname: fullname,
+      user_email: email,
+      user_avatar: uploadUrl && uploadUrl.thumbnail,
+    };
+  }
+
+  static async findNotificationByReceiverId({ user_id }) {
+    return await getNotificationReceiverIdService(user_id);
+  }
+
+  // chia sẻ quiz cho giáo viên khác
   static async shareQuizToTeacher({ email, quiz_id, user_id }) {
     const user = await User.findOne({ user_email: email });
 
@@ -149,16 +199,22 @@ class UserService {
     );
 
     // tao thong bao
+    console.log(user);
     const noti = await pushNotiForSys({
       type: "SHARE-001",
       receiverId: user._id,
       senderId: user_id,
       content: "Bạn đã nhận được 1 bài quiz từ giáo viên khác",
+      options: {
+        name: user.user_fullname,
+        avatar: user.user_avatar,
+      },
     });
 
     //gửi thông báo qua socket
     _io.emit(`${user._id}`, noti);
   }
+
   static async findNotificationByReceiverId({ user_id, skip, limit }) {
     return await getNotificationReceiverIdService({
       userId: user_id,
@@ -217,7 +273,6 @@ class TeacherService extends UserService {
     const newTeacher = await Teacher.create({
       ...this.user_attributes,
     });
-
 
     if (!newTeacher) {
       throw new BadRequestError("Cannot create user");
