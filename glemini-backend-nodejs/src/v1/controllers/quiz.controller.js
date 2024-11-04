@@ -60,12 +60,13 @@ class QuizController {
     }).send(res);
   };
 
-  search = async (req, res) => {
-    return new OK({
-      message: "Search successfully",
-      metadata: await quizService.search(req.body),
-    }).send(res);
-  };
+	search = async (req, res) => {
+		return new OK({
+			message: 'Search successfully',
+			metadata: await quizService.search(req.body),
+		}).send(res);
+	};
+
 
   deleteQuiz = async (req, res) => {
     return new OK({

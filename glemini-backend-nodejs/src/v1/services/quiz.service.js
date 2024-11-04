@@ -107,20 +107,20 @@ class QuizService {
     return quizzes.filter((quiz) => quiz.quiz_status === "published");
   }
 
-  // Search {name-desc} and filter {quiz_turn, date}
-  async search({ key, skip = 0, limit = 20, sort = { createdAt: -1 } }) {
-    const query = {};
-    if (key) {
-      query.quiz_name = { $regex: key, $options: "i" };
+	// Search {name-desc} and filter {quiz_turn, date}
+	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1 }) {
+		const query = {};
+		if (key) {
+			query.quiz_name = { $regex: key, $options: 'i' };
+		}
+
+    if (quiz_on !== -1) {
+      query.quiz_turn = { $gte: quiz_on };
     }
 
-    const quizzes = await quizModel
-      .find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
-    return quizzes;
-  }
+		const quizzes = await quizModel.find(query).sort({createdAt: sortStatus}).skip(skip).limit(limit);
+		return quizzes;
+	}
 
   // Hàm lấy thông tin chi tiết của quiz
   async getQuizDetails({ quiz_id }) {

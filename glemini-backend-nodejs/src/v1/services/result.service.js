@@ -94,6 +94,9 @@ class ResultService {
     }
 
     static async review({ exercise_id, user_id, quiz_id }) {
+        if (!exercise_id && !quiz_id) {
+            throw new BadRequestError("Don't get data review of a user");
+        }
         const query = {
             user_id,
             quiz_id,
@@ -147,8 +150,9 @@ class ResultService {
                 },
             })
             .populate({
-                path: 'result_questions.answer',
-                model: 'Answer',
+                path: 'exercise_id',
+                select: 'name'
+                
             });
     
         // Nhóm các kết quả theo trạng thái
@@ -157,20 +161,17 @@ class ResultService {
             doing: []
         };
     
-        // Lấy số lượng câu hỏi cho từng quiz và phân loại kết quả
         for (const result of results) {
             const quiz = result.quiz_id;
             if (quiz) {
-                // Tính số lượng câu hỏi cho quiz
                 const questionCount = await QuestionModel.countDocuments({ quiz_id: quiz._id });
-                quiz.questionCount = questionCount; // Gán số lượng câu hỏi vào quiz
+                quiz.questionCount = questionCount;
     
-                // Tạo một bản sao của result để thêm questionCount
                 const resultWithQuestionCount = {
-                    ...result.toObject(), // Convert to plain object to manipulate it
+                    ...result.toObject(),
                     quiz_id: {
-                        ...quiz.toObject(), // Convert quiz to plain object
-                        questionCount // Thêm số lượng câu hỏi vào quiz
+                        ...quiz.toObject(), 
+                        questionCount 
                     }
                 };
     
