@@ -1,7 +1,7 @@
 'use strict';
 
 const amqplib = require('amqplib');
-const { pushNotiForUser } = require('../services/expo.service');
+const { pushNotiForUser, pushNoti } = require('../services/expo.service');
 
 
 const connectToRabbitMQ = async () => {
@@ -24,9 +24,10 @@ const consumerQueue = async (channel,queueName) =>{
 
         // consume message from producer
         channel.consume(queueName, (message) => {
-            // console.log(`Received message: ${message.content.toString()}`);
-            // return message.content.toString();
-            pushNotiForUser(JSON.parse(message.content.toString()));
+            console.log('Received message: ', message.content.toString());
+            const data = JSON.parse(message.content.toString());
+            pushNoti(data);
+            
         },{
             noAck:true
         });
