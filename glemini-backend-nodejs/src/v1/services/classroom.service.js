@@ -13,7 +13,7 @@ const xlsx = require('xlsx');
 class ClassroomService {
 
     // Hàm lấy lớp theo học sinh
-    async getClassroomsByStudentId({user_id}) {
+    async getClassroomsByStudentId({ user_id }) {
 
         const classrooms = await studentModel.findById(user_id)
             .populate({
@@ -48,14 +48,6 @@ class ClassroomService {
 
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom không tồn tại');
-
-        const existingExercise = await exerciseModel.findOne({
-            quiz_id: quizId,
-            classroom_id: classroomId
-        });
-        if (existingExercise) {
-            throw new BadRequestError('Quiz đã tồn tại trong lớp học');
-        }
 
         const newExercise = await exerciseModel.create({
             name: name,
@@ -99,7 +91,13 @@ class ClassroomService {
     // Hàm lấy thông tin lớp học
     async getClassroomById(classroomId) {
         const classroom = await classroomModel.findById(classroomId)
-            .populate('exercises')
+            .populate({
+                path: 'exercises',
+                populate: {
+                    path: 'quiz_id',
+                    select: 'quiz_name quiz_thumb'
+                }
+            })
             .populate('school')
             .populate('subject')
             .populate('students');

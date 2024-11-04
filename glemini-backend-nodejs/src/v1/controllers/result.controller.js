@@ -31,7 +31,7 @@ class ResultController {
 
     async getResultsByUserId(req, res) {
         return new OK({
-            message: 'Read result successfully!',
+            message: 'Get result by user successfully!',
             metadata: await resultService.getResultsByUserId(req.body)
         }).send(res);
     }
