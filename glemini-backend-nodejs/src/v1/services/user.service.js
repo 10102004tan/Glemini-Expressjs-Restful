@@ -123,7 +123,7 @@ class UserService {
     return await getNotificationReceiverIdService(user_id);
   }
 
-  // check email exists
+  // chia sẻ quiz cho giáo viên khác
   static async shareQuizToTeacher({ email, quiz_id, user_id }) {
     const user = await User.findOne({ user_email: email });
 
@@ -148,16 +148,22 @@ class UserService {
     );
 
     // tao thong bao
+    console.log(user);
     const noti = await pushNotiForSys({
       type: "SHARE-001",
       receiverId: user._id,
       senderId: user_id,
       content: "Bạn đã nhận được 1 bài quiz từ giáo viên khác",
+      options: {
+        name: user.user_fullname,
+        avatar: user.user_avatar,
+      },
     });
 
     //gửi thông báo qua socket
     _io.emit(`${user._id}`, noti);
   }
+
   static async findNotificationByReceiverId({ user_id, skip, limit }) {
     return await getNotificationReceiverIdService({
       userId: user_id,

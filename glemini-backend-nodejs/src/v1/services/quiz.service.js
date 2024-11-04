@@ -8,6 +8,7 @@ const fs = require("fs");
 const { url } = require("../configs/url.response.config");
 const UploadService = require("./upload.service");
 const { model } = require("../configs/gemini.config");
+const { default: mongoose } = require("mongoose");
 
 class QuizService {
   // Hàm tạo quiz
@@ -25,11 +26,15 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo user
-  async getQuizByUser({ user_id }) {
-    const quizzies = await quizModel.find({
-      user_id,
-      quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
-    });
+  async getQuizByUser({ user_id, limit = 20, skip = 0 }) {
+    console.log(limit, skip);
+    const quizzies = await quizModel
+      .find({
+        user_id,
+        quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
+      })
+      .skip(skip)
+      .limit(limit);
 
     if (!quizzies) {
       throw new BadRequestError("Quiz not found");
@@ -47,14 +52,14 @@ class QuizService {
     return quiz;
   }
 
-	// Hàm lấy danh sách câu hỏi theo quiz
-	async getQuestionsByQuiz({ quiz_id }) {
-		console.log(quiz_id);
-		const questions = await questionModel
-			.find({ quiz_id })
-			.populate('question_answer_ids')
-			.populate('correct_answer_ids')
-			.exec();
+  // Hàm lấy danh sách câu hỏi theo quiz
+  async getQuestionsByQuiz({ quiz_id }) {
+    console.log(quiz_id);
+    const questions = await questionModel
+      .find({ quiz_id })
+      .populate("question_answer_ids")
+      .populate("correct_answer_ids")
+      .exec();
 
     if (!questions) {
       throw new BadRequestError("Questions not found");
@@ -63,18 +68,23 @@ class QuizService {
     return questions;
   }
 
-	// Hàm lấy danh sách quiz theo môn học
-	async getQuizzesBySubjectIdPublished({ subjectId,limit=20,skip=0 }) {
-		let query = {};
-		if (subjectId) {
-			try {
-				query.subject_ids = { $in: [subjectId] };
-			} catch (error) {
-				throw new BadRequestError('Invalid subject ID format');
-			}
-		}
+  // Hàm lấy danh sách quiz theo môn học
+  async getQuizzesBySubjectIdPublished({ subjectId, limit = 20, skip = 0 }) {
+    let query = {};
+    if (subjectId) {
+      try {
+        query.subject_ids = { $in: [subjectId] };
+      } catch (error) {
+        throw new BadRequestError("Invalid subject ID format");
+      }
+    }
 
-		let quizzes = await quizModel.find(query).populate('user_id').sort({createdAt: -1}).skip(skip).limit(limit);
+    let quizzes = await quizModel
+      .find(query)
+      .populate("user_id")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     if (subjectId === null) {
       quizzes = await quizModel.find({});
@@ -97,16 +107,20 @@ class QuizService {
     return quizzes.filter((quiz) => quiz.quiz_status === "published");
   }
 
-	// Search {name-desc} and filter {quiz_turn, date}
-	async search({ key,skip=0,limit=20,sort={createdAt: -1} }) {
-		const query = {};
-		if (key) {
-			query.quiz_name = { $regex: key, $options: 'i' };
-		}
+  // Search {name-desc} and filter {quiz_turn, date}
+  async search({ key, skip = 0, limit = 20, sort = { createdAt: -1 } }) {
+    const query = {};
+    if (key) {
+      query.quiz_name = { $regex: key, $options: "i" };
+    }
 
-		const quizzes = await quizModel.find(query).sort(sort).skip(skip).limit(limit);
-		return quizzes;
-	}
+    const quizzes = await quizModel
+      .find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+    return quizzes;
+  }
 
   // Hàm lấy thông tin chi tiết của quiz
   async getQuizDetails({ quiz_id }) {
@@ -181,20 +195,20 @@ class QuizService {
     return quiz;
   }
 
-	// Hàm upload file ảnh
-	async uploadQuiz(req) {
-		console.log(req.file);
-		if (!req.file) {
-			throw new BadRequestError('No file uploaded');
-		}
+  // Hàm upload file ảnh
+  async uploadQuiz(req) {
+    console.log(req.file);
+    if (!req.file) {
+      throw new BadRequestError("No file uploaded");
+    }
 
     const uploadUrl = await UploadService.uploadImageFromOneFile({
       path: req.file.path,
       folderName: "/quizzes/" + req.file.filename,
     });
 
-		return uploadUrl;
-	}
+    return uploadUrl;
+  }
 
   // Hàm upload file docx
   async uploadDoc(req, res) {
@@ -226,45 +240,45 @@ class QuizService {
     return questions; // Trả về các câu hỏi đã phân tích
   }
 
-	// Hàm upload file md
-	async uploadTxt(req, res) {
-		if (!req.file) {
-			throw new BadRequestError('No file uploaded');
-		}
+  // Hàm upload file md
+  async uploadTxt(req, res) {
+    if (!req.file) {
+      throw new BadRequestError("No file uploaded");
+    }
 
-		const filePath = req.file.path; // Lấy đường dẫn của tệp đã tải lên
+    const filePath = req.file.path; // Lấy đường dẫn của tệp đã tải lên
 
-		// Đọc nội dung của tệp Markdown
-		const fileContent = fs.readFileSync(filePath, 'utf-8'); // Đọc tệp và chuyển đổi sang chuỗi
+    // Đọc nội dung của tệp Markdown
+    const fileContent = fs.readFileSync(filePath, "utf-8"); // Đọc tệp và chuyển đổi sang chuỗi
 
-		// Phân tích các câu hỏi từ nội dung tệp Markdown
-		const questions = QuizService.parseQuestionsFromText(fileContent);
-		return questions; // Trả về các câu hỏi đã phân tích
-	}
+    // Phân tích các câu hỏi từ nội dung tệp Markdown
+    const questions = QuizService.parseQuestionsFromText(fileContent);
+    return questions; // Trả về các câu hỏi đã phân tích
+  }
 
-	// Hàm phân tích nội dung và tạo câu hỏi từ file docx
-	static parseQuestionsFromText = (text) => {
-		console.log(text);
-		const lines = text.split('\n');
-		const questions = [];
-		let currentQuestion = null;
+  // Hàm phân tích nội dung và tạo câu hỏi từ file docx
+  static parseQuestionsFromText = (text) => {
+    console.log(text);
+    const lines = text.split("\n");
+    const questions = [];
+    let currentQuestion = null;
 
-		lines.forEach((line) => {
-			line = line.replace('\r', '');
-			if (line.startsWith('Question:')) {
-				if (currentQuestion) {
-					questions.push(currentQuestion);
-				}
-				currentQuestion = {
-					question: line.split('Question:')[1].trim(),
-					answers: [],
-				};
-			} else if (line.startsWith('Answer: ')) {
-				currentQuestion.answers.push(line.split('Answer: ')[1]);
-			} else if (line.startsWith('Correct Answer:')) {
-				currentQuestion.correctAnswer = line.split(': ')[1];
-			}
-		});
+    lines.forEach((line) => {
+      line = line.replace("\r", "");
+      if (line.startsWith("Question:")) {
+        if (currentQuestion) {
+          questions.push(currentQuestion);
+        }
+        currentQuestion = {
+          question: line.split("Question:")[1].trim(),
+          answers: [],
+        };
+      } else if (line.startsWith("Answer: ")) {
+        currentQuestion.answers.push(line.split("Answer: ")[1]);
+      } else if (line.startsWith("Correct Answer:")) {
+        currentQuestion.correctAnswer = line.split(": ")[1];
+      }
+    });
 
     if (currentQuestion) {
       questions.push(currentQuestion);
@@ -273,11 +287,11 @@ class QuizService {
     return questions;
   };
 
-	// Hàm phân tích nội dung và tạo câu hỏi từ file md
-	static parseQuestionsFromMd(text) {
-		const lines = text.split('\n'); // Tách nội dung thành từng dòng
-		const questions = []; // Mảng để lưu trữ các câu hỏi
-		let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
+  // Hàm phân tích nội dung và tạo câu hỏi từ file md
+  static parseQuestionsFromMd(text) {
+    const lines = text.split("\n"); // Tách nội dung thành từng dòng
+    const questions = []; // Mảng để lưu trữ các câu hỏi
+    let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
 
     lines.forEach((line) => {
       // console.log('lien: ' + line);
@@ -348,14 +362,14 @@ class QuizService {
       if (end_filter_date) query.createdAt.$lte = new Date(end_filter_date);
     }
 
-		// Kiểm tra nếu có danh sách môn học thì thêm vào query
-		if (quiz_subjects && quiz_subjects.length > 0) {
-			query.subject_ids = { $in: quiz_subjects };
-		}
+    // Kiểm tra nếu có danh sách môn học thì thêm vào query
+    if (quiz_subjects && quiz_subjects.length > 0) {
+      query.subject_ids = { $in: quiz_subjects };
+    }
 
-		query.quiz_status = { $ne: 'deleted' }; // Lấy các quiz mà quiz_status khác 'deleted'
-		// Tìm kiếm quiz theo query
-		const quizzes = await quizModel.find(query);
+    query.quiz_status = { $ne: "deleted" }; // Lấy các quiz mà quiz_status khác 'deleted'
+    // Tìm kiếm quiz theo query
+    const quizzes = await quizModel.find(query);
 
     if (!quizzes) {
       throw new BadRequestError("Quizzes not found");
@@ -363,71 +377,71 @@ class QuizService {
     return quizzes;
   }
 
-	// Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
-	async geminiCreateQuestionByPrompt({ prompt }) {
-		// Kiểm tra nếu không có prompt thì trả về lỗi
-		if (!prompt) {
-			throw new BadRequestError('Prompt is required');
-		}
-		// Tạo câu hỏi từ prompt
-		const result = await model.generateContent(prompt);
-		// Trả về câu hỏi vừa tạo
-		return JSON.parse(result.response.text());
-	}
+  // Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
+  async geminiCreateQuestionByPrompt({ prompt }) {
+    // Kiểm tra nếu không có prompt thì trả về lỗi
+    if (!prompt) {
+      throw new BadRequestError("Prompt is required");
+    }
+    // Tạo câu hỏi từ prompt
+    const result = await model.generateContent(prompt);
+    // Trả về câu hỏi vừa tạo
+    return JSON.parse(result.response.text());
+  }
 
-	// Hàm tạo câu hỏi từ gemini AI theo prompt dữ liệu trả về dạng stream
-	geminiCreateQuestionByPromptStream = async (req, res) => {
-		const { prompt } = req.body;
+  // Hàm tạo câu hỏi từ gemini AI theo prompt dữ liệu trả về dạng stream
+  geminiCreateQuestionByPromptStream = async (req, res) => {
+    const { prompt } = req.body;
 
-		// Kiểm tra nếu không có prompt
-		if (!prompt) {
-			throw new Error('Prompt is required');
-		}
+    // Kiểm tra nếu không có prompt
+    if (!prompt) {
+      throw new Error("Prompt is required");
+    }
 
-		try {
-			// Giả lập quá trình tạo câu hỏi từ Gemini AI theo từng phần
-			const questions = await model.generateContent(prompt);
+    try {
+      // Giả lập quá trình tạo câu hỏi từ Gemini AI theo từng phần
+      const questions = await model.generateContent(prompt);
 
-			for (const question of questions) {
-				// Gửi từng chunk dữ liệu đến client
-				res.write(`data: ${JSON.stringify(question)}\n\n`);
-				// Giả lập độ trễ giữa các lần gửi
-				await new Promise((resolve) => setTimeout(resolve, 500));
-			}
-		} catch (err) {
-			throw err;
-		}
-	};
+      for (const question of questions) {
+        // Gửi từng chunk dữ liệu đến client
+        res.write(`data: ${JSON.stringify(question)}\n\n`);
+        // Giả lập độ trễ giữa các lần gửi
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
 
-	// Hàm tạo câu hỏi từ gemini AI theo hình ảnh
-	async geminiCreateQuestionByImages(req) {
-		// Kiểm tra nếu không có file ảnh thì trả về lỗi
-		const file = req.file;
-		console.log(file);
-		if (!file) {
-			throw new BadRequestError('No file uploaded');
-		}
+  // Hàm tạo câu hỏi từ gemini AI theo hình ảnh
+  async geminiCreateQuestionByImages(req) {
+    // Kiểm tra nếu không có file ảnh thì trả về lỗi
+    const file = req.file;
+    console.log(file);
+    if (!file) {
+      throw new BadRequestError("No file uploaded");
+    }
 
-		const fileName = req.file.filename;
-		const prompt = req.body.prompt;
+    const fileName = req.file.filename;
+    const prompt = req.body.prompt;
 
-		if (!prompt) {
-			throw new BadRequestError('Prompt is required');
-		}
+    if (!prompt) {
+      throw new BadRequestError("Prompt is required");
+    }
 
-		const image = {
-			inlineData: {
-				data: Buffer.from(
-					fs.readFileSync('src/v1/uploads/geminies/' + fileName)
-				).toString('base64'),
-				mimeType: file.mimetype,
-			},
-		};
+    const image = {
+      inlineData: {
+        data: Buffer.from(
+          fs.readFileSync("src/v1/uploads/geminies/" + fileName)
+        ).toString("base64"),
+        mimeType: file.mimetype,
+      },
+    };
 
-		const result = await model.generateContent([prompt, image]);
-		const response = JSON.parse(result.response.text());
-		return response;
-	}
+    const result = await model.generateContent([prompt, image]);
+    const response = JSON.parse(result.response.text());
+    return response;
+  }
   //lấy tất cả quiz mà shared_user_ids có chứa user_id
   async getAllQuizShared({ user_id }) {
     const quizzies = await quizModel.find({
@@ -435,10 +449,24 @@ class QuizService {
     });
 
     if (!quizzies) {
-      throw new BadRequestError("Quiz not found");
+      throw new BadRequestError("No shared quizzes found");
     }
 
     return quizzies;
+  }
+
+  //Hàm xóa quiz đã chia sẻ dựa trên user_id
+  async removeQuizShared({ user_id, quiz_id }) {
+    const quiz = await quizModel.updateOne(
+      { _id: quiz_id, shared_user_ids: { $in: [user_id] } },
+      { $pull: { shared_user_ids: user_id } }
+    );
+
+    if (!quiz) {
+      throw new BadRequestError("Quiz not found");
+    }
+
+    return quiz;
   }
 }
 
