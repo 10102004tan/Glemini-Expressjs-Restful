@@ -49,7 +49,6 @@ class QuizService {
 
 	// Hàm lấy danh sách câu hỏi theo quiz
 	async getQuestionsByQuiz({ quiz_id }) {
-		console.log(quiz_id);
 		const questions = await questionModel
 			.find({ quiz_id })
 			.populate('question_answer_ids')

@@ -35,6 +35,13 @@ class ResultController {
             metadata: await resultService.getResultsByUserId(req.body)
         }).send(res);
     }
+
+    async getReportResults(req, res) {
+        return new OK({
+            message: 'Get report results by teacher successfully!',
+            metadata: await resultService.getReportResults(req.body)
+        }).send(res);
+    }
 }
 
 module.exports = new ResultController();
