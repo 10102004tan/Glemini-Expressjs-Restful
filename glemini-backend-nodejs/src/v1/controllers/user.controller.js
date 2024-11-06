@@ -80,12 +80,12 @@ class UserController {
     }
 
     // Check email exsist
-    checkExsitsEmail = async (req, res) => {
-         return new OK({
-               message: "Check Email Exsist",
-               metadata: await UserService.checkExsitsEmail(req.body)
-         }).send(res);
-    }
+    // checkExsitsEmail = async (req, res) => {
+    //      return new OK({
+    //            message: "Check Email Exsist",
+    //            metadata: await UserService.checkExsitsEmail(req.body)
+    //      }).send(res);
+    // }
 
 
     // get notification

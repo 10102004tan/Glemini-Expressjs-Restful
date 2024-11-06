@@ -10,6 +10,7 @@ class QuizController {
     }).send(res);
   };
 
+  // lấy tất cả các quiz theo người dùng
   getQuizByUser = async (req, res) => {
     return new OK({
       message: "Quiz fetched successfully",
@@ -143,6 +144,13 @@ class QuizController {
       metadata: await quizService.getAllQuizShared(req.body),
     }).send(res);
   };
+
+  removeQuizShared = async (req, res) => {
+    return new OK({
+      message: "Quiz removed successfully",
+      metadata: await quizService.removeQuizShared(req.body),
+    }).send(res);
+  }
 }
 
 module.exports = new QuizController();

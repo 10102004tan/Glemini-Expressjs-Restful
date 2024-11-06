@@ -19,5 +19,5 @@ router.post('/profile/verification/re-upload',uploadDisk.array('images'), asynHa
 router.post('/notifications', asynHandler(userController.getNotification));
 router.post("/share-quiz", asynHandler(userController.shareQuizToTeacher));
 
-router.post('/check-email', asynHandler(userController.checkExsitsEmail));
+// router.post('/check-email', asynHandler(userController.checkExsitsEmail));
 module.exports = router;
