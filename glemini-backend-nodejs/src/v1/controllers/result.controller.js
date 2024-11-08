@@ -29,6 +29,13 @@ class ResultController {
         }).send(res);
     };
 
+    overview = async (req, res) => {
+        return new OK({
+            message: 'Read overview successfully!',
+            metadata: await resultService.overview(req.body),
+        }).send(res);
+    };
+
     async getResultsByUserId(req, res) {
         return new OK({
             message: 'Get result by user successfully!',

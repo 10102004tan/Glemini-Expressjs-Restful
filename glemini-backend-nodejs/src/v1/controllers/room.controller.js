@@ -17,6 +17,14 @@ class RoomController {
             metadata: await roomService.createRoom(req.body),
         }).send(res);
     };
+
+    async detailRoom(req, res) {
+        const room = await roomService.detailRoom(req.body)
+        return new OK({
+            message: 'Get detail room successfully!',
+            metadata: room
+        }).send(res);
+    }
 }
 
 module.exports = new RoomController();

@@ -255,6 +255,7 @@ class ResultService {
 
             rooms.forEach(room => {
                 allResults.push({
+                    id: room._id,
                     type: 'room',
                     identifier: room.room_code,
                     description: room.description,
@@ -266,6 +267,7 @@ class ResultService {
             classrooms.forEach(classroom => {
                 classroom.exercises.forEach(exercise => {
                     allResults.push({
+                        id: exercise._id,
                         type: 'exercise',
                         identifier: exercise.name,
                         class_name: classroom.class_name,
@@ -281,6 +283,38 @@ class ResultService {
         }
     }
 
+    static async overview({ id }) {
+        if (!id) {
+            throw new BadRequestError("Don't get data overview of a user");
+        }
+
+        const result = await ResultModel.findById(id)
+            .populate({
+                path: 'user_id',
+                select: 'user_fullname user_avatar'
+            })
+            .populate({
+                path: 'result_questions.question_id',
+                model: 'Question',
+                populate: [{
+                    path: 'question_answer_ids',
+                    model: 'Answer'
+                },{
+                    path: 'correct_answer_ids',
+                    model: 'Answer'
+                }]
+            })
+            .populate({
+                path: 'result_questions.answer',
+                model: 'Answer',
+            });
+
+        if (!result) {
+            throw new BadRequestError('Result not found');
+        }
+
+        return result;
+    }
 }
 
 module.exports = ResultService;
