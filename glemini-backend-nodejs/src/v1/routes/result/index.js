@@ -13,6 +13,7 @@ router.post('/student', asynHandler(resultController.getResultsByUserId));
 router.post('/save-question', asynHandler(resultController.saveQuestion));
 router.post('/complete-quiz', asynHandler(resultController.completeQuiz));
 router.post('/review', asynHandler(resultController.review));
+router.post('/overview', asynHandler(resultController.overview));
 router.post('/reports', asynHandler(resultController.getReportResults));
 
 module.exports = router;

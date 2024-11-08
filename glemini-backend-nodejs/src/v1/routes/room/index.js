@@ -9,6 +9,7 @@ const roomController = require('../../controllers/room.controller');
 // router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 router.post('/create', asynHandler(roomController.createRoom));
+router.post('/report', asynHandler(roomController.detailRoom));
 
 
 module.exports = router;
