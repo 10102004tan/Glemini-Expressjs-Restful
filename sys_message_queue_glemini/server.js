@@ -5,9 +5,11 @@ const { consumerQueue } = require("./src/services/consumerQueue.service");
 const { pushNotiForUser } = require("./src/services/expo.service");
 const { default: Expo } = require('expo-server-sdk');
 
+
+require('./src/dbs/init.mongodb');
+
 const queueName = 'notificationQueue';
 
-consumerQueue(queueName).then((data)=>{
-    console.log('Data',data);
-})
-.catch(console.error);
+consumerQueue(queueName).then(()=>{
+    console.log(`Consumer queue success ${queueName}`);
+}).catch(console.error);

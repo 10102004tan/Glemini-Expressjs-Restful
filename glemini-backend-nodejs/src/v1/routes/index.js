@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const routeAccess = require('./access');
 const routeQuizzes = require('./quizzes');

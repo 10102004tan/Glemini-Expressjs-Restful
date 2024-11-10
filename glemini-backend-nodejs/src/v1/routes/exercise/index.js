@@ -3,10 +3,12 @@ const express = require('express');
 const router = express.Router();
 const { asynHandler } = require('../../auths/utils');
 const exerciseController = require('../../controllers/exercises.controller');
-const { uploadQuestions } = require('../../configs/multer.config');
 const { authentication } = require('../../auths');
 
-router.use(asynHandler(authentication));
+// AUTHENTICATION
+// router.use(asynHandler(authentication));
+// AUTHENTICATION
 
+router.post("/report", asynHandler(exerciseController.detailExercise));
 
 module.exports = router;

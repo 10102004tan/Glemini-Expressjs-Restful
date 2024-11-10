@@ -135,8 +135,22 @@ class SocketService {
 		// Xử lý khi giao viên kết thúc cuộc thi
 		socket.on('endQuiz', ({ roomCode }) => {
 			console.log(`Teacher ended the quiz in room: ${roomCode}`);
-			// Phát sự kiện kết thúc cuộc thi cho tất cả các client trong phòng
+
+			// Phát sự kiện kết thúc quiz cho tất cả các client trong phòng
 			_io.to(roomCode).emit('quizEnded');
+
+			// Lấy danh sách socket trong phòng sử dụng adapter
+			const room = _io.sockets.adapter.rooms.get(roomCode);
+			if (room) {
+				room.forEach((clientId) => {
+					const clientSocket = _io.sockets.sockets.get(clientId);
+					if (clientSocket) {
+						clientSocket.leave(roomCode);
+					}
+				});
+			} else {
+				console.log(`No clients found in room: ${roomCode}`);
+			}
 		});
 
 		// Xử lý sự kiện khi giao viên kết thúc bài thi

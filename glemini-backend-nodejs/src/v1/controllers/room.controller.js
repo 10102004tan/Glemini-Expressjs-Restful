@@ -1,6 +1,5 @@
 'use strict';
 
-const socketService = require('../services/socket.service');
 const roomService = require('../services/room.service');
 const { CREATED, OK } = require('../cores/success.response');
 
@@ -38,6 +37,14 @@ class RoomController {
 			metadata: await roomService.updateRoom(req.body),
 		}).send(res);
 	};
+
+	async detailRoom(req, res) {
+		const room = await roomService.detailRoom(req.body);
+		return new OK({
+			message: 'Get detail room successfully!',
+			metadata: room,
+		}).send(res);
+	}
 }
 
 module.exports = new RoomController();

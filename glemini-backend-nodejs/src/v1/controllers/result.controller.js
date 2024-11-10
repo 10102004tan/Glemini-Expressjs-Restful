@@ -29,13 +29,6 @@ class ResultController {
 		}).send(res);
 	};
 
-	async getResultsByUserId(req, res) {
-		return new OK({
-			message: 'Read result successfully!',
-			metadata: await resultService.getResultsByUserId(req.body),
-		}).send(res);
-	}
-
 	async getResultsByRoomId(req, res) {
 		return new OK({
 			message: 'Read result successfully!',
@@ -56,6 +49,26 @@ class ResultController {
 		return new OK({
 			message: 'Update result successfully!',
 			metadata: await resultService.getUserRank(req.body),
+		}).send(res);
+	}
+	overview = async (req, res) => {
+		return new OK({
+			message: 'Read overview successfully!',
+			metadata: await resultService.overview(req.body),
+		}).send(res);
+	};
+
+	async getResultsByUserId(req, res) {
+		return new OK({
+			message: 'Get result by user successfully!',
+			metadata: await resultService.getResultsByUserId(req.body),
+		}).send(res);
+	}
+
+	async getReportResults(req, res) {
+		return new OK({
+			message: 'Get report results by teacher successfully!',
+			metadata: await resultService.getReportResults(req.body),
 		}).send(res);
 	}
 }

@@ -60,6 +60,29 @@ class RoomService {
 		await room.save();
 		return room;
 	}
+
+	async detailRoom({ id }) {
+		const room = await roomModel.findById(id).populate([
+			{
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb',
+			},
+			{
+				path: 'result_ids',
+				populate: {
+					path: 'user_id',
+					model: 'User',
+					select: 'user_fullname user_avatar',
+				},
+			},
+		]);
+
+		if (!room) {
+			throw new BadRequestError("Don't have report in room!");
+		}
+
+		return room;
+	}
 }
 
 module.exports = new RoomService();
