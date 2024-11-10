@@ -185,55 +185,26 @@ class ResultService {
     }
 
     // Teacher in report
-    static async getReportResults({ userId }) {
+    static async getReportResults({ userId, limit = 5, page = 1, identifier, class_name, type, sortOrder = 'oldest' }) {
         if (!userId) {
             throw new BadRequestError('User ID is required');
         }
+    
         try {
-            // Lấy tất cả các phòng (Room) mà người dùng tạo
+            const queryOptions = {};
+            if (identifier) queryOptions.identifier = { $regex: identifier, $options: 'i' };
+            if (class_name) queryOptions.class_name = { $regex: class_name, $options: 'i' };
+            if (type) queryOptions.type = type;
+    
+            // Fetch rooms created by the user, filtering for completed results
             const rooms = await RoomModel.find({ user_created_id: userId })
                 .populate({
                     path: 'result_ids',
+                    match: { status: 'completed' },
                     model: 'Result',
-                    populate: [{
-                        path: 'user_id',
-                        select: 'user_fullname user_avatar user_email'
-                    },
-                    {
-                        path: 'quiz_id',
-                        select: 'quiz_name quiz_thumb'
-                    },
-                    {
-                        path: 'result_questions.question_id',
-                        select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-                        populate: {
-                            path: 'question_answer_ids',
-                            model: 'Answer',
-                            select: 'text image'
-                        }
-                    },
-                    {
-                        path: 'result_questions.answer',
-                        select: 'text image'
-                    }]
-
-                });
-
-            // Lấy tất cả các lớp học (Classroom) mà người dùng là giáo viên
-            const classrooms = await classroomModel.find({ user_id: userId })
-                .populate({
-                    path: 'exercises',
-                    populate: {
-                        path: 'result_ids',
-                        model: 'Result',
-                        populate: [{
-                            path: 'user_id',
-                            select: 'user_fullname user_avatar user_email'
-                        },
-                        {
-                            path: 'quiz_id',
-                            select: 'quiz_name quiz_thumb'
-                        },
+                    populate: [
+                        { path: 'user_id', select: 'user_fullname user_avatar user_email' },
+                        { path: 'quiz_id', select: 'quiz_name quiz_thumb' },
                         {
                             path: 'result_questions.question_id',
                             select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
@@ -243,27 +214,49 @@ class ResultService {
                                 select: 'text image'
                             }
                         },
-                        {
-                            path: 'result_questions.answer',
-                            select: 'text image'
-                        }]
-
+                        { path: 'result_questions.answer', select: 'text image' }
+                    ]
+                });
+    
+            // Fetch classrooms where the user is the teacher, filtering for completed results
+            const classrooms = await classroomModel.find({ user_id: userId })
+                .populate({
+                    path: 'exercises',
+                    populate: {
+                        path: 'result_ids',
+                        match: { status: 'completed' },
+                        model: 'Result',
+                        populate: [
+                            { path: 'user_id', select: 'user_fullname user_avatar user_email' },
+                            { path: 'quiz_id', select: 'quiz_name quiz_thumb' },
+                            {
+                                path: 'result_questions.question_id',
+                                select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+                                populate: {
+                                    path: 'question_answer_ids',
+                                    model: 'Answer',
+                                    select: 'text image'
+                                }
+                            },
+                            { path: 'result_questions.answer', select: 'text image' }
+                        ]
                     }
                 });
-
+    
+            // Process rooms and classrooms into a combined results list
             const allResults = [];
-
+    
             rooms.forEach(room => {
                 allResults.push({
                     id: room._id,
                     type: 'room',
                     identifier: room.room_code,
                     description: room.description,
-                    results: room.result_ids
+                    results: room.result_ids,
+                    createdAt: room.createdAt
                 });
             });
-
-            // Kết quả từ các bài tập trong lớp học
+    
             classrooms.forEach(classroom => {
                 classroom.exercises.forEach(exercise => {
                     allResults.push({
@@ -272,16 +265,45 @@ class ResultService {
                         identifier: exercise.name,
                         class_name: classroom.class_name,
                         subject: classroom.subject.name,
-                        results: exercise.result_ids
+                        results: exercise.result_ids,
+                        createdAt: exercise.createdAt
                     });
                 });
             });
-
-            return allResults;
+    
+            // Apply filtering on combined results
+            const filteredResults = allResults.filter(result => {
+                const matchesIdentifier = identifier ? result.identifier.match(new RegExp(identifier, 'i')) : true;
+                const matchesClassName = class_name ? (result.class_name && result.class_name.match(new RegExp(class_name, 'i'))) : true;
+                const matchesType = type ? result.type === type : true;
+                return matchesIdentifier && matchesClassName && matchesType;
+            });
+    
+            // Sort results based on createdAt
+            if (sortOrder === 'newest') {
+                filteredResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Newest first
+            } else if (sortOrder === 'oldest') {
+                filteredResults.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Oldest first
+            }
+    
+            // Implement pagination on the filtered and sorted results
+            const totalResults = filteredResults.length;
+            const paginatedResults = filteredResults.slice((page - 1) * limit, page * limit);
+    
+            return {
+                results: paginatedResults,
+                totalResults,
+                totalPages: Math.ceil(totalResults / limit),
+                currentPage: page
+            };
         } catch (error) {
             throw new BadRequestError(error);
         }
     }
+    
+    
+    
+    
 
     static async overview({ id }) {
         if (!id) {
