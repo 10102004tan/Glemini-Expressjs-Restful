@@ -8,313 +8,443 @@ const { BadRequestError } = require('../cores/error.repsone');
 const classroomModel = require('../models/classroom.model');
 
 class ResultService {
-    static async saveQuestion({ exercise_id, user_id, quiz_id, question_id, answer, correct, score }) {
-        const query = {
-            user_id,
-            quiz_id,
-        };
-        if (exercise_id) {
-            query.exercise_id = exercise_id;
-        }
+	static async saveQuestion({
+		exercise_id,
+		room_id,
+		user_id,
+		quiz_id,
+		question_id,
+		answer,
+		correct,
+		score,
+	}) {
+		const query = {
+			user_id,
+			quiz_id,
+		};
+		if (exercise_id) {
+			query.exercise_id = exercise_id;
+		}
 
-        let result = await ResultModel.findOne(query);
+		if (room_id) {
+			query.room_id = room_id;
+		}
 
-        if (!result) {
-            result = new ResultModel({
-                user_id,
-                quiz_id,
-                status: 'doing',
-                result_questions: [],
-            });
+		let result = await ResultModel.findOne(query);
 
-            if (exercise_id) {
-                result.exercise_id = exercise_id;
-            }
+		if (!result) {
+			// Create a new result document if none exists
+			result = new ResultModel({
+				user_id,
+				quiz_id,
+				status: 'doing',
+				result_questions: [],
+			});
 
-            await result.save();
+			if (exercise_id) {
+				result.exercise_id = exercise_id;
+			}
 
-            if (exercise_id) {
-                await exerciseModel.findByIdAndUpdate(
-                    exercise_id,
-                    { $addToSet: { result_ids: result._id } },
-                    { new: true, runValidators: true }
-                );
-            }
-        } else {
-            if (result.status === 'completed') {
-                result.status = 'doing';
-                result.result_questions = [];
-            }
-        }
+			if (room_id) {
+				result.room_id = room_id;
+			}
+			// Update quiz play count
+			await QuizModel.findOneAndUpdate(
+				{ _id: quiz_id },
+				{ $inc: { quiz_turn: 1 } },
+				{ new: true, runValidators: true }
+			);
 
-        result.result_questions.push({
-            question_id,
-            answer,
-            correct,
-            score,
-        });
+			await result.save(); // Save the new result instance
 
-        await result.save();
+			// If exercise_id exists, add the result._id to exercise.result_ids
+			if (exercise_id) {
+				await exerciseModel.findByIdAndUpdate(
+					exercise_id,
+					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
+					{ new: true, runValidators: true }
+				);
+			}
+		} else {
+			// If a result already exists, update its status and clear questions if completed
+			if (result.status === 'completed') {
+				result.status = 'doing';
+				result.result_questions = []; // Clear previous questions
+			}
+		}
 
-        return result;
-    }
+		// Add the new question answer to result.result_questions
+		result.result_questions.push({
+			question_id,
+			answer,
+			correct,
+			score,
+		});
 
-    static async completeQuiz({ exercise_id, user_id, quiz_id }) {
-        const query = {
-            user_id,
-            quiz_id,
-        };
-        if (exercise_id) {
-            query.exercise_id = exercise_id;
-        }
+		await result.save(); // Save updated result
 
-        const result = await ResultModel.findOneAndUpdate(
-            query,
-            { status: 'completed' },
-            { new: true },
-            { runValidators: true }
-        );
+		return result;
+	}
 
-        if (!result) {
-            throw new BadRequestError('Result not found');
-        }
+	static async completeQuiz({ exercise_id, room_id, user_id, quiz_id }) {
+		const query = {
+			user_id,
+			quiz_id,
+		};
 
-        // Update quiz play count
-        await QuizModel.findOneAndUpdate(
-            { _id: quiz_id },
-            { $inc: { quiz_turn: 1 } },
-            { new: true, runValidators: true }
-        );
+		if (exercise_id) {
+			query.exercise_id = exercise_id;
+		}
 
-        return result;
-    }
+		if (room_id) {
+			query.room_id = room_id;
+		}
 
-    static async review({ exercise_id, user_id, quiz_id }) {
-        if (!exercise_id && !quiz_id) {
-            throw new BadRequestError("Don't get data review of a user");
-        }
-        const query = {
-            user_id,
-            quiz_id,
-        };
-        if (exercise_id) {
-            query.exercise_id = exercise_id;
-        }
+		const result = await ResultModel.findOneAndUpdate(
+			query,
+			{ status: 'completed' },
+			{ new: true },
+			{ runValidators: true }
+		);
 
-        const result = await ResultModel.findOne(query)
-            .populate({
-                path: 'result_questions.question_id',
-                model: 'Question',
-                populate: {
-                    path: 'question_answer_ids',
-                    model: 'Answer'
-                }
-            })
-            .populate({
-                path: 'result_questions.answer',
-                model: 'Answer',
-            });
+		if (!result) {
+			throw new BadRequestError('Result not found');
+		}
 
-        if (!result) {
-            throw new BadRequestError('Result not found');
-        }
+		// Update quiz play count
+		await QuizModel.findOneAndUpdate(
+			{ _id: quiz_id },
+			{ $inc: { quiz_turn: 1 } },
+			{ new: true, runValidators: true }
+		);
 
-        return result;
-    }
+		return result;
+	}
 
-    // Student  in activity
-    static async getResultsByUserId({ userId }) {
-        if (!userId) {
-            throw new BadRequestError('User ID is required');
-        }
+	static async review({ exercise_id, user_id, quiz_id, room_id }) {
+		// console.log(exercise_id, user_id, quiz_id, room_code);
+		const query = {};
 
-        const results = await ResultModel.find({ user_id: userId })
-            .populate({
-                path: 'quiz_id',
-                select: 'quiz_name quiz_thumb user_id',
-                populate: {
-                    path: 'user_id',
-                    select: 'user_fullname'
+		if (quiz_id) {
+			query.quiz_id = quiz_id;
+		}
 
-                },
-            })
-            .populate({
-                path: 'result_questions.question_id',
-                model: 'Question',
-                populate: {
-                    path: 'question_answer_ids',
-                    model: 'Answer',
-                },
-            })
-            .populate({
-                path: 'exercise_id',
-                select: 'name'
+		if (exercise_id) {
+			query.exercise_id = exercise_id;
+		}
 
-            });
+		if (room_id) {
+			query.room_id = room_id;
+		}
 
-        // Nhóm các kết quả theo trạng thái
-        const categorizedResults = {
-            completed: [],
-            doing: []
-        };
+		const result = await ResultModel.findOne(query)
+			.populate({
+				path: 'result_questions.question_id',
+				model: 'Question',
+				populate: {
+					path: 'question_answer_ids',
+					model: 'Answer',
+				},
+			})
+			.populate({
+				path: 'result_questions.answer',
+				model: 'Answer',
+			});
 
-        for (const result of results) {
-            const quiz = result.quiz_id;
-            if (quiz) {
-                const questionCount = await QuestionModel.countDocuments({ quiz_id: quiz._id });
-                quiz.questionCount = questionCount;
+		if (!result) {
+			throw new BadRequestError('Result not found');
+		}
 
-                const resultWithQuestionCount = {
-                    ...result.toObject(),
-                    quiz_id: {
-                        ...quiz.toObject(),
-                        questionCount
-                    }
-                };
+		return result;
+	}
 
-                // Phân loại kết quả
-                if (result.status === 'completed') {
-                    categorizedResults.completed.push(resultWithQuestionCount);
-                } else {
-                    categorizedResults.doing.push(resultWithQuestionCount);
-                }
-            }
-        }
+	static async getResultsByRoomId(roomId, status) {
+		if (!['doing', 'completed'].includes(status)) {
+			throw new BadRequestError('Invalid status');
+		}
 
-        return categorizedResults;
-    }
+		const results = await ResultModel.find({
+			room_id: roomId,
+			status,
+		});
 
-    // Teacher in report
-    static async getReportResults({ userId }) {
-        if (!userId) {
-            throw new BadRequestError('User ID is required');
-        }
-        try {
-            // Lấy tất cả các phòng (Room) mà người dùng tạo
-            const rooms = await RoomModel.find({ user_created_id: userId })
-                .populate({
-                    path: 'result_ids',
-                    model: 'Result',
-                    populate: [{
-                        path: 'user_id',
-                        select: 'user_fullname user_avatar user_email'
-                    },
-                    {
-                        path: 'quiz_id',
-                        select: 'quiz_name quiz_thumb'
-                    },
-                    {
-                        path: 'result_questions.question_id',
-                        select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-                        populate: {
-                            path: 'question_answer_ids',
-                            model: 'Answer',
-                            select: 'text image'
-                        }
-                    },
-                    {
-                        path: 'result_questions.answer',
-                        select: 'text image'
-                    }]
+		return results;
+	}
 
-                });
+	static async updateResultWhileRealtimePlay({
+		room_id,
+		user_id,
+		quiz_id,
+		question_id,
+		answer,
+		correct,
+		score,
+	}) {
+		// Kiểm tra tham số đầu vào
+		if (!user_id || !quiz_id || !question_id) {
+			throw new Error('Thiếu tham số bắt buộc');
+		}
 
-            // Lấy tất cả các lớp học (Classroom) mà người dùng là giáo viên
-            const classrooms = await classroomModel.find({ user_id: userId })
-                .populate({
-                    path: 'exercises',
-                    populate: {
-                        path: 'result_ids',
-                        model: 'Result',
-                        populate: [{
-                            path: 'user_id',
-                            select: 'user_fullname user_avatar user_email'
-                        },
-                        {
-                            path: 'quiz_id',
-                            select: 'quiz_name quiz_thumb'
-                        },
-                        {
-                            path: 'result_questions.question_id',
-                            select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-                            populate: {
-                                path: 'question_answer_ids',
-                                model: 'Answer',
-                                select: 'text image'
-                            }
-                        },
-                        {
-                            path: 'result_questions.answer',
-                            select: 'text image'
-                        }]
+		const query = { user_id, quiz_id };
+		if (room_id) query.room_id = room_id;
 
-                    }
-                });
+		let result = await ResultModel.findOne(query);
 
-            const allResults = [];
+		if (!result) {
+			result = new ResultModel({
+				user_id,
+				quiz_id,
+				status: 'doing',
+				result_questions: [],
+			});
 
-            rooms.forEach(room => {
-                allResults.push({
-                    id: room._id,
-                    type: 'room',
-                    identifier: room.room_code,
-                    description: room.description,
-                    results: room.result_ids
-                });
-            });
+			if (room_id) result.room_id = room_id;
+		}
 
-            // Kết quả từ các bài tập trong lớp học
-            classrooms.forEach(classroom => {
-                classroom.exercises.forEach(exercise => {
-                    allResults.push({
-                        id: exercise._id,
-                        type: 'exercise',
-                        identifier: exercise.name,
-                        class_name: classroom.class_name,
-                        subject: classroom.subject.name,
-                        results: exercise.result_ids
-                    });
-                });
-            });
+		// Kiểm tra và cập nhật câu trả lời trùng lặp
+		const existingAnswerIndex = result.result_questions.findIndex(
+			(q) => q.question_id.toString() === question_id.toString()
+		);
+		if (existingAnswerIndex !== -1) {
+			result.result_questions[existingAnswerIndex] = {
+				question_id,
+				answer,
+				correct,
+				score,
+				answered_at: new Date(),
+			};
+		} else {
+			result.result_questions.push({
+				question_id,
+				answer,
+				correct,
+				score,
+				answered_at: new Date(),
+			});
+		}
 
-            return allResults;
-        } catch (error) {
-            throw new BadRequestError(error);
-        }
-    }
+		await result.save();
+		return result;
+	}
 
-    static async overview({ id }) {
-        if (!id) {
-            throw new BadRequestError("Don't get data overview of a user");
-        }
+	static async getUserRank({ room_id, user_id, quiz_id }) {
+		const result = await ResultModel.findOne({
+			room_id,
+			user_id,
+			quiz_id,
+		}).populate('user_id');
 
-        const result = await ResultModel.findById(id)
-            .populate({
-                path: 'user_id',
-                select: 'user_fullname user_avatar'
-            })
-            .populate({
-                path: 'result_questions.question_id',
-                model: 'Question',
-                populate: [{
-                    path: 'question_answer_ids',
-                    model: 'Answer'
-                },{
-                    path: 'correct_answer_ids',
-                    model: 'Answer'
-                }]
-            })
-            .populate({
-                path: 'result_questions.answer',
-                model: 'Answer',
-            });
+		if (!result) {
+			throw new BadRequestError('Result not found');
+		}
 
-        if (!result) {
-            throw new BadRequestError('Result not found');
-        }
+		// Lấy điểm số của user hiện tại
+		const userScore = result.result_questions.reduce((acc, q) => {
+			return q.correct ? acc + q.score : acc;
+		}, 0);
 
-        return result;
-    }
+		return { ...result._doc, userScore };
+	}
+	// Student  in activity
+	static async getResultsByUserId({ userId }) {
+		if (!userId) {
+			throw new BadRequestError('User ID is required');
+		}
+
+		const results = await ResultModel.find({ user_id: userId })
+			.populate({
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb user_id',
+				populate: {
+					path: 'user_id',
+					select: 'user_fullname',
+				},
+			})
+			.populate({
+				path: 'result_questions.question_id',
+				model: 'Question',
+				populate: {
+					path: 'question_answer_ids',
+					model: 'Answer',
+				},
+			})
+			.populate({
+				path: 'exercise_id',
+				select: 'name',
+			});
+
+		// Nhóm các kết quả theo trạng thái
+		const categorizedResults = {
+			completed: [],
+			doing: [],
+		};
+
+		for (const result of results) {
+			const quiz = result.quiz_id;
+			if (quiz) {
+				const questionCount = await QuestionModel.countDocuments({
+					quiz_id: quiz._id,
+				});
+				quiz.questionCount = questionCount;
+
+				const resultWithQuestionCount = {
+					...result.toObject(),
+					quiz_id: {
+						...quiz.toObject(),
+						questionCount,
+					},
+				};
+
+				// Phân loại kết quả
+				if (result.status === 'completed') {
+					categorizedResults.completed.push(resultWithQuestionCount);
+				} else {
+					categorizedResults.doing.push(resultWithQuestionCount);
+				}
+			}
+		}
+
+		return categorizedResults;
+	}
+
+	// Teacher in report
+	static async getReportResults({ userId }) {
+		if (!userId) {
+			throw new BadRequestError('User ID is required');
+		}
+		try {
+			// Lấy tất cả các phòng (Room) mà người dùng tạo
+			const rooms = await RoomModel.find({
+				user_created_id: userId,
+			}).populate({
+				path: 'result_ids',
+				model: 'Result',
+				populate: [
+					{
+						path: 'user_id',
+						select: 'user_fullname user_avatar user_email',
+					},
+					{
+						path: 'quiz_id',
+						select: 'quiz_name quiz_thumb',
+					},
+					{
+						path: 'result_questions.question_id',
+						select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+						populate: {
+							path: 'question_answer_ids',
+							model: 'Answer',
+							select: 'text image',
+						},
+					},
+					{
+						path: 'result_questions.answer',
+						select: 'text image',
+					},
+				],
+			});
+
+			// Lấy tất cả các lớp học (Classroom) mà người dùng là giáo viên
+			const classrooms = await classroomModel
+				.find({ user_id: userId })
+				.populate({
+					path: 'exercises',
+					populate: {
+						path: 'result_ids',
+						model: 'Result',
+						populate: [
+							{
+								path: 'user_id',
+								select: 'user_fullname user_avatar user_email',
+							},
+							{
+								path: 'quiz_id',
+								select: 'quiz_name quiz_thumb',
+							},
+							{
+								path: 'result_questions.question_id',
+								select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+								populate: {
+									path: 'question_answer_ids',
+									model: 'Answer',
+									select: 'text image',
+								},
+							},
+							{
+								path: 'result_questions.answer',
+								select: 'text image',
+							},
+						],
+					},
+				});
+
+			const allResults = [];
+
+			rooms.forEach((room) => {
+				allResults.push({
+					id: room._id,
+					type: 'room',
+					identifier: room.room_code,
+					description: room.description,
+					results: room.result_ids,
+				});
+			});
+
+			// Kết quả từ các bài tập trong lớp học
+			classrooms.forEach((classroom) => {
+				classroom.exercises.forEach((exercise) => {
+					allResults.push({
+						id: exercise._id,
+						type: 'exercise',
+						identifier: exercise.name,
+						class_name: classroom.class_name,
+						subject: classroom.subject.name,
+						results: exercise.result_ids,
+					});
+				});
+			});
+
+			return allResults;
+		} catch (error) {
+			throw new BadRequestError(error);
+		}
+	}
+
+	static async overview({ id }) {
+		if (!id) {
+			throw new BadRequestError("Don't get data overview of a user");
+		}
+
+		const result = await ResultModel.findById(id)
+			.populate({
+				path: 'user_id',
+				select: 'user_fullname user_avatar',
+			})
+			.populate({
+				path: 'result_questions.question_id',
+				model: 'Question',
+				populate: [
+					{
+						path: 'question_answer_ids',
+						model: 'Answer',
+					},
+					{
+						path: 'correct_answer_ids',
+						model: 'Answer',
+					},
+				],
+			})
+			.populate({
+				path: 'result_questions.answer',
+				model: 'Answer',
+			});
+
+		if (!result) {
+			throw new BadRequestError('Result not found');
+		}
+
+		return result;
+	}
 }
 
 module.exports = ResultService;
