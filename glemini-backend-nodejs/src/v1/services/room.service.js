@@ -2,30 +2,87 @@ const roomModel = require('../models/room.model');
 const { BadRequestError } = require('../cores/error.repsone');
 
 class RoomService {
-    async createRoom({ room_code, quiz_id, user_created_id, user_max, description }) {
-        console.log({room_code, quiz_id, user_created_id, user_max, description});
-        
-        if (!room_code || !quiz_id || !user_created_id || !user_max) {
-            throw new BadRequestError('Room code, quiz ID, creator ID and user max are required');
-        }
+	async createRoom({
+		room_code,
+		quiz_id,
+		user_created_id,
+		user_max,
+		description,
+	}) {
+		if (!room_code || !quiz_id || !user_created_id || !user_max) {
+			throw new BadRequestError(
+				'Room code, quiz ID, creator ID and user max are required'
+			);
+		}
 
-        const existingRoom = await roomModel.findOne({ room_code });
-        if (existingRoom) {
-            throw new BadRequestError('Room code already exists');
-        }
+		const existingRoom = await roomModel.findOne({ room_code });
+		if (existingRoom) {
+			throw new BadRequestError('Room code already exists');
+		}
 
-        const newRoom = await roomModel.create({
-            room_code,
-            quiz_id,
-            user_created_id,
-            user_max,
-            description,
-            status: 'start'
-        },
-    );
+		const newRoom = await roomModel.create({
+			room_code,
+			quiz_id,
+			user_created_id,
+			user_max,
+			description,
+			status: 'start',
+		});
 
-        return newRoom;
-    }
+		return newRoom;
+	}
+
+	async getListCreatedRoom({ user_created_id }) {
+		const rooms = await roomModel.find({ user_created_id });
+		if (!rooms) {
+			throw new BadRequestError('No room found');
+		}
+		return rooms;
+	}
+
+	async getRoomDetail({ room_code }) {
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+
+		return room;
+	}
+
+	async updateRoom({ room_code, status }) {
+		console.log(room_code, status);
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+
+		room.status = status;
+		await room.save();
+		return room;
+	}
+
+	async detailRoom({ id }) {
+		const room = await roomModel.findById(id).populate([
+			{
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb',
+			},
+			{
+				path: 'result_ids',
+				populate: {
+					path: 'user_id',
+					model: 'User',
+					select: 'user_fullname user_avatar',
+				},
+			},
+		]);
+
+		if (!room) {
+			throw new BadRequestError("Don't have report in room!");
+		}
+
+		return room;
+	}
 }
 
 module.exports = new RoomService();

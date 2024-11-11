@@ -1,17 +1,17 @@
-'use strict';
-const mongoose = require('mongoose');
-const { host, port, name } = require('../configs/mongodb.config');
-const colors = require('../configs/colors.config');
-const subjectService = require('../services/subject.service');
-const schoolService = require('../services/school.service');
+"use strict";
+const mongoose = require("mongoose");
+const { host, port, name } = require("../configs/mongodb.config");
+const colors = require("../configs/colors.config");
+const subjectService = require("../services/subject.service");
+const schoolService = require("../services/school.service");
 class Database {
-	constructor() {
-		this.connect();
-	}
+  constructor() {
+    this.connect();
+  }
 
 	connect() {
-		//const connectString = `mongodb://${host}:${port}/${name}`;
-		const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
+		const connectString = `mongodb://${host}:${port}/${name}`;
+		// const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
 		mongoose
 			.connect(connectString)
 			.then(() => {
@@ -35,12 +35,12 @@ class Database {
 			});
 	}
 
-	static getInstance() {
-		if (!Database.instance) {
-			Database.instance = new Database();
-		}
-		return Database.instance;
-	}
+  static getInstance() {
+    if (!Database.instance) {
+      Database.instance = new Database();
+    }
+    return Database.instance;
+  }
 }
 
 const instanceDB = Database.getInstance();

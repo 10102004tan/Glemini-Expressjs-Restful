@@ -11,8 +11,8 @@ const {
 const templateRouter = require("../template");
 const { authentication } = require("../../auths");
 
-router.use('/get-templates', templateRouter);
-router.post('/search', asynHandler(quizController.search));
+router.use("/get-templates", templateRouter);
+router.post("/search", asynHandler(quizController.search));
 
 // AUTHENTICATION
 router.use(asynHandler(authentication));
@@ -66,6 +66,10 @@ router.post(
 router.post(
   "/get-all-quizzes-shared",
   asynHandler(quizController.getAllQuizShared)
+);
+router.post(
+  "/remove-quiz-shared",
+  asynHandler(quizController.removeQuizShared)
 );
 
 module.exports = router;
