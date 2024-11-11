@@ -6,6 +6,7 @@ const exerciseModel = require('../models/exercise.model');
 const RoomModel = require('../models/room.model');
 const { BadRequestError } = require('../cores/error.repsone');
 const classroomModel = require('../models/classroom.model');
+const roomModel = require('../models/room.model');
 
 class ResultService {
 	static async saveQuestion({
@@ -61,6 +62,15 @@ class ResultService {
 			if (exercise_id) {
 				await exerciseModel.findByIdAndUpdate(
 					exercise_id,
+					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
+					{ new: true, runValidators: true }
+				);
+			}
+
+			// Save result to room
+			if (room_id) {
+				await roomModel.findByIdAndUpdate(
+					room_id,
 					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
 					{ new: true, runValidators: true }
 				);
