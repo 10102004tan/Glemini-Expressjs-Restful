@@ -98,18 +98,60 @@ class QuizService {
   }
 
 	// Search {name-desc} and filter {quiz_turn, date}
-	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1 }) {
+	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1,subjectIds }) {
+    console.log(subjectIds);
 		const query = {};
 		if (key) {
 			query.quiz_name = { $regex: key, $options: 'i' };
 		}
 
+    // get quiz published
+    query.quiz_status = "published";
+
+    // get quiz by subjectIds . ex: subjectIds = [1,2,3] and subject_ids in [1,2] or subject_ids [1,2,3] with subjectIds in [1,2,3]
+    if (subjectIds && subjectIds.length > 0) {
+      query.subject_ids = { $in: subjectIds };
+    }
+    // get count questions > 0, count questions get from quizModel inner join questionModel
+
+
+
+
     if (quiz_on !== -1) {
       query.quiz_turn = { $gte: quiz_on };
     }
+		const quizzes = await quizModel.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "quiz_id",
+          as: "questions",
+        },
+      },
+      {
+        $project: {
+          quiz_name: 1,
+          quiz_description: 1,
+          quiz_thumb: 1,
+          quiz_turn: 1,
+          quiz_status: 1,
+          createdAt: 1,
+          question_count: { $size: "$questions" }, // Count of questions
+        },
+      },
+      {
+        $match: { question_count: { $gt: 0 } },
+      },
+      { $sort: { createdAt: sortStatus } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
 
-		const quizzes = await quizModel.find(query).sort({createdAt: sortStatus}).skip(skip).limit(limit);
-		return quizzes;
+    return quizzes;
 	}
 
   // Hàm lấy thông tin chi tiết của quiz

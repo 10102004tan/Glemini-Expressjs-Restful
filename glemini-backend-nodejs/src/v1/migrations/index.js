@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-
-const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
+const { host, port, name } = require('../configs/mongodb.config');
+const connectString = `mongodb://${host}:${port}/${name}`;
+//const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
 // Kết nối tới MongoDB
 mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Đã kết nối tới MongoDB"))
