@@ -29,6 +29,11 @@ const resultSchema = new Schema(
 			enum: ['doing', 'completed', 'cancel'],
 			default: 'doing',
 		},
+		type: {
+			type: String,
+			enum: ['publish', 'room', 'exercise'],
+			default: 'exercise',
+		},
 		result_questions: [
 			{
 				question_id: {

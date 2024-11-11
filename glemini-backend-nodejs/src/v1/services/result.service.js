@@ -43,6 +43,8 @@ class ResultService {
 
 			if (exercise_id) {
 				result.exercise_id = exercise_id;
+			} else {
+				result.type = 'publish'
 			}
 
 			if (room_id) {
@@ -121,12 +123,12 @@ class ResultService {
 		return result;
 	}
 
-	static async review({ exercise_id, user_id, quiz_id, room_id }) {
-		// console.log(exercise_id, user_id, quiz_id, room_code);
+	static async review({ exercise_id, quiz_id, room_id, type }) {
 		const query = {};
 
-		if (quiz_id) {
+		if (quiz_id && type) {
 			query.quiz_id = quiz_id;
+			query.type = type
 		}
 
 		if (exercise_id) {
