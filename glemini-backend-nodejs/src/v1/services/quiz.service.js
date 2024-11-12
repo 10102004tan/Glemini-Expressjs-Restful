@@ -8,7 +8,7 @@ const fs = require("fs");
 const { url } = require("../configs/url.response.config");
 const UploadService = require("./upload.service");
 const { model } = require("../configs/gemini.config");
-const { default: mongoose } = require("mongoose");
+const { Types: { ObjectId } } = require('mongoose')
 
 class QuizService {
   // Hàm tạo quiz
@@ -117,13 +117,13 @@ class QuizService {
     // get quiz published
     query.quiz_status = "published";
 
-    // get quiz by subjectIds . ex: subjectIds = [1,2,3] and subject_ids in [1,2] or subject_ids [1,2,3] with subjectIds in [1,2,3]
+    // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
     if (subjectIds && subjectIds.length > 0) {
+      subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
       query.subject_ids = { $in: subjectIds };
-    }
-    // get count questions > 0, count questions get from quizModel inner join questionModel
-
-
+    } 
+    
+    
 
 
     if (quiz_on !== -1) {
@@ -149,6 +149,7 @@ class QuizService {
           quiz_turn: 1,
           quiz_status: 1,
           createdAt: 1,
+          subject_ids: 1,
           question_count: { $size: "$questions" }, // Count of questions
         },
       },
