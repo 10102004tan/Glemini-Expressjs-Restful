@@ -53,13 +53,6 @@ class ResultService {
 				result.room_id = room_id;
 			}
 
-			// Cập nhật lượt chơi của quiz
-			await QuizModel.findOneAndUpdate(
-				{ _id: quiz_id },
-				{ $inc: { quiz_turn: 1 } },
-				{ new: true, runValidators: true }
-			);
-
 			await result.save(); // Lưu `result` mới
 
 			// Nếu có `exercise_id`, thêm `result._id` vào `exercise.result_ids`
