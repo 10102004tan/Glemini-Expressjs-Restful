@@ -26,11 +26,15 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo user
-  async getQuizByUser({ user_id }) {
-    const quizzies = await quizModel.find({
-      user_id,
-      quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
-    });
+  async getQuizByUser({ user_id, skip = 0, limit = 2 }) {
+    const quizzies = await quizModel
+      .find({
+        user_id,
+        quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     if (!quizzies) {
       throw new BadRequestError("Quiz not found");
