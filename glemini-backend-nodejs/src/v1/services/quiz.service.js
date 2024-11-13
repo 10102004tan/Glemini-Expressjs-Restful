@@ -108,7 +108,6 @@ class QuizService {
 
 	// Search {name-desc} and filter {quiz_turn, date}
 	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1,subjectIds }) {
-    console.log(subjectIds);
 		const query = {};
 		if (key) {
 			query.quiz_name = { $regex: key, $options: 'i' };

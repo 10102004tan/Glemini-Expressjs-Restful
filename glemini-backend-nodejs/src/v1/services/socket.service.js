@@ -4,12 +4,23 @@
 class SocketService {
 	connection(socket) {
 		const generateID = () => Math.random().toString(36).substring(2, 10);
-		console.log(`Socket: ${socket.id} user just connected! ⚡`);
+		console.log(`Socket: ${socket.id}  user just connected! ⚡`);
+
+		// push socket to list user online global include userId, socket
+		socket.on('init', (userId) => {
+			// check userId exist in map user online , if not exist then push to list user online
+			_listUserOnline.push({ userId, socket });
+			console.log('🚪List user online:', _listUserOnline);
+		});
 
 		const chatRooms = [];
 
 		socket.on('disconnect', () => {
 			socket.disconnect();
+			// remove socket from list user online global
+			_listUserOnline = _listUserOnline.filter(
+				(user) => user.socket.id !== socket.id
+			);
 			console.log('🔥: A user disconnected');
 		});
 
@@ -21,6 +32,7 @@ class SocketService {
 			// 👇🏻 Returns the updated chat rooms via another event
 			socket.emit('roomsList', chatRooms);
 		});
+
 
 		socket.on('createClassroom', (classData) => {
 			const newClassroom = {
