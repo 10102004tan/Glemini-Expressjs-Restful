@@ -89,36 +89,39 @@ class ResultService {
 		const query = {
 			user_id,
 			quiz_id,
+			type: ''
 		};
-
+	
 		if (exercise_id) {
 			query.exercise_id = exercise_id;
-		}
-
-		if (room_id) {
+			query.type = 'exercise';
+		} else if (room_id) {
 			query.room_id = room_id;
+			query.type = 'room';
+		} else {
+			query.type = 'publish';
 		}
-
+	
 		const result = await ResultModel.findOneAndUpdate(
 			query,
 			{ status: 'completed' },
-			{ new: true },
-			{ runValidators: true }
+			{ new: true, runValidators: true }
 		);
-
+	
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
-
+	
 		// Update quiz play count
 		await QuizModel.findOneAndUpdate(
 			{ _id: quiz_id },
 			{ $inc: { quiz_turn: 1 } },
 			{ new: true, runValidators: true }
 		);
-
+	
 		return result;
 	}
+	
 
 	static async review({ user_id, exercise_id, quiz_id, room_id, type }) {
 		const query = {
