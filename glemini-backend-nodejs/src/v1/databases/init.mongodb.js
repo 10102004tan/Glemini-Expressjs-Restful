@@ -8,7 +8,6 @@ class Database {
   constructor() {
     this.connect();
   }
-
   connect() {
     //const connectString = `mongodb://${host}:${port}/${name}`;
     const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
@@ -34,7 +33,6 @@ class Database {
         );
       });
   }
-
   static getInstance() {
     if (!Database.instance) {
       Database.instance = new Database();
