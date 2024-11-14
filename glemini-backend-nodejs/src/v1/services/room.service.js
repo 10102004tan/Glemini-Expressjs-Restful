@@ -80,7 +80,7 @@ class RoomService {
 				populate: {
 					path: 'user_id',
 					model: 'User',
-					select: 'user_fullname user_avatar',
+					select: 'user_fullname user_avatar user_email',
 				},
 			},
 		]);
