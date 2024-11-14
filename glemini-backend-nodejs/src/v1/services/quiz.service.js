@@ -506,6 +506,7 @@ class QuizService {
   }
   //lấy tất cả quiz mà shared_user_ids có chứa user_id
   async getAllQuizShared({ user_id, skip = 0, limit = 2 }) {
+    console.log("skip", skip);
     const quizzies = await quizModel
       .find({
         shared_user_ids: { $elemMatch: { user_id: user_id } },
