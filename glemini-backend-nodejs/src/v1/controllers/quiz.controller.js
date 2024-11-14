@@ -60,13 +60,12 @@ class QuizController {
     }).send(res);
   };
 
-	search = async (req, res) => {
-		return new OK({
-			message: 'Search successfully',
-			metadata: await quizService.search(req.body),
-		}).send(res);
-	};
-
+  search = async (req, res) => {
+    return new OK({
+      message: "Search successfully",
+      metadata: await quizService.search(req.body),
+    }).send(res);
+  };
 
   deleteQuiz = async (req, res) => {
     return new OK({
@@ -150,7 +149,14 @@ class QuizController {
       message: "Quiz removed successfully",
       metadata: await quizService.removeQuizShared(req.body),
     }).send(res);
-  }
+  };
+  // sao chép tất cả quiz của người dùng khác
+  copyQuiz = async (req, res) => {
+    return new OK({
+      message: "Quiz copied successfully",
+      metadata: await quizService.copyQuizShared(req.body),
+    }).send(res);
+  };
 }
 
 module.exports = new QuizController();

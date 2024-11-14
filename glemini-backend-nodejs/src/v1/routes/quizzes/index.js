@@ -71,5 +71,6 @@ router.post(
   "/remove-quiz-shared",
   asynHandler(quizController.removeQuizShared)
 );
+router.post("/copy-quiz", asynHandler(quizController.copyQuiz));
 
 module.exports = router;

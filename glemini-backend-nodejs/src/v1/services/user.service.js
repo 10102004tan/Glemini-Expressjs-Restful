@@ -230,36 +230,6 @@ class UserService {
     return updated;
   }
 
-  // Kiểm tra quyền chỉnh sửa quiz
-  static async checkPermissionEditQuiz({ user_id, quiz_id }) {
-    const quiz = await quizModel.findOne({
-      _id: quiz_id,
-      shared_user_ids: {
-        $elemMatch: {
-          user_id,
-        },
-      },
-    });
-
-    if (!quiz) {
-      throw new BadRequestError("Không có quyền chỉnh sửa");
-    }
-
-    const sharedUser = quiz.shared_user_ids.find(
-      (item) => item.user_id.toString() === user_id.toString()
-    );
-
-    return sharedUser.isEdit;
-  }
-
-  static async findNotificationByReceiverId({ user_id, skip, limit }) {
-    return await getNotificationReceiverIdService({
-      userId: user_id,
-      skip,
-      limit,
-    });
-  }
-
   static async getAllTeachersAccount({ skip, limit }) {
     const teachers = await Teacher.aggregate([
       {
