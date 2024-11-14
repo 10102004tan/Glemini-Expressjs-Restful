@@ -70,7 +70,7 @@ class ResultService {
 			// Save result to room
 			if (room_id) {
 				await roomModel.findByIdAndUpdate(
-					room_id,
+					{ _id: room_id },
 					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
 					{ new: true, runValidators: true }
 				);
@@ -109,13 +109,21 @@ class ResultService {
 		if (room_id) {
 			query.room_id = room_id;
 		}
-
+		// Cập nhật lại trạng thái kết thúc cho quiz đó
 		const result = await ResultModel.findOneAndUpdate(
 			query,
 			{ status: 'completed' },
 			{ new: true },
 			{ runValidators: true }
 		);
+
+		// Xóa người dùng ra khỏi phòng
+		if (room_id) {
+			await roomModel.findByIdAndUpdate(
+				{ _id: room_id },
+				{ $pull: { user_join_ids: user_id } }
+			);
+		}
 
 		if (!result) {
 			throw new BadRequestError('Result not found');
@@ -137,6 +145,10 @@ class ResultService {
 
 		if (quiz_id) {
 			query.quiz_id = quiz_id;
+		}
+
+		if (user_id) {
+			query.user_id = user_id;
 		}
 
 		if (exercise_id) {
@@ -190,6 +202,7 @@ class ResultService {
 		correct,
 		score,
 	}) {
+		console.log(room_id);
 		// Kiểm tra tham số đầu vào
 		if (!user_id || !quiz_id || !question_id) {
 			throw new Error('Thiếu tham số bắt buộc');
@@ -208,7 +221,9 @@ class ResultService {
 				result_questions: [],
 			});
 
-			if (room_id) result.room_id = room_id;
+			if (room_id) {
+				result.room_id = room_id;
+			}
 		}
 
 		// Kiểm tra và cập nhật câu trả lời trùng lặp
@@ -231,6 +246,15 @@ class ResultService {
 				score,
 				answered_at: new Date(),
 			});
+		}
+
+		if (room_id) {
+			// Save result to room
+			await roomModel.findByIdAndUpdate(
+				{ _id: room_id },
+				{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
+				{ new: true, runValidators: true }
+			);
 		}
 
 		await result.save();
@@ -317,126 +341,155 @@ class ResultService {
 		return categorizedResults;
 	}
 
-    // Teacher in report
-    static async getReportResults({ userId, limit = 5, page = 1, identifier, class_name, type, sortOrder = 'oldest' }) {
-        if (!userId) {
-            throw new BadRequestError('User ID is required');
-        }
-    
-        try {
-            const queryOptions = {};
-            if (identifier) queryOptions.identifier = { $regex: identifier, $options: 'i' };
-            if (class_name) queryOptions.class_name = { $regex: class_name, $options: 'i' };
-            if (type) queryOptions.type = type;
-    
-            // Fetch rooms created by the user, filtering for completed results
-            const rooms = await RoomModel.find({ user_created_id: userId })
-                .populate({
-                    path: 'result_ids',
-                    match: { status: 'completed' },
-                    model: 'Result',
-                    populate: [
-                        { path: 'user_id', select: 'user_fullname user_avatar user_email' },
-                        { path: 'quiz_id', select: 'quiz_name quiz_thumb' },
-                        {
-                            path: 'result_questions.question_id',
-                            select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-                            populate: {
-                                path: 'question_answer_ids',
-                                model: 'Answer',
-                                select: 'text image'
-                            }
-                        },
-                        { path: 'result_questions.answer', select: 'text image' }
-                    ]
-                });
-    
-            // Fetch classrooms where the user is the teacher, filtering for completed results
-            const classrooms = await classroomModel.find({ user_id: userId })
-                .populate({
-                    path: 'exercises',
-                    populate: {
-                        path: 'result_ids',
-                        match: { status: 'completed' },
-                        model: 'Result',
-                        populate: [
-                            { path: 'user_id', select: 'user_fullname user_avatar user_email' },
-                            { path: 'quiz_id', select: 'quiz_name quiz_thumb' },
-                            {
-                                path: 'result_questions.question_id',
-                                select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-                                populate: {
-                                    path: 'question_answer_ids',
-                                    model: 'Answer',
-                                    select: 'text image'
-                                }
-                            },
-                            { path: 'result_questions.answer', select: 'text image' }
-                        ]
-                    }
-                });
-    
-            // Process rooms and classrooms into a combined results list
-            const allResults = [];
-    
-            rooms.forEach(room => {
-                allResults.push({
-                    id: room._id,
-                    type: 'room',
-                    identifier: room.room_code,
-                    description: room.description,
-                    results: room.result_ids,
-                    createdAt: room.createdAt
-                });
-            });
-    
-            classrooms.forEach(classroom => {
-                classroom.exercises.forEach(exercise => {
-                    allResults.push({
-                        id: exercise._id,
-                        type: 'exercise',
-                        identifier: exercise.name,
-                        class_name: classroom.class_name,
-                        subject: classroom.subject.name,
-                        results: exercise.result_ids,
-                        createdAt: exercise.createdAt
-                    });
-                });
-            });
-    
-            // Apply filtering on combined results
-            const filteredResults = allResults.filter(result => {
-                const matchesIdentifier = identifier ? result.identifier.match(new RegExp(identifier, 'i')) : true;
-                const matchesClassName = class_name ? (result.class_name && result.class_name.match(new RegExp(class_name, 'i'))) : true;
-                const matchesType = type ? result.type === type : true;
-                return matchesIdentifier && matchesClassName && matchesType;
-            });
-    
-            // Sort results based on createdAt
-            if (sortOrder === 'newest') {
-                filteredResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Newest first
-            } else if (sortOrder === 'oldest') {
-                filteredResults.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Oldest first
-            }
-    
-            // Implement pagination on the filtered and sorted results
-            const totalResults = filteredResults.length;
-            const paginatedResults = filteredResults.slice((page - 1) * limit, page * limit);
-    
-            return {
-                results: paginatedResults,
-                totalResults,
-                totalPages: Math.ceil(totalResults / limit),
-                currentPage: page
-            };
-        } catch (error) {
-            throw new BadRequestError(error);
-        }
-    }
-    
-    
-    
-    
+	// Teacher in report
+	static async getReportResults({
+		userId,
+		limit = 5,
+		page = 1,
+		identifier,
+		class_name,
+		type,
+		sortOrder = 'oldest',
+	}) {
+		if (!userId) {
+			throw new BadRequestError('User ID is required');
+		}
+
+		try {
+			const queryOptions = {};
+			if (identifier)
+				queryOptions.identifier = { $regex: identifier, $options: 'i' };
+			if (class_name)
+				queryOptions.class_name = { $regex: class_name, $options: 'i' };
+			if (type) queryOptions.type = type;
+
+			// Fetch rooms created by the user, filtering for completed results
+			const rooms = await RoomModel.find({
+				user_created_id: userId,
+			}).populate({
+				path: 'result_ids',
+				match: { status: 'completed' },
+				model: 'Result',
+				populate: [
+					{
+						path: 'user_id',
+						select: 'user_fullname user_avatar user_email',
+					},
+					{ path: 'quiz_id', select: 'quiz_name quiz_thumb' },
+					{
+						path: 'result_questions.question_id',
+						select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+						populate: {
+							path: 'question_answer_ids',
+							model: 'Answer',
+							select: 'text image',
+						},
+					},
+					{ path: 'result_questions.answer', select: 'text image' },
+				],
+			});
+
+			// Fetch classrooms where the user is the teacher, filtering for completed results
+			const classrooms = await classroomModel
+				.find({ user_id: userId })
+				.populate({
+					path: 'exercises',
+					populate: {
+						path: 'result_ids',
+						match: { status: 'completed' },
+						model: 'Result',
+						populate: [
+							{
+								path: 'user_id',
+								select: 'user_fullname user_avatar user_email',
+							},
+							{ path: 'quiz_id', select: 'quiz_name quiz_thumb' },
+							{
+								path: 'result_questions.question_id',
+								select: 'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+								populate: {
+									path: 'question_answer_ids',
+									model: 'Answer',
+									select: 'text image',
+								},
+							},
+							{
+								path: 'result_questions.answer',
+								select: 'text image',
+							},
+						],
+					},
+				});
+
+			// Process rooms and classrooms into a combined results list
+			const allResults = [];
+
+			rooms.forEach((room) => {
+				allResults.push({
+					id: room._id,
+					type: 'room',
+					identifier: room.room_code,
+					description: room.description,
+					results: room.result_ids,
+					createdAt: room.createdAt,
+				});
+			});
+
+			classrooms.forEach((classroom) => {
+				classroom.exercises.forEach((exercise) => {
+					allResults.push({
+						id: exercise._id,
+						type: 'exercise',
+						identifier: exercise.name,
+						class_name: classroom.class_name,
+						subject: classroom.subject.name,
+						results: exercise.result_ids,
+						createdAt: exercise.createdAt,
+					});
+				});
+			});
+
+			// Apply filtering on combined results
+			const filteredResults = allResults.filter((result) => {
+				const matchesIdentifier = identifier
+					? result.identifier.match(new RegExp(identifier, 'i'))
+					: true;
+				const matchesClassName = class_name
+					? result.class_name &&
+						result.class_name.match(new RegExp(class_name, 'i'))
+					: true;
+				const matchesType = type ? result.type === type : true;
+				return matchesIdentifier && matchesClassName && matchesType;
+			});
+
+			// Sort results based on createdAt
+			if (sortOrder === 'newest') {
+				filteredResults.sort(
+					(a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+				); // Newest first
+			} else if (sortOrder === 'oldest') {
+				filteredResults.sort(
+					(a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+				); // Oldest first
+			}
+
+			// Implement pagination on the filtered and sorted results
+			const totalResults = filteredResults.length;
+			const paginatedResults = filteredResults.slice(
+				(page - 1) * limit,
+				page * limit
+			);
+
+			return {
+				results: paginatedResults,
+				totalResults,
+				totalPages: Math.ceil(totalResults / limit),
+				currentPage: page,
+			};
+		} catch (error) {
+			throw new BadRequestError(error);
+		}
+	}
 
 	static async overview({ id }) {
 		if (!id) {
@@ -470,6 +523,55 @@ class ResultService {
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
+
+		return result;
+	}
+
+	static async getRankBoard({ room_id, quiz_id }) {
+		const results = await ResultModel.find({
+			room_id,
+			quiz_id,
+		}).populate('user_id');
+
+		if (!results) {
+			throw new BadRequestError('Result not found');
+		}
+
+		let totalAnswered = 0;
+		let correctAnswered = 0;
+
+		const rankBoard = results.map((result) => {
+			const userScore = result.result_questions.reduce((acc, q) => {
+				return q.correct ? acc + q.score : acc;
+			}, 0);
+
+			totalAnswered += result.result_questions.length;
+			correctAnswered += result.result_questions.filter(
+				(q) => q.correct
+			).length;
+
+			return {
+				user_id: result.user_id,
+				userScore,
+			};
+		});
+
+		return {
+			rank: rankBoard,
+			total_answer: totalAnswered,
+			correct_answer: correctAnswered,
+		};
+	}
+
+	static async resetResultRoom({ room_id, user_id }) {
+		const result = await ResultModel.findOne({ room_id, user_id });
+		if (!result) {
+			throw new BadRequestError('Result not found');
+		}
+
+		result.status = 'doing';
+		result.result_questions = [];
+		await result.save();
 
 		return result;
 	}

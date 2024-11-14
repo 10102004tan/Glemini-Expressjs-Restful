@@ -21,5 +21,7 @@ router.post(
 );
 router.post('/overview', asynHandler(resultController.overview));
 router.post('/reports', asynHandler(resultController.getReportResults));
+router.post('/rank', asynHandler(resultController.getRankBoard));
+router.post('/reset', asynHandler(resultController.resetResultRoom));
 
 module.exports = router;

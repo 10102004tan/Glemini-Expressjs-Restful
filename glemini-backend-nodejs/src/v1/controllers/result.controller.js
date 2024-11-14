@@ -71,6 +71,20 @@ class ResultController {
 			metadata: await resultService.getReportResults(req.body),
 		}).send(res);
 	}
+
+	async getRankBoard(req, res) {
+		return new OK({
+			message: 'Get rank successfully!',
+			metadata: await resultService.getRankBoard(req.body),
+		}).send(res);
+	}
+
+	async resetResultRoom(req, res) {
+		return new OK({
+			message: 'Reset result successfully!',
+			metadata: await resultService.resetResultRoom(req.body),
+		}).send(res);
+	}
 }
 
 module.exports = new ResultController();

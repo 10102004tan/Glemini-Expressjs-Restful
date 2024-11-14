@@ -45,6 +45,22 @@ class RoomController {
 			metadata: room,
 		}).send(res);
 	}
+
+	async addUserToRoom(req, res) {
+		const room = await roomService.addUserToRoom(req.body);
+		return new OK({
+			message: 'Add user to room successfully!',
+			metadata: room,
+		}).send(res);
+	}
+
+	async checkJoinedUser(req, res) {
+		const check = await roomService.checkJoinedUser(req.body);
+		return new OK({
+			message: 'Check user joined room successfully!',
+			metadata: check,
+		}).send(res);
+	}
 }
 
 module.exports = new RoomController();

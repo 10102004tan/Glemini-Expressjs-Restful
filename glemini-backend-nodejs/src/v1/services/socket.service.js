@@ -1,5 +1,7 @@
 'use strict';
 
+const ResultService = require('./result.service');
+
 // const usersJoinedRoom = []; // 👈🏻 Array to store users joined room
 class SocketService {
 	connection(socket) {
@@ -37,11 +39,6 @@ class SocketService {
 			socket.join(roomCode);
 			socket.user = user; // Lưu thông tin người dùng vào socket
 			socket.user.score = 0; // Khởi tạo điểm số ban đầu
-			socket.correctAnswers = 0; // Số câu trả lời đúng
-			socket.wrongAnswers = 0; // Số câu trả lời sai
-			socket.totalAnswers = 0; // Tổng số câu đã trả lời
-			socket.accuracy = 0; // Tỷ lệ % đáp án chính xác
-			socket.errorRate = 0; // Tỷ lệ % đáp án sai
 
 			console.log(`${user.user_fullname} joined room: ${roomCode}`);
 
@@ -79,47 +76,25 @@ class SocketService {
 		});
 
 		// Xử lý khi user gửi câu trả lời và cập nhật điểm
-		socket.on('submitAnswer', ({ roomCode, userId, point, isCorrect }) => {
-			// console.log('submitAnswer', { roomCode, userId, point });
-			// Thêm thông báo vào phòng chat (nếu có)
-			console.log(`${userId} submitted an answer in room: ${roomCode}`);
-			// Tăng tổng số câu đã trả lời lên 1
-			socket.totalAnswers += 1;
+		socket.on(
+			'submitAnswer',
+			async ({ roomCode, userId, point, isCorrect, quizId, roomId }) => {
+				console.log(
+					`${userId} submitted an answer in room: ${roomCode}`
+				);
+				// Cập nhật bảng xếp hạng của phòng
+				const rank = await ResultService.getRankBoard({
+					room_id: roomId,
+					quiz_id: quizId,
+				});
 
-			if (isCorrect) {
-				socket.correctAnswers += 1; // Câu trả lời đúng
-			} else {
-				socket.wrongAnswers += 1; // Câu trả lời sai
+				// Phát sự kiện bảng xếp hạng mới cho tất cả các client trong phòng
+				// Nếu cần, có thể phát sóng thông tin mới cho tất cả mọi người trong phòng
+				_io.to(roomCode).emit('updateRanking', rank);
+
+				_io.to(roomCode).emit('updateStats', rank);
 			}
-
-			// Tính tỷ lệ % chính xác và % sai sót
-			socket.accuracy =
-				(socket.correctAnswers / socket.totalAnswers) * 100;
-			socket.error_rate =
-				(socket.wrongAnswers / socket.totalAnswers) * 100;
-
-			console.log(`Updated accuracy: ${socket.accuracy.toFixed(2)}%`);
-			console.log(`Updated error rate: ${socket.errorRate.toFixed(2)}%`);
-
-			// Kiểm tra và cập nhật điểm cho user trong socket nếu có
-			if (socket.user && socket.user.score !== undefined) {
-				socket.user.score += point; // Cập nhật điểm
-			} else {
-				console.error('User data not found or score not initialized');
-			}
-
-			// Cập nhật bảng xếp hạng của phòng
-			const updatedRanking = updateRankingForRoom(roomCode);
-
-			// Phát sự kiện bảng xếp hạng mới cho tất cả các client trong phòng
-			_io.to(roomCode).emit('updateRanking', updatedRanking);
-
-			// Nếu cần, có thể phát sóng thông tin mới cho tất cả mọi người trong phòng
-			_io.to(roomCode).emit('updateStats', {
-				accuracy: socket.accuracy.toFixed(1),
-				errorRate: socket.errorRate.toFixed(1),
-			});
-		});
+		);
 
 		// Xử lý khi user hoàn thành toàn bộ bài thi
 		socket.on('finishQuiz', ({ roomCode, userId }) => {
