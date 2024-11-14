@@ -70,20 +70,21 @@ class QuizService {
 
   // Hàm lấy danh sách quiz theo môn học
   async getQuizzesBySubjectIdPublished() {
-    // Get all subjects
     const subjects = await subjectModel.find({});
     const results = [];
 
-    // Loop through each subject to get up to 4 published quizzes
     for (const subject of subjects) {
         const quizzes = await quizModel
             .find({
                 quiz_status: "published",
                 subject_ids: { $in: [subject._id] }
             })
-            .populate("user_id")
+            .populate({
+              path: 'user_id',
+              select: 'user_fullname user_avatar'
+            })
             .sort({ createdAt: -1 })
-            .limit(4); // Limit to 4 quizzes per subject
+            .limit(4);
 
         if (quizzes.length > 0) {
             results.push({
