@@ -9,6 +9,7 @@ const userModel = require('../models/user.model');
 const { BadRequestError } = require('../cores/error.repsone');
 const fs = require('fs');
 const xlsx = require('xlsx');
+const { pushNotiForSys } = require('./notification.service');
 
 class ClassroomService {
 
@@ -154,6 +155,23 @@ class ClassroomService {
                     { $addToSet: { classroom_ids: classroomId } },
                     { upsert: true }
                 );
+
+                const noti = await pushNotiForSys({
+                    type: 'CLASSROOM-001',
+                    receiverId: user._id,
+                    senderId: classroom.user_id,
+                    content: `You have been added to the classroom ${classroom.class_name}`,
+                    options: {
+                        classroom_id: classroom._id,
+                        classroom_name: classroom.class_name,
+                    }
+                });
+    
+                // push real-time notification for user
+               const userOnline = _listUserOnline.find(item => item.userId === user._id);
+               if (!userOnline) return;
+               userOnline.socket.emit('notification', noti);
+
             }
         }
 
@@ -191,6 +209,22 @@ class ClassroomService {
                 { $addToSet: { classroom_ids: classroomId } },
                 { upsert: true }
             );
+
+            const noti = await pushNotiForSys({
+                type: 'CLASSROOM-001',
+                receiverId: user._id,
+                senderId: classroom.user_id,
+                content: `You have been added to the classroom ${classroom.class_name}`,
+                options: {
+                    classroom_id: classroom._id,
+                    classroom_name: classroom.class_name,
+                }
+            });
+
+            // push real-time notification for user
+           const userOnline = _listUserOnline.find(item => item.userId === user._id);
+           if (!userOnline) return;
+           userOnline.socket.emit('notification', noti);
         }
 
         await classroom.save();

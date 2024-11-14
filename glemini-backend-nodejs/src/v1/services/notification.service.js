@@ -14,18 +14,6 @@ const pushNotiForSys = async ({
     options = {},
     content = ''
 }) => {
-    // if (type === 'SYS-001') {
-    //     noti_content = 'System maintenance in  @@@'
-    // } else if (type === 'SYS-002') {
-    //     noti_content = 'Update feature @@@@ in @@@';
-    // }
-    // else if (type === 'SHARE-001') {
-    //     noti_content = 'New share notification from @@@';
-    // }
-    // else if (type === 'ROOM-001') {
-    //     noti_content = 'Bạn được mời tham gia phòng chơi từ @@@';
-    // }
-
     const newNoti = await NOTI.create({
         noti_content: content,
         noti_options: options,
@@ -93,10 +81,11 @@ const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},
     return 1;
 }
 
+
 module.exports = {
     pushNotiForSys,
     findNotiByType,
     getNotificationReceiverIdService,
     updateStatusNotificationService,
-    sendNotificationAdminService
+    sendNotificationAdminService,
 };

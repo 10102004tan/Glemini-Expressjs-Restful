@@ -140,6 +140,17 @@ class QuizService {
           as: "questions",
         },
       },
+        {
+          // lookup with user and unwind
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+      },{
+        $unwind: "$user",
+      },
       {
         $project: {
           quiz_name: 1,
@@ -149,6 +160,8 @@ class QuizService {
           quiz_status: 1,
           createdAt: 1,
           subject_ids: 1,
+          user_avatar: "$user.user_avatar",
+          user_fullname: "$user.user_fullname",
           question_count: { $size: "$questions" }, // Count of questions
         },
       },

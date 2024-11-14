@@ -14,7 +14,7 @@ const COLLECTION_NAME = 'notifications';
 const notificationSchema = new Schema({
     noti_type:{
         type:String,
-        enum:['SYS-001','SYS-002','SHARE-001','SHARE-002','ROOM-001'],
+        enum:['SYS-001','SYS-002','SHARE-001','SHARE-002','ROOM-001','CLASSROOM-001'],
         required:true
     },
     noti_senderId:{

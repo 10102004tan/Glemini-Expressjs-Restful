@@ -8,7 +8,9 @@ class SocketService {
 
 		// push socket to list user online global include userId, socket
 		socket.on('init', (userId) => {
-			// check userId exist in map user online , if not exist then push to list user online
+			// if socket.id exists in list user online
+			const userOnline = _listUserOnline.find(item => item.socket === socket);
+			if (userOnline) return;
 			_listUserOnline.push({ userId, socket });
 			console.log('🚪List user online:', _listUserOnline);
 		});
@@ -21,6 +23,7 @@ class SocketService {
 			_listUserOnline = _listUserOnline.filter(
 				(user) => user.socket.id !== socket.id
 			);
+			console.log('🚪List user online prev:', _listUserOnline);
 			console.log('🔥: A user disconnected');
 		});
 
