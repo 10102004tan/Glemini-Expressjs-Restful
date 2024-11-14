@@ -121,9 +121,9 @@ class UserService {
     };
   }
 
-  static async findNotificationByReceiverId({ user_id, skip, limit }) {
+  static async findNotificationByReceiverId({ userId, skip, limit }) {
     return await getNotificationReceiverIdService({
-      userId: user_id,
+      userId,
       skip,
       limit,
     });
@@ -170,10 +170,6 @@ class UserService {
       user_email: email,
       user_avatar: uploadUrl && uploadUrl.thumbnail,
     };
-  }
-
-  static async findNotificationByReceiverId({ user_id }) {
-    return await getNotificationReceiverIdService(user_id);
   }
 
   // chia sẻ quiz cho giáo viên khác
