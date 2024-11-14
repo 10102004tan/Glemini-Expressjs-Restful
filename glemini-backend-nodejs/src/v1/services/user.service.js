@@ -27,6 +27,7 @@ const { pushNoti } = require("./expo.service");
 const quizModel = require("../models/quiz.model");
 const ExpoToken = require("../models/expoToken.model");
 const notificationModel = require("../models/notification.model");
+const expoTokenModel = require("../models/expoToken.model");
 
 class UserFactory {
   static createUser(type, payload) {
@@ -244,10 +245,27 @@ class UserService {
 
     // Gửi thông báo realtime
     const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-    if (listUserOnline.length == 0) return;
-    listUserOnline.forEach((item) => {
-        item.socket.emit('notification', noti);
-    });
+    if (listUserOnline.length == 0) {
+      // push notification with expo notification
+      const expoToken = await expoTokenModel.findOne({ user_id: user._id });
+      const { tokens } = expoToken;
+      if (tokens.length > 0) {
+          const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+          // push notification with expo notification
+          pushNoti({
+              somePushTokens: listTokens,
+              data: {
+                  body: "Bạn có 1 bài quiz được chia sẻ từ một giáo viên nào đó :)",
+                  title: 'Thông báo',
+              }
+          });
+      }
+  } else {
+      listUserOnline.forEach((item) => {
+          item.socket.emit('notification', noti);
+      });
+
+  };
 
 
     return updated;

@@ -10,6 +10,8 @@ const { BadRequestError } = require('../cores/error.repsone');
 const fs = require('fs');
 const xlsx = require('xlsx');
 const { pushNotiForSys } = require('./notification.service');
+const expoTokenModel = require('../models/expoToken.model');
+const { pushNoti } = require('./expo.service');
 
 class ClassroomService {
 
@@ -151,14 +153,14 @@ class ClassroomService {
     // Hàm thêm học sinh vào lớp học bằng file Excel
     static addStudentsFromExcel = async (classroomId, filePath) => {
         const students = ClassroomService.readStudentsFromExcel(filePath);
-    
+
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
-    
+
         // Initialize an array to hold promises for all user creation and classroom updates
         const studentPromises = students.map(async (student) => {
             let user = await userModel.findOne({ user_email: student.email });
-    
+
             if (!user) {
                 const signupData = {
                     fullname: student.fullname,
@@ -167,25 +169,25 @@ class ClassroomService {
                     type: 'student',
                     attributes: {}
                 };
-    
+
                 const newUser = await AccessService.signup(signupData);
                 user = newUser.user;
             }
-    
+
             // Add student to classroom if not already there
             if (!classroom.students.includes(user._id)) {
                 await classroomModel.updateOne(
                     { _id: classroomId },
                     { $addToSet: { students: user._id } }
                 );
-                
+
                 // Update student's classroom list
                 await studentModel.updateOne(
                     { _id: user._id },
                     { $addToSet: { classroom_ids: classroomId } },
                     { upsert: true }
                 );
-    
+
                 const noti = await pushNotiForSys({
                     type: 'CLASSROOM-001',
                     receiverId: user._id,
@@ -196,34 +198,40 @@ class ClassroomService {
                         classroom_name: classroom.class_name,
                     }
                 });
-    
+
                 // push real-time notification for user
-                const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-               if (!userOnline) return;
-               userOnline.socket.emit('notification', noti);
+                const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+                if (listUserOnline.length == 0) {
+                    // push notification with expo notification
+                } else {
+                    listUserOnline.forEach((item) => {
+                        item.socket.emit('notification', noti);
+                    });
+
+                };
 
             }
         });
-    
+
         // Wait for all promises to resolve before returning
         await Promise.all(studentPromises);
-    
+
         return classroom;
     }
-    
+
 
     // Hàm thêm một học sinh
     async addStudent({ classroomId, user_email }) {
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
-    
+
         let user = await userModel.findOne({ user_email: user_email });
-    
+
         // If the student is already in the classroom, throw an error
         if (user && classroom.students.includes(user._id)) {
             throw new BadRequestError('Student is already in this classroom');
         }
-    
+
         if (!user) {
             const fullname = user_email.split('@')[0];
             const signupData = {
@@ -233,7 +241,7 @@ class ClassroomService {
                 type: 'student',
                 attributes: {}
             };
-    
+
             const newUser = await AccessService.signup(signupData);
             user = newUser.user;
         }
@@ -261,15 +269,34 @@ class ClassroomService {
                 }
             });
 
-            // push real-time notification for user
-           const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-           if (!userOnline) return;
-           userOnline.socket.emit('notification', noti);
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+            console.log("list:::",listUserOnline);
+            if (listUserOnline.length == 0) {
+                // push notification with expo notification
+                const expoToken = await expoTokenModel.findOne({ user_id: user._id });
+                const {tokens} = expoToken;
+                if (tokens.length > 0){
+                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+                    // push notification with expo notification
+                    pushNoti({
+                        somePushTokens: listTokens,
+                        data: {
+                            body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
+                            title: 'Thông báo',
+                            data: noti.options
+                        }
+                    });
+                }
+            } else {
+                listUserOnline.forEach((item) => {
+                    item.socket.emit('notification', noti);
+                });
+            };
         }
-    
+
         await classroom.save()
         return classroom;
-    }    
+    }
 
     // Xóa học sinh ra khỏi lớp
     async removeStudentFromClass(classroomId, studentId) {

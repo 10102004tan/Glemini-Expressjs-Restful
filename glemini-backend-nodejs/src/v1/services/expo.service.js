@@ -20,6 +20,7 @@ const pushNoti = ({somePushTokens=[],data}) => {
             body:data.body,
             title:data.title,
             data: { withSome: 'data' },
+            logo:'https://banner2.cleanpng.com/20190618/y/kisspng-google-classroom-teacher-g-suite-education-school-lawson-takoa-google-classroom-1713886125563.webp',
         })
     }
 
