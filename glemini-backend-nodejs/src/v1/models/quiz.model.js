@@ -53,4 +53,13 @@ var quizSchema = new mongoose.Schema(
   }
 );
 
+// if quiz_thumb null, set default image
+quizSchema.pre("save", function (next) {
+  if (!this.quiz_thumb) {
+    this.quiz_thumb =
+      "https://elearningindustry.com/wp-content/uploads/2021/10/Shareable-Quizzes-In-Online-Training-7-Reasons.jpg";
+  }
+  next();
+});
+
 module.exports = mongoose.model("Quiz", quizSchema);
