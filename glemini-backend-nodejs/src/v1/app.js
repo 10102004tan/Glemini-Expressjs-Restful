@@ -7,8 +7,6 @@ const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
-const fs = require('fs');  
-const path = require('path');
 const io = require('socket.io')(server,{
 	cors:{
 		origin: '*',
@@ -16,6 +14,8 @@ const io = require('socket.io')(server,{
 });
 global.__basedir = __dirname;
 global._io = io;
+// array list user online global
+global._listUserOnline = [];
 
 /* MIDDLEWARES START*/
 app.use(express.json());
@@ -38,6 +38,7 @@ require('./databases/init.mongodb');
 
 global._io.on('connection', socketService.connection);
 /* SOCKET CONNECTION END*/
+
 /* ROUTES START*/
 app.use('/', require('./routes'));
 

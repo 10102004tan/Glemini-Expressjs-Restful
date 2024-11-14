@@ -8,7 +8,7 @@ const fs = require("fs");
 const { url } = require("../configs/url.response.config");
 const UploadService = require("./upload.service");
 const { model } = require("../configs/gemini.config");
-const { default: mongoose } = require("mongoose");
+const { Types: { ObjectId } } = require('mongoose')
 
 class QuizService {
   // Hàm tạo quiz
@@ -106,24 +106,75 @@ class QuizService {
     return quizzes.filter((quiz) => quiz.quiz_status === "published");
   }
 
-  // Search {name-desc} and filter {quiz_turn, date}
-  async search({ key, skip = 0, limit = 20, sortStatus = 1, quiz_on = -1 }) {
-    const query = {};
-    if (key) {
-      query.quiz_name = { $regex: key, $options: "i" };
-    }
+	// Search {name-desc} and filter {quiz_turn, date}
+	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1,subjectIds }) {
+		const query = {};
+		if (key) {
+			query.quiz_name = { $regex: key, $options: 'i' };
+		}
+
+    // get quiz published
+    query.quiz_status = "published";
+
+    // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
+    if (subjectIds && subjectIds.length > 0) {
+      subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
+      query.subject_ids = { $in: subjectIds };
+    } 
+    
+    
+
 
     if (quiz_on !== -1) {
       query.quiz_turn = { $gte: quiz_on };
     }
+		const quizzes = await quizModel.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "quiz_id",
+          as: "questions",
+        },
+      },
+        {
+          // lookup with user and unwind
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+      },{
+        $unwind: "$user",
+      },
+      {
+        $project: {
+          quiz_name: 1,
+          quiz_description: 1,
+          quiz_thumb: 1,
+          quiz_turn: 1,
+          quiz_status: 1,
+          createdAt: 1,
+          subject_ids: 1,
+          user_avatar: "$user.user_avatar",
+          user_fullname: "$user.user_fullname",
+          question_count: { $size: "$questions" }, // Count of questions
+        },
+      },
+      {
+        $match: { question_count: { $gt: 0 } },
+      },
+      { $sort: { createdAt: sortStatus } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
 
-    const quizzes = await quizModel
-      .find(query)
-      .sort({ createdAt: sortStatus })
-      .skip(skip)
-      .limit(limit);
     return quizzes;
-  }
+	}
 
   // Hàm lấy thông tin chi tiết của quiz
   async getQuizDetails({ quiz_id }) {

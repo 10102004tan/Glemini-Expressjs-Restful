@@ -9,31 +9,31 @@ class Database {
     this.connect();
   }
 
-  connect() {
-    const connectString = `mongodb://${host}:${port}/${name}`;
-    // const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
-    mongoose
-      .connect(connectString)
-      .then(() => {
-        console.log(
-          colors.bg.green,
-          `MongoDB ${name} connection successful ☕︎`,
-          colors.reset
-        );
-        // Khởi tạo dữ liệu mẫu
-        subjectService.initialize();
-        schoolService.initialize();
-      })
-      .catch((err) => {
-        console.log(
-          colors.fg.white,
-          colors.bg.red,
-          "Error while connecting to database: ",
-          err.message,
-          colors.reset
-        );
-      });
-  }
+	connect() {
+		//const connectString = `mongodb://${host}:${port}/${name}`;
+		const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
+		mongoose
+			.connect(connectString)
+			.then(() => {
+				console.log(
+					colors.bg.green,
+					`MongoDB ${name} connection successful ☕︎`,
+					colors.reset
+				);
+				// Khởi tạo dữ liệu mẫu
+				subjectService.initialize();
+				schoolService.initialize();
+			})
+			.catch((err) => {
+				console.log(
+					colors.fg.white,
+					colors.bg.red,
+					'Error while connecting to database: ',
+					err.message,
+					colors.reset
+				);
+			});
+	}
 
   static getInstance() {
     if (!Database.instance) {
