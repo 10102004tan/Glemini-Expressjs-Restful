@@ -62,6 +62,28 @@ class ClassroomService {
         await classroom.save();
 
         await classroom.populate('exercises');
+
+        // push notification for student
+        for (const studentId of classroom.students) {
+            const noti = await pushNotiForSys({
+                type: 'CLASSROOM-002',
+                receiverId: studentId,
+                senderId: classroom.user_id,
+                content: `A new quiz has been added to the classroom ${classroom.class_name}`,
+                options: {
+                    classroom_id: classroom._id,
+                    classroom_name: classroom.class_name,
+                    quiz_id: quizId,
+                    exercise_name: name,
+                    exercise_id: newExercise._id
+                }
+            });
+            // push real-time notification for user
+            const userOnline = _listUserOnline.find(item => item.userId === studentId.toString());
+            console.log('userOnline', userOnline);
+            if (!userOnline) return;
+            userOnline.socket.emit('notification', noti);
+        }
         return classroom;
     }
 
@@ -168,7 +190,7 @@ class ClassroomService {
                 });
     
                 // push real-time notification for user
-               const userOnline = _listUserOnline.find(item => item.userId === user._id);
+                const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
                if (!userOnline) return;
                userOnline.socket.emit('notification', noti);
 
@@ -222,7 +244,7 @@ class ClassroomService {
             });
 
             // push real-time notification for user
-           const userOnline = _listUserOnline.find(item => item.userId === user._id);
+           const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
            if (!userOnline) return;
            userOnline.socket.emit('notification', noti);
         }

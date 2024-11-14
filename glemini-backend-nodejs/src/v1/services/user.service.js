@@ -144,7 +144,6 @@ class UserService {
 
   static async updateProfile({ user_id, fullname, email, avatar }) {
     // update full name,email,avatar
-    console.log(fullname);
     let uploadUrl = null;
     if (avatar) {
       uploadUrl = await UploadService.uploadImageFromOneFile({
@@ -179,6 +178,15 @@ class UserService {
 
   // chia sẻ quiz cho giáo viên khác
   static async shareQuizToTeacher({ email, quiz_id, user_id, isEdit }) {
+
+    // find user teacher
+    const infoSender = await findUserByIdV2({
+      id: user_id,
+      select: {
+        user_fullname: 1,
+        user_avatar: 1,
+    }});
+
     // Tìm người dùng theo email
     const user = await User.findOne({ user_email: email });
 
@@ -186,8 +194,12 @@ class UserService {
       throw new BadRequestError("Email does not exist");
     }
 
+    // check type user
+    if (user.user_type !== "teacher") {
+      throw new BadRequestError("Quiz not shared for student");
+    }
+
     // Kiểm tra xem quiz đã được chia sẻ cho người dùng này chưa
-    console.log(user._id);
     const quiz = await quizModel.findOne({
       _id: quiz_id,
       user_id,
@@ -212,6 +224,11 @@ class UserService {
       }
     );
 
+
+
+   
+
+   // Gửi thông báo cho người dùng
     // Tạo thông báo chia sẻ
     const noti = await pushNotiForSys({
       type: "SHARE-001",
@@ -219,13 +236,23 @@ class UserService {
       senderId: user_id,
       content: "Bạn đã nhận được 1 bài quiz từ giáo viên khác",
       options: {
-        name: user.user_fullname,
-        avatar: user.user_avatar,
+        name: infoSender.user_fullname,
+        avatar: infoSender.user_avatar,
+        quiz_id
       },
     });
 
-    // Gửi thông báo qua socket
-    _io.emit(`${user._id}`, noti);
+    if (!noti) {
+      throw new BadRequestError("Cannot send notification");
+    }
+
+    // Gửi thông báo realtime
+    const userOnline = _listUserOnline.find(
+      (item) => item.userId === user._id.toString()
+    );
+    if (userOnline) {
+      userOnline.socket.emit("notification", noti);
+    }
 
     return updated;
   }
