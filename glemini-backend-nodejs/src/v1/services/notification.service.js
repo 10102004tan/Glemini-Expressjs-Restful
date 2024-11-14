@@ -32,8 +32,9 @@ const findNotiByType = async (type) => {
     return noti;
 }
 
-const getNotificationReceiverIdService = ({userId,skip,limit}) => {
-    return getNotificationByReceiverId({userId,skip,limit});
+const getNotificationReceiverIdService = async ({userId,skip,limit}) => {
+    console.log('userId',userId);
+    return await getNotificationByReceiverId({userId,skip,limit});
 }
 
 const updateStatusNotificationService = async({notiId, status}) => {

@@ -91,7 +91,7 @@ class UserController {
     return new OK({
       message: "Get Notification",
       metadata: await UserService.findNotificationByReceiverId({
-        user_id: req.user.user_id,
+        userId: req.user.user_id,
         skip: req.body.skip,
         limit: req.body.limit,
       }),
