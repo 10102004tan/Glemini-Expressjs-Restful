@@ -11,7 +11,9 @@ class SocketService {
 		// push socket to list user online global include userId, socket
 		socket.on('init', (userId) => {
 			// if socket.id exists in list user online
-			const userOnline = _listUserOnline.find(item => item.socket === socket);
+			const userOnline = _listUserOnline.find(
+				(item) => item.socket === socket
+			);
 			if (userOnline) return;
 			_listUserOnline.push({ userId, socket });
 			console.log('🚪List user online:', _listUserOnline);
@@ -37,7 +39,6 @@ class SocketService {
 			// 👇🏻 Returns the updated chat rooms via another event
 			socket.emit('roomsList', chatRooms);
 		});
-
 
 		socket.on('createClassroom', (classData) => {
 			const newClassroom = {
@@ -103,10 +104,11 @@ class SocketService {
 					quiz_id: quizId,
 				});
 
+				console.log(rank);
+
 				// Phát sự kiện bảng xếp hạng mới cho tất cả các client trong phòng
 				// Nếu cần, có thể phát sóng thông tin mới cho tất cả mọi người trong phòng
 				_io.to(roomCode).emit('updateRanking', rank);
-
 				_io.to(roomCode).emit('updateStats', rank);
 			}
 		);
