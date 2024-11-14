@@ -3,6 +3,7 @@ const mammoth = require("mammoth");
 const { BadRequestError } = require("../cores/error.repsone");
 const questionModel = require("../models/question.model");
 const quizModel = require("../models/quiz.model");
+const subjectModel = require("../models/subject.model");
 const fs = require("fs");
 
 const { url } = require("../configs/url.response.config");
@@ -68,37 +69,35 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo môn học
-  async getQuizzesBySubjectIdPublished({ subjectId, limit = 20, skip = 0 }) {
-    let query = {};
-    if (subjectId) {
-      try {
-        query.subject_ids = { $in: [subjectId] };
-      } catch (error) {
-        throw new BadRequestError("Invalid subject ID format");
-      }
+  async getQuizzesBySubjectIdPublished() {
+    // Get all subjects
+    const subjects = await subjectModel.find({});
+    const results = [];
+
+    // Loop through each subject to get up to 4 published quizzes
+    for (const subject of subjects) {
+        const quizzes = await quizModel
+            .find({
+                quiz_status: "published",
+                subject_ids: { $in: [subject._id] }
+            })
+            .populate("user_id")
+            .sort({ createdAt: -1 })
+            .limit(4); // Limit to 4 quizzes per subject
+
+        if (quizzes.length > 0) {
+            results.push({
+                subject: subject,
+                quizzes: quizzes
+            });
+        }
     }
 
-    let quizzes = await quizModel
-      .find(query)
-      .populate("user_id")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    return results;
+}
 
-    if (subjectId === null) {
-      quizzes = await quizModel.find({});
-    }
 
-    const publishedQuizzes = quizzes.filter(
-      (quiz) => quiz.quiz_status === "published"
-    );
 
-    if (publishedQuizzes.length === 0) {
-      throw new BadRequestError("No published quizzes found");
-    }
-
-    return publishedQuizzes;
-  }
 
   // Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
