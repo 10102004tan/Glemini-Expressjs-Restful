@@ -9,7 +9,9 @@ const fs = require("fs");
 const { url } = require("../configs/url.response.config");
 const UploadService = require("./upload.service");
 const { model } = require("../configs/gemini.config");
-const { Types: { ObjectId } } = require('mongoose')
+const {
+  Types: { ObjectId },
+} = require("mongoose");
 
 class QuizService {
   // Hàm tạo quiz
@@ -110,29 +112,35 @@ class QuizService {
     return quizzes.filter((quiz) => quiz.quiz_status === "published");
   }
 
-	// Search {name-desc} and filter {quiz_turn, date}
-	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1,subjectIds }) {
-		const query = {};
-		if (key) {
-			query.quiz_name = { $regex: key, $options: 'i' };
-		}
+  // Search {name-desc} and filter {quiz_turn, date}
+  async search({
+    key,
+    skip = 0,
+    limit = 20,
+    sortStatus = 1,
+    quiz_on = -1,
+    subjectIds,
+  }) {
+    const query = {};
+    if (key) {
+      query.quiz_name = { $regex: key, $options: "i" };
+    }
 
     // get quiz published
     query.quiz_status = "published";
 
     // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
     if (subjectIds && subjectIds.length > 0) {
-      subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
+      subjectIds = subjectIds.map((subjectId) =>
+        ObjectId.createFromHexString(subjectId)
+      );
       query.subject_ids = { $in: subjectIds };
-    } 
-    
-    
-
+    }
 
     if (quiz_on !== -1) {
       query.quiz_turn = { $gte: quiz_on };
     }
-		const quizzes = await quizModel.aggregate([
+    const quizzes = await quizModel.aggregate([
       {
         $match: query,
       },
@@ -144,15 +152,16 @@ class QuizService {
           as: "questions",
         },
       },
-        {
-          // lookup with user and unwind
-          $lookup: {
-            from: "users",
-            localField: "user_id",
-            foreignField: "_id",
-            as: "user",
-          },
-      },{
+      {
+        // lookup with user and unwind
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
         $unwind: "$user",
       },
       {
@@ -179,7 +188,7 @@ class QuizService {
     ]);
 
     return quizzes;
-	}
+  }
 
   // Hàm lấy thông tin chi tiết của quiz
   async getQuizDetails({ quiz_id }) {
@@ -502,11 +511,16 @@ class QuizService {
     return response;
   }
   //lấy tất cả quiz mà shared_user_ids có chứa user_id
-  async getAllQuizShared({ user_id }) {
-    const quizzies = await quizModel.find({
-      shared_user_ids: { $elemMatch: { user_id: user_id } },
-      quiz_status: { $ne: "deleted" },
-    });
+  async getAllQuizShared({ user_id, skip = 0, limit = 2 }) {
+    console.log("skip", skip);
+    const quizzies = await quizModel
+      .find({
+        shared_user_ids: { $elemMatch: { user_id: user_id } },
+        quiz_status: { $ne: "deleted" },
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     if (quizzies.length === 0) {
       // Kiểm tra mảng không rỗng

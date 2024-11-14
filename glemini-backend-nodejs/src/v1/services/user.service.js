@@ -175,14 +175,14 @@ class UserService {
 
   // chia sẻ quiz cho giáo viên khác
   static async shareQuizToTeacher({ email, quiz_id, user_id, isEdit }) {
-
     // find user teacher
     const infoSender = await findUserByIdV2({
       id: user_id,
       select: {
         user_fullname: 1,
         user_avatar: 1,
-    }});
+      },
+    });
 
     // Tìm người dùng theo email
     const user = await User.findOne({ user_email: email });
@@ -221,11 +221,7 @@ class UserService {
       }
     );
 
-
-
-   
-
-   // Gửi thông báo cho người dùng
+    // Gửi thông báo cho người dùng
     // Tạo thông báo chia sẻ
     const noti = await pushNotiForSys({
       type: "SHARE-001",
@@ -235,7 +231,7 @@ class UserService {
       options: {
         name: infoSender.user_fullname,
         avatar: infoSender.user_avatar,
-        quiz_id
+        quiz_id,
       },
     });
 
