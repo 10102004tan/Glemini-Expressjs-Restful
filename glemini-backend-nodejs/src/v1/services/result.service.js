@@ -19,6 +19,16 @@ class ResultService {
 		correct,
 		score,
 	}) {
+		console.log(
+			exercise_id,
+			room_id,
+			user_id,
+			quiz_id,
+			question_id,
+			answer,
+			correct,
+			score
+		);
 		const query = {
 			user_id,
 			quiz_id,
@@ -94,14 +104,13 @@ class ResultService {
 		return result;
 	}
 
-
 	static async completeQuiz({ exercise_id, room_id, user_id, quiz_id }) {
 		const query = {
 			user_id,
 			quiz_id,
-			type: ''
+			type: '',
 		};
-	
+
 		if (exercise_id) {
 			query.exercise_id = exercise_id;
 			query.type = 'exercise';
@@ -111,14 +120,13 @@ class ResultService {
 		} else {
 			query.type = 'publish';
 		}
-    
+
 		// Cập nhật lại trạng thái kết thúc cho quiz đó
 		const result = await ResultModel.findOneAndUpdate(
 			query,
 			{ status: 'completed' },
 			{ new: true, runValidators: true }
 		);
-
 
 		// Xóa người dùng ra khỏi phòng
 		if (room_id) {
@@ -131,24 +139,23 @@ class ResultService {
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
-	
+
 		// Update quiz play count
 		await QuizModel.findOneAndUpdate(
 			{ _id: quiz_id },
 			{ $inc: { quiz_turn: 1 } },
 			{ new: true, runValidators: true }
 		);
-	
+
 		return result;
 	}
-	
 
 	static async review({ user_id, exercise_id, quiz_id, room_id, type }) {
 		const query = {
-            user_id,
-            quiz_id,
-			type
-        };
+			user_id,
+			quiz_id,
+			type,
+		};
 
 		if (user_id) {
 			query.user_id = user_id;
@@ -226,6 +233,7 @@ class ResultService {
 
 			if (room_id) {
 				result.room_id = room_id;
+				result.type = 'room';
 			}
 		}
 
@@ -311,7 +319,7 @@ class ResultService {
 			})
 			.populate({
 				path: 'room_id',
-				select: 'room_code',
+				select: 'room_code user_created_id',
 			});
 
 		// Nhóm các kết quả theo trạng thái
