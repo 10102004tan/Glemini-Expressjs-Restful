@@ -16,6 +16,7 @@ const { pushNoti } = require('./expo.service');
 const { producerQueue } = require('./producerQueue.service');
 const { storeNewExpoToken, removeExpoToken } = require('./expoToken.service');
 const { pushNotiForSys } = require('./notification.service');
+const expoTokenModel = require('../models/expoToken.model');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, user_expotoken, attributes, files }) {
@@ -459,10 +460,32 @@ class AccessSevice {
 
             // get list user online by userId
             const listUserOnline = _listUserOnline.filter((item) => item.userId === user_id);
-            if (listUserOnline.length == 0) return;
-            listUserOnline.forEach((item) => {
-                item.socket.emit('notification', noti);
-            });
+            // if (listUserOnline.length == 0) return;
+            // listUserOnline.forEach((item) => {
+            //     item.socket.emit('notification', noti);
+            // });
+
+            if (listUserOnline.length == 0) {
+                // push notification with expo notification
+                const expoToken = await expoTokenModel.findOne({ user_id });
+                const { tokens } = expoToken;
+                if (tokens.length > 0) {
+                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+                    // push notification with expo notification
+                    pushNoti({
+                        somePushTokens: listTokens,
+                        data: {
+                            body: message,
+                            title: 'Thông báo',
+                        }
+                    });
+                }
+            } else {
+                listUserOnline.forEach((item) => {
+                    item.socket.emit('notification', noti);
+                });
+
+            };
 
             return updatedStatus;
         }
