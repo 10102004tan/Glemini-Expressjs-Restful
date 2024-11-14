@@ -49,14 +49,22 @@ class RoomService {
 		return room;
 	}
 
-	async updateRoom({ room_code, status }) {
-		console.log(room_code, status);
+	async updateRoom({ room_code, status, joined_users }) {
 		const room = await roomModel.findOne({ room_code });
 		if (!room) {
 			throw new BadRequestError('No room found');
 		}
 
-		room.status = status;
+		// Cập nhật trạng thái
+		if (status) {
+			room.status = status;
+		}
+
+		// Nếu có danh sách người dùng đã tham gia vào phòng
+		if (joined_users) {
+			room.user_join_ids = joined_users;
+		}
+
 		await room.save();
 		return room;
 	}
@@ -82,6 +90,36 @@ class RoomService {
 		}
 
 		return room;
+	}
+
+	// Hàm thêm người dùng đã join vào phòng
+	async addUserToRoom({ room_code, user_id }) {
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+		room.user_ids.push(user_id);
+		await room.save();
+		return room;
+	}
+
+	// Hàm kiểm tra người dùng đã tham gia vào phòng chơi chưa
+	async checkJoinedUser({ user_id, room_code }) {
+		const room = await roomModel.findOne({ room_code });
+
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+
+		let check = false;
+		room.user_join_ids.forEach((user) => {
+			if (user.toString() === user_id.toString()) {
+				check = true;
+				return;
+			}
+		});
+
+		return check;
 	}
 }
 
