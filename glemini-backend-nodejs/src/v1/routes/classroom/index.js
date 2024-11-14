@@ -4,8 +4,10 @@ const router = express.Router();
 const { authentication } = require('../../auths');
 const { asynHandler } = require('../../auths/utils');
 const { uploadExcel } = require('../../configs/multer.config');
-
+const templateRouter = require("../template");
 const classroomController = require('../../controllers/classroom.controller');
+
+router.use("/get-templates", templateRouter);
 
 /* AUTHENTICATION */
 router.use(asynHandler(authentication));
