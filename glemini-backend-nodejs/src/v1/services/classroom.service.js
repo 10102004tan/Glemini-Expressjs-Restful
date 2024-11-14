@@ -79,10 +79,13 @@ class ClassroomService {
                 }
             });
             // push real-time notification for user
-            const userOnline = _listUserOnline.find(item => item.userId === studentId.toString());
-            console.log('userOnline', userOnline);
-            if (!userOnline) return;
-            userOnline.socket.emit('notification', noti);
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
+            if (listUserOnline.length == 0) return;
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
+
+
         }
         return classroom;
     }
@@ -190,9 +193,11 @@ class ClassroomService {
                 });
     
                 // push real-time notification for user
-                const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-               if (!userOnline) return;
-               userOnline.socket.emit('notification', noti);
+                const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
+                if (listUserOnline.length == 0) return;
+                listUserOnline.forEach((item) => {
+                    item.socket.emit('notification', noti);
+                });
 
             }
         }
@@ -244,9 +249,11 @@ class ClassroomService {
             });
 
             // push real-time notification for user
-           const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-           if (!userOnline) return;
-           userOnline.socket.emit('notification', noti);
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
+            if (listUserOnline.length == 0) return;
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
         }
 
         await classroom.save();

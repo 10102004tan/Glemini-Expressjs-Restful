@@ -136,7 +136,7 @@ class AccessSevice {
 
             // add user_expotoken to expoToken
             const storeExpoToken = await storeNewExpoToken(newUser._id, user_expotoken);
-            
+
             if (!storeExpoToken) {
                 throw new BadRequestError("Cannot store expo token");
             }
@@ -155,7 +155,7 @@ class AccessSevice {
         }
 
     }
-    static async login({ email, password,user_expotoken }) {
+    static async login({ email, password, user_expotoken }) {
         const foundUser = await findUserByEmailV2(email);
 
         if (!foundUser) {
@@ -214,7 +214,7 @@ class AccessSevice {
         }
 
     }
-    static async logout({ user_id,user_expotoken }) {
+    static async logout({ user_id, user_expotoken }) {
         const del = await KeyTokenService.removeRefreshTokenById(user_id);
         if (!del) {
             throw new BadRequestError("Logout failed");
@@ -433,7 +433,7 @@ class AccessSevice {
             else if (teacher_status === 'rejected') {
                 message = "Information is incorrect, please re-upload information";
                 status = "warning";
-                logo_status = "https://media.istockphoto.com/id/1407160246/vector/danger-triangle-icon.jpg?s=612x612&w=0&k=20&c=BS5mwULONmoEG9qPnpAxjb6zhVzHYBNOYsc7S5vdzYI="  
+                logo_status = "https://media.istockphoto.com/id/1407160246/vector/danger-triangle-icon.jpg?s=612x612&w=0&k=20&c=BS5mwULONmoEG9qPnpAxjb6zhVzHYBNOYsc7S5vdzYI="
             }
             else if (teacher_status === 'pedding') {
                 message = "Your account has been suspended";
@@ -456,14 +456,13 @@ class AccessSevice {
                 throw new BadRequestError("Cannot send notification");
             }
 
-            // send notification to user online
-            
-            const userOnline = _listUserOnline.find(
-                (item) => item.userId === user_id
-              );
-            if (userOnline) {
-                userOnline.socket.emit('notification', noti);
-            }
+
+            // get list user online by userId
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === user_id);
+            if (listUserOnline.length == 0) return;
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
 
             return updatedStatus;
         }
