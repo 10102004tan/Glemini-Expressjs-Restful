@@ -524,6 +524,31 @@ class QuizService {
 
     return quiz;
   }
+
+  //sao chép lại tất cả thông tin cùa quiz đã chia sẻ
+  async copyQuizShared({ user_id, quiz_id }) {
+    const quiz = await quizModel.findOne({ _id: quiz_id });
+
+    if (!quiz) {
+      throw new BadRequestError("Quiz not found");
+    }
+
+    const newQuiz = await quizModel.create({
+      user_id,
+      quiz_name: quiz.quiz_name + " (copy)",
+      quiz_description: quiz.quiz_description,
+      quiz_thumb: quiz.quiz_thumb,
+      subject_ids: quiz.subject_ids,
+      quiz_status: "unpublished",
+      quiz_turn: quiz.quiz_turn,
+    });
+
+    if (!newQuiz) {
+      throw new BadRequestError("Quiz not created");
+    }
+
+    return newQuiz;
+  }
 }
 
 module.exports = new QuizService();
