@@ -148,13 +148,14 @@ class ClassroomService {
     // Hàm thêm học sinh vào lớp học bằng file Excel
     static addStudentsFromExcel = async (classroomId, filePath) => {
         const students = ClassroomService.readStudentsFromExcel(filePath);
-
+    
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
-
-        for (const student of students) {
+    
+        // Initialize an array to hold promises for all user creation and classroom updates
+        const studentPromises = students.map(async (student) => {
             let user = await userModel.findOne({ user_email: student.email });
-
+    
             if (!user) {
                 const signupData = {
                     fullname: student.fullname,
@@ -163,21 +164,25 @@ class ClassroomService {
                     type: 'student',
                     attributes: {}
                 };
-
+    
                 const newUser = await AccessService.signup(signupData);
                 user = newUser.user;
             }
-
-            // Thêm học sinh vào lớp nếu chưa có
+    
+            // Add student to classroom if not already there
             if (!classroom.students.includes(user._id)) {
-                classroom.students.push(user._id);
-
+                await classroomModel.updateOne(
+                    { _id: classroomId },
+                    { $addToSet: { students: user._id } }
+                );
+                
+                // Update student's classroom list
                 await studentModel.updateOne(
                     { _id: user._id },
                     { $addToSet: { classroom_ids: classroomId } },
                     { upsert: true }
                 );
-
+    
                 const noti = await pushNotiForSys({
                     type: 'CLASSROOM-001',
                     receiverId: user._id,
@@ -189,27 +194,35 @@ class ClassroomService {
                     }
                 });
     
-                // push real-time notification for user
+                // Push real-time notification if the user is online
                 const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-               if (!userOnline) return;
-               userOnline.socket.emit('notification', noti);
-
+                if (userOnline) {
+                    userOnline.socket.emit('notification', noti);
+                }
             }
-        }
-
-        await classroom.save();
+        });
+    
+        // Wait for all promises to resolve before returning
+        await Promise.all(studentPromises);
+    
         return classroom;
     }
+    
 
     // Hàm thêm một học sinh
     async addStudent({ classroomId, user_email }) {
         const classroom = await classroomModel.findById(classroomId);
         if (!classroom) throw new BadRequestError('Classroom not found');
-
+    
         let user = await userModel.findOne({ user_email: user_email });
-
+    
+        // If the student is already in the classroom, throw an error
+        if (user && classroom.students.includes(user._id)) {
+            throw new BadRequestError('Student is already in this classroom');
+        }
+    
         if (!user) {
-            const fullname = user_email.split('@')[0]
+            const fullname = user_email.split('@')[0];
             const signupData = {
                 fullname: fullname,
                 email: user_email,
@@ -217,41 +230,43 @@ class ClassroomService {
                 type: 'student',
                 attributes: {}
             };
-
+    
             const newUser = await AccessService.signup(signupData);
             user = newUser.user;
         }
-
-        // Thêm học sinh vào lớp nếu chưa có
-        if (!classroom.students.includes(user._id)) {
-            classroom.students.push(user._id);
-
-            await studentModel.updateOne(
-                { _id: user._id },
-                { $addToSet: { classroom_ids: classroomId } },
-                { upsert: true }
-            );
-
-            const noti = await pushNotiForSys({
-                type: 'CLASSROOM-001',
-                receiverId: user._id,
-                senderId: classroom.user_id,
-                content: `You have been added to the classroom ${classroom.class_name}`,
-                options: {
-                    classroom_id: classroom._id,
-                    classroom_name: classroom.class_name,
-                }
-            });
-
-            // push real-time notification for user
-           const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-           if (!userOnline) return;
-           userOnline.socket.emit('notification', noti);
+    
+        await classroomModel.updateOne(
+            { _id: classroomId },
+            { $addToSet: { students: user._id } }
+        );
+    
+        await studentModel.updateOne(
+            { _id: user._id },
+            { $addToSet: { classroom_ids: classroomId } },
+            { upsert: true }
+        );
+    
+        // Send a notification to the user
+        const noti = await pushNotiForSys({
+            type: 'CLASSROOM-001',
+            receiverId: user._id,
+            senderId: classroom.user_id,
+            content: `You have been added to the classroom ${classroom.class_name}`,
+            options: {
+                classroom_id: classroom._id,
+                classroom_name: classroom.class_name,
+            }
+        });
+    
+        // Push real-time notification if the user is online
+        const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
+        if (userOnline) {
+            userOnline.socket.emit('notification', noti);
         }
-
-        await classroom.save();
+    
+        await classroom.save()
         return classroom;
-    }
+    }    
 
     // Xóa học sinh ra khỏi lớp
     async removeStudentFromClass(classroomId, studentId) {
