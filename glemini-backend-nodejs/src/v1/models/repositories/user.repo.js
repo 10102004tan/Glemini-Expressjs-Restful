@@ -26,6 +26,7 @@ const findUserByIdV2 = async ({id,select={}}) => {
     return foundUser;
 };
 
+
 const updatePasswordByEmail = async ({email, password}) => {
     const updated = await User.updateOne({user_email:email}, {user_password: password});
     return updated;
