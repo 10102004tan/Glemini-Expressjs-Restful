@@ -26,15 +26,15 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo user
-  async getQuizByUser({ user_id, limit = 20, skip = 0 }) {
-    console.log(limit, skip);
+  async getQuizByUser({ user_id, skip = 0, limit = 2 }) {
     const quizzies = await quizModel
       .find({
         user_id,
         quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
       })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     if (!quizzies) {
       throw new BadRequestError("Quiz not found");
@@ -52,13 +52,13 @@ class QuizService {
     return quiz;
   }
 
-	// Hàm lấy danh sách câu hỏi theo quiz
-	async getQuestionsByQuiz({ quiz_id }) {
-		const questions = await questionModel
-			.find({ quiz_id })
-			.populate('question_answer_ids')
-			.populate('correct_answer_ids')
-			.exec();
+  // Hàm lấy danh sách câu hỏi theo quiz
+  async getQuestionsByQuiz({ quiz_id }) {
+    const questions = await questionModel
+      .find({ quiz_id })
+      .populate("question_answer_ids")
+      .populate("correct_answer_ids")
+      .exec();
 
     if (!questions) {
       throw new BadRequestError("Questions not found");
@@ -499,10 +499,12 @@ class QuizService {
   //lấy tất cả quiz mà shared_user_ids có chứa user_id
   async getAllQuizShared({ user_id }) {
     const quizzies = await quizModel.find({
-      shared_user_ids: { $in: [user_id] },
+      shared_user_ids: { $elemMatch: { user_id: user_id } },
+      quiz_status: { $ne: "deleted" },
     });
 
-    if (!quizzies) {
+    if (quizzies.length === 0) {
+      // Kiểm tra mảng không rỗng
       throw new BadRequestError("No shared quizzes found");
     }
 
@@ -512,12 +514,12 @@ class QuizService {
   //Hàm xóa quiz đã chia sẻ dựa trên user_id
   async removeQuizShared({ user_id, quiz_id }) {
     const quiz = await quizModel.updateOne(
-      { _id: quiz_id, shared_user_ids: { $in: [user_id] } },
-      { $pull: { shared_user_ids: user_id } }
+      { _id: quiz_id },
+      { $pull: { shared_user_ids: { user_id } } } // Đảm bảo chỉ truyền `user_id` mà không có đối tượng { user_id }
     );
 
-    if (!quiz) {
-      throw new BadRequestError("Quiz not found");
+    if (quiz.modifiedCount === 0) {
+      throw new BadRequestError("Quiz not found or user not shared");
     }
 
     return quiz;
