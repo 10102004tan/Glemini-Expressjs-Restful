@@ -3,12 +3,13 @@ const mammoth = require("mammoth");
 const { BadRequestError } = require("../cores/error.repsone");
 const questionModel = require("../models/question.model");
 const quizModel = require("../models/quiz.model");
+const subjectModel = require("../models/subject.model");
 const fs = require("fs");
 
 const { url } = require("../configs/url.response.config");
 const UploadService = require("./upload.service");
 const { model } = require("../configs/gemini.config");
-const { default: mongoose } = require("mongoose");
+const { Types: { ObjectId } } = require('mongoose')
 
 class QuizService {
   // Hàm tạo quiz
@@ -26,15 +27,15 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo user
-  async getQuizByUser({ user_id, limit = 20, skip = 0 }) {
-    console.log(limit, skip);
+  async getQuizByUser({ user_id, skip = 0, limit = 2 }) {
     const quizzies = await quizModel
       .find({
         user_id,
         quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
       })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     if (!quizzies) {
       throw new BadRequestError("Quiz not found");
@@ -52,13 +53,13 @@ class QuizService {
     return quiz;
   }
 
-	// Hàm lấy danh sách câu hỏi theo quiz
-	async getQuestionsByQuiz({ quiz_id }) {
-		const questions = await questionModel
-			.find({ quiz_id })
-			.populate('question_answer_ids')
-			.populate('correct_answer_ids')
-			.exec();
+  // Hàm lấy danh sách câu hỏi theo quiz
+  async getQuestionsByQuiz({ quiz_id }) {
+    const questions = await questionModel
+      .find({ quiz_id })
+      .populate("question_answer_ids")
+      .populate("correct_answer_ids")
+      .exec();
 
     if (!questions) {
       throw new BadRequestError("Questions not found");
@@ -68,37 +69,36 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo môn học
-  async getQuizzesBySubjectIdPublished({ subjectId, limit = 20, skip = 0 }) {
-    let query = {};
-    if (subjectId) {
-      try {
-        query.subject_ids = { $in: [subjectId] };
-      } catch (error) {
-        throw new BadRequestError("Invalid subject ID format");
-      }
+  async getQuizzesBySubjectIdPublished() {
+    const subjects = await subjectModel.find({});
+    const results = [];
+
+    for (const subject of subjects) {
+        const quizzes = await quizModel
+            .find({
+                quiz_status: "published",
+                subject_ids: { $in: [subject._id] }
+            })
+            .populate({
+              path: 'user_id',
+              select: 'user_fullname user_avatar'
+            })
+            .sort({ createdAt: -1 })
+            .limit(4);
+
+        if (quizzes.length > 0) {
+            results.push({
+                subject: subject,
+                quizzes: quizzes
+            });
+        }
     }
 
-    let quizzes = await quizModel
-      .find(query)
-      .populate("user_id")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    return results;
+}
 
-    if (subjectId === null) {
-      quizzes = await quizModel.find({});
-    }
 
-    const publishedQuizzes = quizzes.filter(
-      (quiz) => quiz.quiz_status === "published"
-    );
 
-    if (publishedQuizzes.length === 0) {
-      throw new BadRequestError("No published quizzes found");
-    }
-
-    return publishedQuizzes;
-  }
 
   // Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
@@ -107,18 +107,73 @@ class QuizService {
   }
 
 	// Search {name-desc} and filter {quiz_turn, date}
-	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1 }) {
+	async search({ key,skip=0,limit=20,sortStatus=1,quiz_on=-1,subjectIds }) {
 		const query = {};
 		if (key) {
 			query.quiz_name = { $regex: key, $options: 'i' };
 		}
 
+    // get quiz published
+    query.quiz_status = "published";
+
+    // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
+    if (subjectIds && subjectIds.length > 0) {
+      subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
+      query.subject_ids = { $in: subjectIds };
+    } 
+    
+    
+
+
     if (quiz_on !== -1) {
       query.quiz_turn = { $gte: quiz_on };
     }
+		const quizzes = await quizModel.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "quiz_id",
+          as: "questions",
+        },
+      },
+        {
+          // lookup with user and unwind
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+      },{
+        $unwind: "$user",
+      },
+      {
+        $project: {
+          quiz_name: 1,
+          quiz_description: 1,
+          quiz_thumb: 1,
+          quiz_turn: 1,
+          quiz_status: 1,
+          createdAt: 1,
+          subject_ids: 1,
+          user_avatar: "$user.user_avatar",
+          user_fullname: "$user.user_fullname",
+          question_count: { $size: "$questions" }, // Count of questions
+        },
+      },
+      {
+        $match: { question_count: { $gt: 0 } },
+      },
+      { $sort: { createdAt: sortStatus } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
 
-		const quizzes = await quizModel.find(query).sort({createdAt: sortStatus}).skip(skip).limit(limit);
-		return quizzes;
+    return quizzes;
 	}
 
   // Hàm lấy thông tin chi tiết của quiz
@@ -444,10 +499,12 @@ class QuizService {
   //lấy tất cả quiz mà shared_user_ids có chứa user_id
   async getAllQuizShared({ user_id }) {
     const quizzies = await quizModel.find({
-      shared_user_ids: { $in: [user_id] },
+      shared_user_ids: { $elemMatch: { user_id: user_id } },
+      quiz_status: { $ne: "deleted" },
     });
 
-    if (!quizzies) {
+    if (quizzies.length === 0) {
+      // Kiểm tra mảng không rỗng
       throw new BadRequestError("No shared quizzes found");
     }
 
@@ -457,15 +514,40 @@ class QuizService {
   //Hàm xóa quiz đã chia sẻ dựa trên user_id
   async removeQuizShared({ user_id, quiz_id }) {
     const quiz = await quizModel.updateOne(
-      { _id: quiz_id, shared_user_ids: { $in: [user_id] } },
-      { $pull: { shared_user_ids: user_id } }
+      { _id: quiz_id },
+      { $pull: { shared_user_ids: { user_id } } } // Đảm bảo chỉ truyền `user_id` mà không có đối tượng { user_id }
     );
+
+    if (quiz.modifiedCount === 0) {
+      throw new BadRequestError("Quiz not found or user not shared");
+    }
+
+    return quiz;
+  }
+
+  //sao chép lại tất cả thông tin cùa quiz đã chia sẻ
+  async copyQuizShared({ user_id, quiz_id }) {
+    const quiz = await quizModel.findOne({ _id: quiz_id });
 
     if (!quiz) {
       throw new BadRequestError("Quiz not found");
     }
 
-    return quiz;
+    const newQuiz = await quizModel.create({
+      user_id,
+      quiz_name: quiz.quiz_name + " (copy)",
+      quiz_description: quiz.quiz_description,
+      quiz_thumb: quiz.quiz_thumb,
+      subject_ids: quiz.subject_ids,
+      quiz_status: "unpublished",
+      quiz_turn: quiz.quiz_turn,
+    });
+
+    if (!newQuiz) {
+      throw new BadRequestError("Quiz not created");
+    }
+
+    return newQuiz;
   }
 }
 

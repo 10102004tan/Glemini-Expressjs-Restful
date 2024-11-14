@@ -23,46 +23,44 @@ class ResultService {
 			user_id,
 			quiz_id,
 		};
+
+		// Thêm `type` vào truy vấn
 		if (exercise_id) {
 			query.exercise_id = exercise_id;
-		}
-
-		if (room_id) {
+			query.type = 'exercise';
+		} else if (room_id) {
 			query.room_id = room_id;
+			query.type = 'room';
+		} else {
+			query.type = 'publish';
 		}
 
 		let result = await ResultModel.findOne(query);
 
 		if (!result) {
-			// Create a new result document if none exists
+			// Tạo mới `result` nếu chưa có
 			result = new ResultModel({
 				user_id,
 				quiz_id,
 				status: 'doing',
 				result_questions: [],
+				type: query.type, // Thiết lập `type` theo loại
 			});
 
 			if (exercise_id) {
 				result.exercise_id = exercise_id;
 			}
-
 			if (room_id) {
 				result.room_id = room_id;
 			}
-			// Update quiz play count
-			await QuizModel.findOneAndUpdate(
-				{ _id: quiz_id },
-				{ $inc: { quiz_turn: 1 } },
-				{ new: true, runValidators: true }
-			);
 
-			await result.save(); // Save the new result instance
+			await result.save(); // Lưu `result` mới
 
-			// If exercise_id exists, add the result._id to exercise.result_ids
+			// Nếu có `exercise_id`, thêm `result._id` vào `exercise.result_ids`
 			if (exercise_id) {
 				await exerciseModel.findByIdAndUpdate(
 					exercise_id,
-					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
+					{ $addToSet: { result_ids: result._id } },
 					{ new: true, runValidators: true }
 				);
 			}
@@ -76,14 +74,14 @@ class ResultService {
 				);
 			}
 		} else {
-			// If a result already exists, update its status and clear questions if completed
+			// Nếu đã có `result`, cập nhật trạng thái và xóa câu hỏi nếu đã hoàn thành
 			if (result.status === 'completed') {
 				result.status = 'doing';
-				result.result_questions = []; // Clear previous questions
+				result.result_questions = []; // Xóa câu hỏi cũ
 			}
 		}
 
-		// Add the new question answer to result.result_questions
+		// Thêm câu trả lời mới vào `result.result_questions`
 		result.result_questions.push({
 			question_id,
 			answer,
@@ -91,31 +89,36 @@ class ResultService {
 			score,
 		});
 
-		await result.save(); // Save updated result
+		await result.save(); // Lưu `result` đã cập nhật
 
 		return result;
 	}
+
 
 	static async completeQuiz({ exercise_id, room_id, user_id, quiz_id }) {
 		const query = {
 			user_id,
 			quiz_id,
+			type: ''
 		};
-
+	
 		if (exercise_id) {
 			query.exercise_id = exercise_id;
-		}
-
-		if (room_id) {
+			query.type = 'exercise';
+		} else if (room_id) {
 			query.room_id = room_id;
+			query.type = 'room';
+		} else {
+			query.type = 'publish';
 		}
+    
 		// Cập nhật lại trạng thái kết thúc cho quiz đó
 		const result = await ResultModel.findOneAndUpdate(
 			query,
 			{ status: 'completed' },
-			{ new: true },
-			{ runValidators: true }
+			{ new: true, runValidators: true }
 		);
+
 
 		// Xóa người dùng ra khỏi phòng
 		if (room_id) {
@@ -128,24 +131,24 @@ class ResultService {
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
-
+	
 		// Update quiz play count
 		await QuizModel.findOneAndUpdate(
 			{ _id: quiz_id },
 			{ $inc: { quiz_turn: 1 } },
 			{ new: true, runValidators: true }
 		);
-
+	
 		return result;
 	}
+	
 
-	static async review({ exercise_id, user_id, quiz_id, room_id }) {
-		// console.log(exercise_id, user_id, quiz_id, room_code);
-		const query = {};
-
-		if (quiz_id) {
-			query.quiz_id = quiz_id;
-		}
+	static async review({ user_id, exercise_id, quiz_id, room_id, type }) {
+		const query = {
+            user_id,
+            quiz_id,
+			type
+        };
 
 		if (user_id) {
 			query.user_id = user_id;
@@ -305,6 +308,10 @@ class ResultService {
 			.populate({
 				path: 'exercise_id',
 				select: 'name',
+			})
+			.populate({
+				path: 'room_id',
+				select: 'room_code',
 			});
 
 		// Nhóm các kết quả theo trạng thái
@@ -500,6 +507,10 @@ class ResultService {
 			.populate({
 				path: 'user_id',
 				select: 'user_fullname user_avatar',
+			})
+			.populate({
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb',
 			})
 			.populate({
 				path: 'result_questions.question_id',

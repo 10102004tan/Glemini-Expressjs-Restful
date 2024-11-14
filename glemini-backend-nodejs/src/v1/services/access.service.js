@@ -15,6 +15,7 @@ const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
 const { pushNoti } = require('./expo.service');
 const { producerQueue } = require('./producerQueue.service');
 const { storeNewExpoToken, removeExpoToken } = require('./expoToken.service');
+const { pushNotiForSys } = require('./notification.service');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, user_expotoken, attributes, files }) {
@@ -135,7 +136,7 @@ class AccessSevice {
 
             // add user_expotoken to expoToken
             const storeExpoToken = await storeNewExpoToken(newUser._id, user_expotoken);
-            
+
             if (!storeExpoToken) {
                 throw new BadRequestError("Cannot store expo token");
             }
@@ -154,7 +155,7 @@ class AccessSevice {
         }
 
     }
-    static async login({ email, password,user_expotoken }) {
+    static async login({ email, password, user_expotoken }) {
         const foundUser = await findUserByEmailV2(email);
 
         if (!foundUser) {
@@ -213,7 +214,7 @@ class AccessSevice {
         }
 
     }
-    static async logout({ user_id,user_expotoken }) {
+    static async logout({ user_id, user_expotoken }) {
         const del = await KeyTokenService.removeRefreshTokenById(user_id);
         if (!del) {
             throw new BadRequestError("Logout failed");
@@ -423,19 +424,46 @@ class AccessSevice {
             }
             let message;
             let status;
+            let logo_status;
             if (teacher_status === 'active') {
-                message = "Your account has been activated";
+                message = "Your account has been activated, thank you for joining us";
                 status = "success";
+                logo_status = "https://thumbs.dreamstime.com/b/vector-d-check-mark-realistic-icon-trendy-plastic-green-round-starburst-badge-checkmark-approved-white-background-verified-296517716.jpg";
             }
-            else if (teacher_status === 'inactive') {
-                message = "Your account has been deactivated";
+            else if (teacher_status === 'rejected') {
+                message = "Information is incorrect, please re-upload information";
                 status = "warning";
+                logo_status = "https://media.istockphoto.com/id/1407160246/vector/danger-triangle-icon.jpg?s=612x612&w=0&k=20&c=BS5mwULONmoEG9qPnpAxjb6zhVzHYBNOYsc7S5vdzYI="
             }
-            else if (teacher_status === 'suspend') {
+            else if (teacher_status === 'pedding') {
                 message = "Your account has been suspended";
                 status = "error";
             }
-            _io.emit('update-status', { user_id, teacher_status, message });
+
+            // send notification to user
+            const noti = await pushNotiForSys({
+                type: 'SYS-003',
+                receiverId: user_id,
+                senderId: "671df08d23841e253cc38506",
+                content: message,
+                options: {
+                    teacher_status,
+                    logo_status,
+                }
+            });
+
+            if (!noti) {
+                throw new BadRequestError("Cannot send notification");
+            }
+
+
+            // get list user online by userId
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === user_id);
+            if (listUserOnline.length == 0) return;
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
+
             return updatedStatus;
         }
         if (user_status) {

@@ -2,9 +2,11 @@
 const { BadRequestError } = require('../cores/error.repsone');
 const NOTI = require('../models/notification.model');
 const { getNotificationByReceiverId, updateStatusNotification } = require('../models/repositories/notification.repo');
+const userModel = require('../models/user.model');
 const { pushNoti } = require('./expo.service');
 const { findExpoTokenAllService } = require('./expoToken.service');
 const { producerQueue } = require('./producerQueue.service');
+const { UserService } = require('./user.service');
 const pushNotiForSys = async ({
     type = 'SYS-001',
     receiverId = 1,
@@ -12,18 +14,6 @@ const pushNotiForSys = async ({
     options = {},
     content = ''
 }) => {
-    // if (type === 'SYS-001') {
-    //     noti_content = 'System maintenance in  @@@'
-    // } else if (type === 'SYS-002') {
-    //     noti_content = 'Update feature @@@@ in @@@';
-    // }
-    // else if (type === 'SHARE-001') {
-    //     noti_content = 'New share notification from @@@';
-    // }
-    // else if (type === 'ROOM-001') {
-    //     noti_content = 'Bạn được mời tham gia phòng chơi từ @@@';
-    // }
-
     const newNoti = await NOTI.create({
         noti_content: content,
         noti_options: options,
@@ -42,8 +32,9 @@ const findNotiByType = async (type) => {
     return noti;
 }
 
-const getNotificationReceiverIdService = ({userId,skip,limit}) => {
-    return getNotificationByReceiverId({userId,skip,limit});
+const getNotificationReceiverIdService = async ({userId,skip,limit}) => {
+    console.log('userId',userId);
+    return await getNotificationByReceiverId({userId,skip,limit});
 }
 
 const updateStatusNotificationService = async({notiId, status}) => {
@@ -59,38 +50,45 @@ const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},
         title,
         body
     };
-    const listExpoToken = await findExpoTokenAllService();
-    const somePushTokens = [];
-    listExpoToken.forEach(async (item) => {
-        item.tokens.forEach((token) => {
-            somePushTokens.push(token);
-        });
-        //store notification
-        const noti = await pushNotiForSys({
-            type,
-            receiverId: item.user_id,
-            senderId,
-            content,
-            // options:{
-            //     name:'Nguyen Van A',
-            //     avatar:'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTa0tuaMXvDBuJp2LfEXIpDnOt7-leCVujqUFModBarOPTFQ244',
-            //     room_id:'AZXROM'
-            // }
-        });
+    // const listExpoToken = await findExpoTokenAllService();
+    // const somePushTokens = [];
+   
+    // get all user
 
-        _io.emit(`notification${item.user_id}`,noti);
-
+    const users = await userModel.find({},{_id:1,
+      user_fullname:1,
+      user_email:1,
     });
 
-    pushNoti({somePushTokens,data});
+    // push notification for all user
+    users.forEach(async (user) => {
+        const noti = await pushNotiForSys({
+            type,
+            receiverId: user._id,
+            senderId,
+            content,
+            options
+        });
+
+        // get list user online by userId
+        const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+        if (listUserOnline.length == 0) return;
+        listUserOnline.forEach((item) => {
+            item.socket.emit('notification', noti);
+        });
+    });
+
+
+    // pushNoti({somePushTokens,data});
 
     return 1;
 }
+
 
 module.exports = {
     pushNotiForSys,
     findNotiByType,
     getNotificationReceiverIdService,
     updateStatusNotificationService,
-    sendNotificationAdminService
+    sendNotificationAdminService,
 };

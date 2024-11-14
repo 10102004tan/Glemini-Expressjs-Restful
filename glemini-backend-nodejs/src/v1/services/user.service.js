@@ -8,6 +8,9 @@ const userConfig = require("../utils/userConfig");
 const { OK } = require("../utils/statusCode");
 const { uploadDisk } = require("../configs/multer.config");
 const {
+  Types: { ObjectId },
+} = require("mongoose");
+const {
   findUserByIdV2,
   findUserById,
   findAndUpdateUserById,
@@ -118,9 +121,9 @@ class UserService {
     };
   }
 
-  static async findNotificationByReceiverId({ user_id, skip, limit }) {
+  static async findNotificationByReceiverId({ userId, skip, limit }) {
     return await getNotificationReceiverIdService({
-      userId: user_id,
+      userId,
       skip,
       limit,
     });
@@ -141,7 +144,6 @@ class UserService {
 
   static async updateProfile({ user_id, fullname, email, avatar }) {
     // update full name,email,avatar
-    console.log(fullname);
     let uploadUrl = null;
     if (avatar) {
       uploadUrl = await UploadService.uploadImageFromOneFile({
@@ -170,57 +172,85 @@ class UserService {
     };
   }
 
-  static async findNotificationByReceiverId({ user_id }) {
-    return await getNotificationReceiverIdService(user_id);
-  }
-
   // chia sẻ quiz cho giáo viên khác
-  static async shareQuizToTeacher({ email, quiz_id, user_id }) {
+  static async shareQuizToTeacher({ email, quiz_id, user_id, isEdit }) {
+
+    // find user teacher
+    const infoSender = await findUserByIdV2({
+      id: user_id,
+      select: {
+        user_fullname: 1,
+        user_avatar: 1,
+    }});
+
+    // Tìm người dùng theo email
     const user = await User.findOne({ user_email: email });
 
     if (!user) {
-      throw new BadRequestError("Email is not exists");
+      throw new BadRequestError("Email does not exist");
     }
 
-    // kiểm tra xem quiz đã được chia sẻ chưa va user_id co nam  trong shared_user_ids
+    // check type user
+    if (user.user_type !== "teacher") {
+      throw new BadRequestError("Quiz not shared for student");
+    }
+
+    // Kiểm tra xem quiz đã được chia sẻ cho người dùng này chưa
     const quiz = await quizModel.findOne({
       _id: quiz_id,
       user_id,
-      shared_user_ids: { $in: [user._id] },
+      shared_user_ids: {
+        $elemMatch: {
+          user_id: user._id,
+        },
+      }, // kiểm tra user_id trong shared_user_ids
     });
+
     if (quiz) {
-      throw new BadRequestError("Quiz is already shared");
+      throw new BadRequestError("Quiz này đã được chia sẻ");
     }
 
-    // update quiz to shared_user_ids
+    // Cập nhật quiz với user nhận và quyền chỉnh sửa
     const updated = await quizModel.updateOne(
       { _id: quiz_id, user_id },
-      { $push: { shared_user_ids: user._id } }
+      {
+        $push: {
+          shared_user_ids: { user_id: user._id, isEdit }, // Lưu isEdit cho người dùng nhận
+        },
+      }
     );
 
-    // tao thong bao
-    console.log(user);
+
+
+   
+
+   // Gửi thông báo cho người dùng
+    // Tạo thông báo chia sẻ
     const noti = await pushNotiForSys({
       type: "SHARE-001",
       receiverId: user._id,
       senderId: user_id,
       content: "Bạn đã nhận được 1 bài quiz từ giáo viên khác",
       options: {
-        name: user.user_fullname,
-        avatar: user.user_avatar,
+        name: infoSender.user_fullname,
+        avatar: infoSender.user_avatar,
+        quiz_id
       },
     });
 
-    //gửi thông báo qua socket
-    _io.emit(`${user._id}`, noti);
-  }
+    if (!noti) {
+      throw new BadRequestError("Cannot send notification");
+    }
 
-  static async findNotificationByReceiverId({ user_id, skip, limit }) {
-    return await getNotificationReceiverIdService({
-      userId: user_id,
-      skip,
-      limit,
+    // Gửi thông báo realtime
+    const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+    if (listUserOnline.length == 0) return;
+    listUserOnline.forEach((item) => {
+        item.socket.emit('notification', noti);
     });
+
+
+    return updated;
   }
 
   static async getAllTeachersAccount({ skip, limit }) {
