@@ -240,8 +240,10 @@ class ClassroomService {
 
         // Thêm học sinh vào lớp nếu chưa có
         if (!classroom.students.includes(user._id)) {
-            classroom.students.push(user._id);
-
+            await classroomModel.updateOne(
+                { _id: classroomId },
+                { $addToSet: { students: user._id } }
+            );
             await studentModel.updateOne(
                 { _id: user._id },
                 { $addToSet: { classroom_ids: classroomId } },
