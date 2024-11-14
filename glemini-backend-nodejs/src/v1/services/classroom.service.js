@@ -79,10 +79,13 @@ class ClassroomService {
                 }
             });
             // push real-time notification for user
-            const userOnline = _listUserOnline.find(item => item.userId === studentId.toString());
-            console.log('userOnline', userOnline);
-            if (!userOnline) return;
-            userOnline.socket.emit('notification', noti);
+            const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
+            if (listUserOnline.length == 0) return;
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
+
+
         }
         return classroom;
     }
@@ -194,11 +197,11 @@ class ClassroomService {
                     }
                 });
     
-                // Push real-time notification if the user is online
+                // push real-time notification for user
                 const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-                if (userOnline) {
-                    userOnline.socket.emit('notification', noti);
-                }
+               if (!userOnline) return;
+               userOnline.socket.emit('notification', noti);
+
             }
         });
     
@@ -234,34 +237,32 @@ class ClassroomService {
             const newUser = await AccessService.signup(signupData);
             user = newUser.user;
         }
-    
-        await classroomModel.updateOne(
-            { _id: classroomId },
-            { $addToSet: { students: user._id } }
-        );
-    
-        await studentModel.updateOne(
-            { _id: user._id },
-            { $addToSet: { classroom_ids: classroomId } },
-            { upsert: true }
-        );
-    
-        // Send a notification to the user
-        const noti = await pushNotiForSys({
-            type: 'CLASSROOM-001',
-            receiverId: user._id,
-            senderId: classroom.user_id,
-            content: `You have been added to the classroom ${classroom.class_name}`,
-            options: {
-                classroom_id: classroom._id,
-                classroom_name: classroom.class_name,
-            }
-        });
-    
-        // Push real-time notification if the user is online
-        const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
-        if (userOnline) {
-            userOnline.socket.emit('notification', noti);
+
+        // Thêm học sinh vào lớp nếu chưa có
+        if (!classroom.students.includes(user._id)) {
+            classroom.students.push(user._id);
+
+            await studentModel.updateOne(
+                { _id: user._id },
+                { $addToSet: { classroom_ids: classroomId } },
+                { upsert: true }
+            );
+
+            const noti = await pushNotiForSys({
+                type: 'CLASSROOM-001',
+                receiverId: user._id,
+                senderId: classroom.user_id,
+                content: `You have been added to the classroom ${classroom.class_name}`,
+                options: {
+                    classroom_id: classroom._id,
+                    classroom_name: classroom.class_name,
+                }
+            });
+
+            // push real-time notification for user
+           const userOnline = _listUserOnline.find(item => item.userId === user._id.toString());
+           if (!userOnline) return;
+           userOnline.socket.emit('notification', noti);
         }
     
         await classroom.save()

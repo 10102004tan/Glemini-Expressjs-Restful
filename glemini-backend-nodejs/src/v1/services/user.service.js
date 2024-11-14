@@ -243,12 +243,12 @@ class UserService {
     }
 
     // Gửi thông báo realtime
-    const userOnline = _listUserOnline.find(
-      (item) => item.userId === user._id.toString()
-    );
-    if (userOnline) {
-      userOnline.socket.emit("notification", noti);
-    }
+    const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+    if (listUserOnline.length == 0) return;
+    listUserOnline.forEach((item) => {
+        item.socket.emit('notification', noti);
+    });
+
 
     return updated;
   }

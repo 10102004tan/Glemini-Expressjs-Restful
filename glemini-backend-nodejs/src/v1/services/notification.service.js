@@ -70,10 +70,12 @@ const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},
             options
         });
 
-        // push realtime notification for all user online
-        const userOnline = _listUserOnline.find((userOnline) => userOnline.userId === user._id.toString());
-        if (!userOnline) return;
-        userOnline.socket.emit('notification', noti);
+        // get list user online by userId
+        const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+        if (listUserOnline.length == 0) return;
+        listUserOnline.forEach((item) => {
+            item.socket.emit('notification', noti);
+        });
     });
 
 
