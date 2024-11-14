@@ -15,7 +15,7 @@ router.use("/get-templates", templateRouter);
 router.post("/search", asynHandler(quizController.search));
 
 // AUTHENTICATION
-router.use(asynHandler(authentication));
+// router.use(asynHandler(authentication));
 // AUTHENTICATION
 
 router.post(

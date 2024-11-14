@@ -104,7 +104,11 @@ class QuizService {
 
   // Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
-    const quizzes = await quizModel.find().sort({ quiz_turn: -1 }).limit(3);
+    const quizzes = await quizModel.find().sort({ quiz_turn: -1 }).limit(3).populate({
+
+      path: 'user_id',
+      select: 'user_fullname user_avatar user_email'
+    });
     return quizzes.filter((quiz) => quiz.quiz_status === "published");
   }
 
