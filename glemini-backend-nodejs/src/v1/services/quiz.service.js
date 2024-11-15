@@ -76,31 +76,28 @@ class QuizService {
     const results = [];
 
     for (const subject of subjects) {
-        const quizzes = await quizModel
-            .find({
-                quiz_status: "published",
-                subject_ids: { $in: [subject._id] }
-            })
-            .populate({
-              path: 'user_id',
-              select: 'user_fullname user_avatar'
-            })
-            .sort({ createdAt: -1 })
-            .limit(4);
+      const quizzes = await quizModel
+        .find({
+          quiz_status: "published",
+          subject_ids: { $in: [subject._id] },
+        })
+        .populate({
+          path: "user_id",
+          select: "user_fullname user_avatar",
+        })
+        .sort({ createdAt: -1 })
+        .limit(4);
 
-        if (quizzes.length > 0) {
-            results.push({
-                subject: subject,
-                quizzes: quizzes
-            });
-        }
+      if (quizzes.length > 0) {
+        results.push({
+          subject: subject,
+          quizzes: quizzes,
+        });
+      }
     }
 
     return results;
-}
-
-
-
+  }
 
   // Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
@@ -564,6 +561,30 @@ class QuizService {
 
     if (!newQuiz) {
       throw new BadRequestError("Quiz not created");
+    }
+
+    const questions = await questionModel.find({ quiz_id: quiz_id });
+
+    if (questions.length > 0) {
+      // Create new questions
+      const newQuestions = questions.map((question) => {
+        return {
+          quiz_id: newQuiz._id,
+          question_excerpt: question.question_excerpt,
+          question_description: question.question_description,
+          question_audio: question.question_audio,
+          question_image: question.question_image,
+          question_video: question.question_video,
+          question_point: question.question_point,
+          question_time: question.question_time,
+          question_explanation: question.question_explanation,
+          question_type: question.question_type,
+          question_answer_ids: question.question_answer_ids,
+          correct_answer_ids: question.correct_answer_ids,
+        };
+      });
+
+      await questionModel.insertMany(newQuestions);
     }
 
     return newQuiz;
