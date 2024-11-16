@@ -116,6 +116,22 @@ class ClassroomService {
         return classroom;
     }
 
+    // Hàm tạo xóa lớp
+    async deleteClassroom(classroomId) {
+        const classroom = await classroomModel.findById(classroomId);
+        if (!classroom) throw new BadRequestError('Classroom not found');
+
+        await studentModel.updateMany(
+            { classroom_ids: classroomId },
+            { $pull: { classroom_ids: classroomId } }
+        );
+
+        const deletedClassroom = await classroomModel.findByIdAndDelete(classroomId);
+
+        return deletedClassroom ? true : false;
+    }
+
+
     // Hàm lấy thông tin lớp học
     async getClassroomById(classroomId) {
         const classroom = await classroomModel.findById(classroomId)
@@ -270,12 +286,12 @@ class ClassroomService {
             });
 
             const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-            console.log("list:::",listUserOnline);
+            console.log("list:::", listUserOnline);
             if (listUserOnline.length == 0) {
                 // push notification with expo notification
                 const expoToken = await expoTokenModel.findOne({ user_id: user._id });
-                const {tokens} = expoToken;
-                if (tokens.length > 0){
+                const { tokens } = expoToken;
+                if (tokens.length > 0) {
                     const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
                     // push notification with expo notification
                     pushNoti({

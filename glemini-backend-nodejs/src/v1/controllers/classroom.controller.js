@@ -13,6 +13,15 @@ class ClassroomController {
         }).send(res);
     }
 
+    async deleteClassroom(req, res, next) {
+        const { classroomId } = req.params;
+        const data = await classroomService.deleteClassroom(classroomId);
+        return new OK({
+            message: 'Delete this classroom successfully!',
+            metadata: data,
+        }).send(res);
+    }
+
     // API lấy thông tin lớp học theo ID
     async getClassroomById(req, res, next) {
 
