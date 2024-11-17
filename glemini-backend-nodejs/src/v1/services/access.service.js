@@ -460,11 +460,6 @@ class AccessSevice {
 
             // get list user online by userId
             const listUserOnline = _listUserOnline.filter((item) => item.userId === user_id);
-            // if (listUserOnline.length == 0) return;
-            // listUserOnline.forEach((item) => {
-            //     item.socket.emit('notification', noti);
-            // });
-
             if (listUserOnline.length == 0) {
                 // push notification with expo notification
                 const expoToken = await expoTokenModel.findOne({ user_id });
@@ -481,6 +476,8 @@ class AccessSevice {
                     });
                 }
             } else {
+                console.log("listUserOnline::",listUserOnline.length);
+                console.log("list:::",listUserOnline)
                 listUserOnline.forEach((item) => {
                     item.socket.emit('notification', noti);
                 });
