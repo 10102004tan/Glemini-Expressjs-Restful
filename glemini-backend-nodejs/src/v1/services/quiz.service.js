@@ -122,6 +122,7 @@ class QuizService {
             quiz_name: 1,
             quiz_thumb: 1,
             quiz_description: 1,
+            quiz_turn: 1,
             quiz_status: 1,
             createdAt: 1,
             total_questions: 1,
