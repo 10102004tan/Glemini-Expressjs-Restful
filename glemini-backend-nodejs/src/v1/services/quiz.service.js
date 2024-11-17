@@ -95,6 +95,11 @@ class QuizService {
           $match: { "questions.0": { $exists: true } }, // Chỉ lấy quiz có ít nhất 1 câu hỏi
         },
         {
+          $addFields: {
+            total_questions: { $size: "$questions" }, // Tính tổng số câu hỏi
+          },
+        },
+        {
           $sort: { createdAt: -1 },
         },
         {
@@ -115,8 +120,11 @@ class QuizService {
           $project: {
             _id: 1,
             quiz_name: 1,
+            quiz_thumb: 1,
+            quiz_description: 1,
             quiz_status: 1,
             createdAt: 1,
+            total_questions: 1,
             "user.user_fullname": 1,
             "user.user_avatar": 1,
           },
@@ -133,7 +141,6 @@ class QuizService {
   
     return results;
   }
-  
 
   // Hàm tối ưu lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
@@ -173,6 +180,8 @@ class QuizService {
         $project: {
           quiz_name: 1,
           quiz_turn: 1,
+          quiz_thumb: 1,
+          quiz_description: 1,
           "user.user_fullname": 1,
           "user.user_avatar": 1,
           "user.user_email": 1,
