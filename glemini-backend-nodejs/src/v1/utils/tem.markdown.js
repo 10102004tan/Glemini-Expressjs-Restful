@@ -15,7 +15,7 @@ Chúng tôi xin thông báo rằng hệ thống sẽ được bảo trì định
 
 Chúng tôi xin lỗi vì sự bất tiện này và cảm ơn sự thông cảm của quý khách.
 
-![Hình ảnh bảo trì hệ thống](https://example.com/maintenance-image.png)
+![Hình ảnh bảo trì hệ thống](https://media.tenor.com/SsXEN-yHFqgAAAAM/exploding-car-explode.gif)
 
 Nếu có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ khách hàng qua email: support@example.com.
 

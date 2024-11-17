@@ -9,6 +9,7 @@ const { OK } = require("../utils/statusCode");
 const { uploadDisk } = require("../configs/multer.config");
 const {
   Types: { ObjectId },
+  default: mongoose,
 } = require("mongoose");
 const {
   findUserByIdV2,
@@ -17,6 +18,8 @@ const {
 } = require("../models/repositories/user.repo");
 const {
   findImagesVerification,
+  updateImagesVerification,
+  updateStatusTeacher,
 } = require("../models/repositories/teacher.repo");
 const UploadService = require("./upload.service");
 const {
@@ -246,22 +249,22 @@ class UserService {
       const expoToken = await expoTokenModel.findOne({ user_id: user._id });
       const { tokens } = expoToken;
       if (tokens.length > 0) {
-          const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
-          // push notification with expo notification
-          pushNoti({
-              somePushTokens: listTokens,
-              data: {
-                  body: "Bạn có 1 bài quiz được chia sẻ từ một giáo viên nào đó :)",
-                  title: 'Thông báo',
-              }
-          });
+        const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+        // push notification with expo notification
+        pushNoti({
+          somePushTokens: listTokens,
+          data: {
+            body: "Bạn có 1 bài quiz được chia sẻ từ một giáo viên nào đó :)",
+            title: 'Thông báo',
+          }
+        });
       }
-  } else {
+    } else {
       listUserOnline.forEach((item) => {
-          item.socket.emit('notification', noti);
+        item.socket.emit('notification', noti);
       });
 
-  };
+    };
 
 
     return updated;
@@ -355,30 +358,42 @@ class TeacherService extends UserService {
 
   // re upload images
   static async reUploadImages({ user_id, email, files }) {
-    const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
-      files,
-      folderName: `users/${email}/verification`,
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+        files,
+        folderName: `users/${email}/verification`,
+      });
 
-    if (!uploadedUrls) {
-      throw new BadRequestError("Cannot upload images");
-    }
+      if (!uploadedUrls) {
+        throw new BadRequestError("Cannot upload images");
+      }
 
-    // update images
+      // update images
 
-    const updated = await updateImagesVerification(
-      user_id,
-      uploadedUrls.map((imageUrl) => imageUrl.image_url)
-    );
+      const updated = await updateImagesVerification(
+        user_id,
+        uploadedUrls.map((imageUrl) => imageUrl.image_url)
+      );
 
-    if (!updated) {
+      if (!updated) {
+        throw new BadRequestError("Cannot update images");
+      }
+
+      // update status teacher to pending
+      await updateStatusTeacher(user_id, "pedding");
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return uploadedUrls.map((imageUrl) => imageUrl.image_url);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
       throw new BadRequestError("Cannot update images");
     }
 
-    // update status teacher to pending
-    await updateStatusTeacher(user_id, "pedding");
-
-    return uploadedUrls.map((imageUrl) => imageUrl.image_url);
   }
 }
 
