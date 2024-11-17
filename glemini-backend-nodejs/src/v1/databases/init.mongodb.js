@@ -9,8 +9,8 @@ class Database {
     this.connect();
   }
   connect() {
-    const connectString = `mongodb://${host}:${port}/${name}`;
-    // const connectString = `mongodb+srv://gleminidev:AMpX6YOVs9o2jXKL@gleminidevdb.zhvjv.mongodb.net/?retryWrites=true&w=majority&appName=gleminiDevDB`;
+    //const connectString = `mongodb://${host}:${port}/${name}`;
+    const connectString = process.env.PRO_DB_URL;
     mongoose
       .connect(connectString)
       .then(() => {

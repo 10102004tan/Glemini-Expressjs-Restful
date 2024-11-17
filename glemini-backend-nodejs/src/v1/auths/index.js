@@ -38,6 +38,7 @@ const authentication = async (req, res, next) => {
 
     const tokens = await findKeyTokenByUserId(userId);
 
+
     if (!tokens) {
         throw new NotFoundError("Access denied");
     }
