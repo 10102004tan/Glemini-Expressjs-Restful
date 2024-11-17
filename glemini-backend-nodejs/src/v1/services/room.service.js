@@ -98,8 +98,40 @@ class RoomService {
 		if (!room) {
 			throw new BadRequestError('No room found');
 		}
-		room.user_ids.push(user_id);
+		// Kiểm tra xem số lượng người tham gia vào phòng đã đủ chưa
+		if (room.user_join_ids.length >= room.user_max) {
+			throw new BadRequestError('Room is full');
+		}
+
+		// Kiểm tra nếu người dùng đã tham gia vào phòng
+		let check = false;
+		room.user_join_ids.forEach((user) => {
+			if (user.toString() === user_id.toString()) {
+				check = true;
+				return;
+			}
+		});
+
+		if (check) {
+			throw new BadRequestError('User already joined room');
+		}
+
+		room.user_join_ids.push(user_id);
 		await room.save();
+		return room;
+	}
+
+	// Xóa người dùng đã join vào phòng
+	async removeUserFromRoom({ room_code, user_id }) {
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+		room.user_join_ids = room.user_join_ids.filter(
+			(user) => user.toString() !== user_id.toString()
+		);
+		await room.save();
+
 		return room;
 	}
 
@@ -120,6 +152,18 @@ class RoomService {
 		});
 
 		return check;
+	}
+
+	// Hàm kiểm tra xem số lượng người tham gia vào phòng đã đủ chưa
+	async checkUserMax({ room_code }) {
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+
+		if (room.user_join_ids.length >= room.user_max) {
+			return true;
+		}
 	}
 }
 
