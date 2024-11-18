@@ -80,12 +80,31 @@ class ClassroomService {
                     exercise_id: newExercise._id
                 }
             });
+            console.log("studentnoti::",noti);
             // push real-time notification for user
             const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
-            if (listUserOnline.length == 0) return;
-            listUserOnline.forEach((item) => {
-                item.socket.emit('notification', noti);
-            });
+            console.log("list:::", listUserOnline);
+            if (listUserOnline.length == 0) {
+                // push notification with expo notification
+                const expoToken = await expoTokenModel.findOne({ user_id: studentId.toString() });
+                const { tokens } = expoToken;
+                if (tokens.length > 0) {
+                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+                    // push notification with expo notification
+                    pushNoti({
+                        somePushTokens: listTokens,
+                        data: {
+                            body: `Bạn được giao bài tập trong lớp ${classroom.class_name}`,
+                            title: 'Thông báo',
+                            data: noti.options
+                        }
+                    });
+                }
+            } else {
+                listUserOnline.forEach((item) => {
+                    item.socket.emit('notification', noti);
+                });
+            };
 
 
         }
@@ -115,6 +134,22 @@ class ClassroomService {
 
         return classroom;
     }
+
+    // Hàm tạo xóa lớp
+    async deleteClassroom(classroomId) {
+        const classroom = await classroomModel.findById(classroomId);
+        if (!classroom) throw new BadRequestError('Classroom not found');
+
+        await studentModel.updateMany(
+            { classroom_ids: classroomId },
+            { $pull: { classroom_ids: classroomId } }
+        );
+
+        const deletedClassroom = await classroomModel.findByIdAndDelete(classroomId);
+
+        return deletedClassroom ? true : false;
+    }
+
 
     // Hàm lấy thông tin lớp học
     async getClassroomById(classroomId) {
@@ -270,12 +305,12 @@ class ClassroomService {
             });
 
             const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-            console.log("list:::",listUserOnline);
+            console.log("list:::", listUserOnline);
             if (listUserOnline.length == 0) {
                 // push notification with expo notification
                 const expoToken = await expoTokenModel.findOne({ user_id: user._id });
-                const {tokens} = expoToken;
-                if (tokens.length > 0){
+                const { tokens } = expoToken;
+                if (tokens.length > 0) {
                     const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
                     // push notification with expo notification
                     pushNoti({

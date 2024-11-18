@@ -315,7 +315,7 @@ class ResultService {
 			})
 			.populate({
 				path: 'exercise_id',
-				select: 'name',
+				select: 'name date_end',
 			})
 			.populate({
 				path: 'room_id',
