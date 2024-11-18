@@ -74,20 +74,64 @@ class QuizService {
   async getQuizzesBySubjectIdPublished() {
     const subjects = await subjectModel.find({});
     const results = [];
-
+  
     for (const subject of subjects) {
-      const quizzes = await quizModel
-        .find({
-          quiz_status: "published",
-          subject_ids: { $in: [subject._id] },
-        })
-        .populate({
-          path: "user_id",
-          select: "user_fullname user_avatar",
-        })
-        .sort({ createdAt: -1 })
-        .limit(4);
-
+      const quizzes = await quizModel.aggregate([
+        {
+          $match: {
+            quiz_status: "published",
+            subject_ids: { $in: [subject._id] },
+          },
+        },
+        {
+          $lookup: {
+            from: "questions", // Tên collection chứa câu hỏi
+            localField: "_id", // Trường liên kết từ quiz
+            foreignField: "quiz_id", // Trường liên kết từ câu hỏi
+            as: "questions", // Kết quả lookup sẽ được lưu tại "questions"
+          },
+        },
+        {
+          $match: { "questions.0": { $exists: true } }, // Chỉ lấy quiz có ít nhất 1 câu hỏi
+        },
+        {
+          $addFields: {
+            total_questions: { $size: "$questions" }, // Tính tổng số câu hỏi
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $limit: 4,
+        },
+        {
+          $lookup: {
+            from: "users", // Tên collection chứa user
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
+          $project: {
+            _id: 1,
+            quiz_name: 1,
+            quiz_thumb: 1,
+            quiz_description: 1,
+            quiz_turn: 1,
+            quiz_status: 1,
+            createdAt: 1,
+            total_questions: 1,
+            "user.user_fullname": 1,
+            "user.user_avatar": 1,
+          },
+        },
+      ]);
+  
       if (quizzes.length > 0) {
         results.push({
           subject: subject,
@@ -95,18 +139,58 @@ class QuizService {
         });
       }
     }
-
+  
     return results;
   }
 
-  // Hàm lấy 3 bộ quiz có lượt chơi nhiều nhất
+  // Hàm tối ưu lấy 3 bộ quiz có lượt chơi nhiều nhất
   async getQuizzesBanner() {
-    const quizzes = await quizModel.find().sort({ quiz_turn: -1 }).limit(3).populate({
+    const quizzes = await quizModel.aggregate([
+      {
+        $match: { quiz_status: "published" },
+      },
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "quiz_id",
+          as: "questions",
+        },
+      },
+      {
+        $match: { "questions.0": { $exists: true } }, // Chỉ lấy quiz có ít nhất 1 câu hỏi
+      },
+      {
+        $sort: { quiz_turn: -1 },
+      },
+      {
+        $limit: 3,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $project: {
+          quiz_name: 1,
+          quiz_turn: 1,
+          quiz_thumb: 1,
+          quiz_description: 1,
+          "user.user_fullname": 1,
+          "user.user_avatar": 1,
+          "user.user_email": 1,
+        },
+      },
+    ]);
 
-      path: 'user_id',
-      select: 'user_fullname user_avatar user_email'
-    });
-    return quizzes.filter((quiz) => quiz.quiz_status === "published");
+    return quizzes;
   }
 
   // Search {name-desc} and filter {quiz_turn, date}
@@ -395,7 +479,7 @@ class QuizService {
   }
 
   // Hàm lấy template file docx
-  async getDocsTemplate(req, res) {}
+  async getDocsTemplate(req, res) { }
 
   // Hàm tìm kiếm quiz theo yêu cầu của người dùng
   async filterQuizzes({

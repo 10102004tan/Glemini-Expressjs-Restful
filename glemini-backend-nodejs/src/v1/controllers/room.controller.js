@@ -61,6 +61,14 @@ class RoomController {
 			metadata: check,
 		}).send(res);
 	}
+
+	async removeUserFromRoom(req, res) {
+		const check = await roomService.removeUserFromRoom(req.body);
+		return new OK({
+			message: 'Remove user from room successfully!',
+			metadata: check,
+		}).send(res);
+	}
 }
 
 module.exports = new RoomController();
