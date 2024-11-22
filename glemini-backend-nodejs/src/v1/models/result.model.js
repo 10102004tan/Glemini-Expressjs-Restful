@@ -42,8 +42,7 @@ const resultSchema = new Schema(
 					ref: 'Question',
 				},
 				answer: {
-					type: [mongoose.Schema.Types.ObjectId],
-					ref: 'Answer',
+					type: Schema.Types.Mixed,
 					default: [],
 				},
 				correct: {
