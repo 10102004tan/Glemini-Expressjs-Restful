@@ -603,7 +603,7 @@ class QuizService {
       .limit(limit)
       .lean();
 
-    if (quizzies.length === 0) {
+    if (!quizzies) {
       // Kiểm tra mảng không rỗng
       throw new BadRequestError("No shared quizzes found");
     }
