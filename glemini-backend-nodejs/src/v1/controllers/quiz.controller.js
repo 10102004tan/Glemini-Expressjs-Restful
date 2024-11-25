@@ -157,6 +157,14 @@ class QuizController {
       metadata: await quizService.copyQuizShared(req.body),
     }).send(res);
   };
+
+  //lấy tất cả thông tin user đã chia sẻ
+  getAllSharedUser = async (req, res) => {
+    return new OK({
+      message: "Get user successfully",
+      metadata: await quizService.getSharedUserIds(req.body),
+    }).send(res);
+  };
 }
 
 module.exports = new QuizController();

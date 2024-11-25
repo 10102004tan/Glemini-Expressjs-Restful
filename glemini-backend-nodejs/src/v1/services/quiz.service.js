@@ -74,7 +74,7 @@ class QuizService {
   async getQuizzesBySubjectIdPublished() {
     const subjects = await subjectModel.find({});
     const results = [];
-  
+
     for (const subject of subjects) {
       const quizzes = await quizModel.aggregate([
         {
@@ -131,7 +131,7 @@ class QuizService {
           },
         },
       ]);
-  
+
       if (quizzes.length > 0) {
         results.push({
           subject: subject,
@@ -139,7 +139,7 @@ class QuizService {
         });
       }
     }
-  
+
     return results;
   }
 
@@ -479,7 +479,7 @@ class QuizService {
   }
 
   // Hàm lấy template file docx
-  async getDocsTemplate(req, res) { }
+  async getDocsTemplate(req, res) {}
 
   // Hàm tìm kiếm quiz theo yêu cầu của người dùng
   async filterQuizzes({
@@ -672,6 +672,26 @@ class QuizService {
     }
 
     return newQuiz;
+  }
+
+  //lấy tất cả user_id và trạng thái của isEdit trong shared_user_ids
+  async getSharedUserIds({ quiz_id }) {
+    // Tìm quiz dựa trên quiz_id và populate thông tin user trong user_id
+    const quiz = await quizModel
+      .findOne({ _id: quiz_id }) // Tìm tài liệu dựa trên quiz_id
+      .populate({
+        path: "shared_user_ids.user_id", // Populate thông tin user từ user_id
+        select: "user_email ", // Loại bỏ các trường nhạy cảm nếu cần
+      })
+      .exec();
+
+    // Nếu không tìm thấy quiz, ném lỗi
+    if (!quiz) {
+      throw new BadRequestError("Quiz not found");
+    }
+
+    // Trả về shared_user_ids (đã bao gồm thông tin user)
+    return quiz.shared_user_ids;
   }
 }
 
