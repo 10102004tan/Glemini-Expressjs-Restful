@@ -76,5 +76,6 @@ router.post(
   "/get-all-user-shared",
   asynHandler(quizController.getAllSharedUser)
 );
+router.post("/remove-user-shared", asynHandler(quizController.removeSharedUser));
 
 module.exports = router;
