@@ -72,5 +72,9 @@ router.post(
   asynHandler(quizController.removeQuizShared)
 );
 router.post("/copy-quiz", asynHandler(quizController.copyQuiz));
+router.post(
+  "/get-all-user-shared",
+  asynHandler(quizController.getAllSharedUser)
+);
 
 module.exports = router;
