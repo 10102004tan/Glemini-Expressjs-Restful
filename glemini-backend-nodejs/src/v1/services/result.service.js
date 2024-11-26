@@ -11,7 +11,17 @@ const roomModel = require('../models/room.model');
 const mongoose = require('mongoose');
 
 class ResultService {
-	static async saveQuestion({ exercise_id, room_id, user_id, quiz_id, question_id, answer, correct, score, question_type }) {
+	static async saveQuestion({
+		exercise_id,
+		room_id,
+		user_id,
+		quiz_id,
+		question_id,
+		answer,
+		correct,
+		score,
+		question_type,
+	}) {
 		console.log(
 			exercise_id,
 			room_id,
@@ -171,11 +181,95 @@ class ResultService {
 			query.room_id = room_id;
 		}
 
-		const result = await ResultModel.findOne(query);
+		const result = await ResultModel.findOne(query)
+			.populate({
+				path: 'user_id',
+				select: 'user_fullname user_avatar',
+			})
+			.populate({
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb',
+			})
+			.populate({
+				path: 'result_questions.question_id',
+				model: 'Question',
+			});
 
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
+
+		// Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
+		const updatedQuestions = await Promise.all(
+			result.result_questions.map(async (question) => {
+				// Populate `answer`
+				let populatedAnswer = null;
+				if (typeof question.answer === 'string') {
+					populatedAnswer = question.answer;
+				} else if (Array.isArray(question.answer)) {
+					populatedAnswer = await Promise.all(
+						question.answer.map(async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						})
+					);
+					populatedAnswer = populatedAnswer.filter(Boolean);
+				} else if (mongoose.Types.ObjectId.isValid(question.answer)) {
+					populatedAnswer = await answerModel
+						.findById(question.answer)
+						.select('text image');
+				}
+
+				// Populate `question_answer_ids`
+				const populatedQuestionAnswers = await Promise.all(
+					question.question_id.question_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				// Populate `correct_answer_ids`
+				const populatedCorrectAnswers = await Promise.all(
+					question.question_id.correct_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				return {
+					...question.toObject(),
+					answer: populatedAnswer,
+					question_id: {
+						...question.question_id.toObject(),
+						question_answer_ids:
+							populatedQuestionAnswers.filter(Boolean),
+						correct_answer_ids:
+							populatedCorrectAnswers.filter(Boolean),
+					},
+				};
+			})
+		);
+
+		// Update the `result_questions` field
+		result.result_questions = updatedQuestions;
+
+		return result;
 
 		return result;
 	}
@@ -201,8 +295,9 @@ class ResultService {
 		answer,
 		correct,
 		score,
+		question_type,
 	}) {
-		console.log(room_id);
+		// console.log(room_id);
 		// Kiểm tra tham số đầu vào
 		if (!user_id || !quiz_id || !question_id) {
 			throw new Error('Thiếu tham số bắt buộc');
@@ -240,13 +335,23 @@ class ResultService {
 				answered_at: new Date(),
 			};
 		} else {
-			result.result_questions.push({
-				question_id,
-				answer,
-				correct,
-				score,
-				answered_at: new Date(),
-			});
+			if (question_type === 'box') {
+				result.result_questions.push({
+					question_id,
+					answer: answer.toString(),
+					correct,
+					score,
+					answered_at: new Date(),
+				});
+			} else {
+				result.result_questions.push({
+					question_id,
+					answer,
+					correct,
+					score,
+					answered_at: new Date(),
+				});
+			}
 		}
 
 		if (room_id) {
@@ -461,7 +566,7 @@ class ResultService {
 					: true;
 				const matchesClassName = class_name
 					? result.class_name &&
-					result.class_name.match(new RegExp(class_name, 'i'))
+						result.class_name.match(new RegExp(class_name, 'i'))
 					: true;
 				const matchesType = type ? result.type === type : true;
 				return matchesIdentifier && matchesClassName && matchesType;
@@ -500,7 +605,7 @@ class ResultService {
 		if (!id) {
 			throw new BadRequestError("Don't get data overview of a user");
 		}
-	
+
 		const result = await ResultModel.findById(id)
 			.populate({
 				path: 'user_id',
@@ -514,11 +619,11 @@ class ResultService {
 				path: 'result_questions.question_id',
 				model: 'Question',
 			});
-	
+
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
-	
+
 		// Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
 		const updatedQuestions = await Promise.all(
 			result.result_questions.map(async (question) => {
@@ -530,54 +635,67 @@ class ResultService {
 					populatedAnswer = await Promise.all(
 						question.answer.map(async (answerId) => {
 							if (mongoose.Types.ObjectId.isValid(answerId)) {
-								return await answerModel.findById(answerId).select('text image');
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
 							}
 							return null;
 						})
 					);
 					populatedAnswer = populatedAnswer.filter(Boolean);
 				} else if (mongoose.Types.ObjectId.isValid(question.answer)) {
-					populatedAnswer = await answerModel.findById(question.answer).select('text image');
+					populatedAnswer = await answerModel
+						.findById(question.answer)
+						.select('text image');
 				}
-	
+
 				// Populate `question_answer_ids`
 				const populatedQuestionAnswers = await Promise.all(
-					question.question_id.question_answer_ids.map(async (answerId) => {
-						if (mongoose.Types.ObjectId.isValid(answerId)) {
-							return await answerModel.findById(answerId).select('text image');
+					question.question_id.question_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
 						}
-						return null;
-					})
+					)
 				);
-	
+
 				// Populate `correct_answer_ids`
 				const populatedCorrectAnswers = await Promise.all(
-					question.question_id.correct_answer_ids.map(async (answerId) => {
-						if (mongoose.Types.ObjectId.isValid(answerId)) {
-							return await answerModel.findById(answerId).select('text image');
+					question.question_id.correct_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
 						}
-						return null;
-					})
+					)
 				);
-	
+
 				return {
 					...question.toObject(),
 					answer: populatedAnswer,
 					question_id: {
 						...question.question_id.toObject(),
-						question_answer_ids: populatedQuestionAnswers.filter(Boolean),
-						correct_answer_ids: populatedCorrectAnswers.filter(Boolean),
+						question_answer_ids:
+							populatedQuestionAnswers.filter(Boolean),
+						correct_answer_ids:
+							populatedCorrectAnswers.filter(Boolean),
 					},
 				};
 			})
 		);
-	
+
 		// Update the `result_questions` field
 		result.result_questions = updatedQuestions;
-	
+
 		return result;
 	}
-		
 
 	static async getRankBoard({ room_id, quiz_id }) {
 		const results = await ResultModel.find({
