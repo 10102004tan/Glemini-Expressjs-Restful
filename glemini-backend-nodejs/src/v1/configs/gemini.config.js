@@ -45,7 +45,8 @@ const schema = {
 			},
 			answers: {
 				type: SchemaType.ARRAY,
-				description: 'List of answers have 4 items',
+				description:
+					'List of answers have 4 items if question type is single or multiple, if question type is box list of answer have only 1 items',
 				items: {
 					type: SchemaType.OBJECT,
 					description: 'Answer of the question',
