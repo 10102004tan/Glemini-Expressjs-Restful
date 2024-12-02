@@ -74,7 +74,7 @@ class QuizService {
   async getQuizzesBySubjectIdPublished() {
     const subjects = await subjectModel.find({});
     const results = [];
-  
+
     for (const subject of subjects) {
       const quizzes = await quizModel.aggregate([
         {
@@ -131,7 +131,7 @@ class QuizService {
           },
         },
       ]);
-  
+
       if (quizzes.length > 0) {
         results.push({
           subject: subject,
@@ -139,7 +139,7 @@ class QuizService {
         });
       }
     }
-  
+
     return results;
   }
 
@@ -479,7 +479,7 @@ class QuizService {
   }
 
   // Hàm lấy template file docx
-  async getDocsTemplate(req, res) { }
+  async getDocsTemplate(req, res) {}
 
   // Hàm tìm kiếm quiz theo yêu cầu của người dùng
   async filterQuizzes({
@@ -503,6 +503,8 @@ class QuizService {
     // Kiểm tra nếu có trạng thái quiz thì thêm vào query
     if (quiz_status) {
       query.quiz_status = quiz_status;
+    } else {
+      query.quiz_status = { $ne: "deleted" }; // Chỉ khi không có quiz_status
     }
 
     if (start_filter_date || end_filter_date) {
@@ -516,7 +518,6 @@ class QuizService {
       query.subject_ids = { $in: quiz_subjects };
     }
 
-    query.quiz_status = { $ne: "deleted" }; // Lấy các quiz mà quiz_status khác 'deleted'
     // Tìm kiếm quiz theo query
     const quizzes = await quizModel.find(query);
 
@@ -672,6 +673,58 @@ class QuizService {
     }
 
     return newQuiz;
+  }
+
+  //lấy tất cả user_id và trạng thái của isEdit trong shared_user_ids
+  async getSharedUserIds({ quiz_id }) {
+    // Tìm quiz dựa trên quiz_id và populate thông tin user trong user_id
+    const quiz = await quizModel
+      .findOne({ _id: quiz_id }) // Tìm tài liệu dựa trên quiz_id
+      .populate({
+        path: "shared_user_ids.user_id", // Populate thông tin user từ user_id
+        select: "user_email ", // Loại bỏ các trường nhạy cảm nếu cần
+      })
+      .exec();
+
+    // Nếu không tìm thấy quiz, ném lỗi
+    if (!quiz) {
+      throw new BadRequestError("Quiz not found");
+    }
+
+    // Trả về shared_user_ids (đã bao gồm thông tin user)
+    return quiz.shared_user_ids;
+  }
+
+  // xóa user_email trong mảng shared_user_ids dựa trên user_id
+  async removeSharedUser({ quiz_id, user_id }) {
+    // Kiểm tra quiz tồn tại
+    const quiz = await quizModel.findById(quiz_id);
+    if (!quiz) {
+      throw new BadRequestError("Quiz not found");
+    }
+
+    // Xóa user khỏi shared_user_ids
+    const result = await quizModel.updateOne(
+      { _id: quiz_id },
+      { $pull: { shared_user_ids: { user_id } } }
+    );
+
+    // Kiểm tra xem có thực sự xóa được không
+    if (result.modifiedCount === 0) {
+      throw new BadRequestError("User not found or already removed");
+    }
+
+    // Lấy danh sách shared_user_ids mới (nếu cần gửi lại phía client)
+    const updatedQuiz = await quizModel
+      .findById(quiz_id)
+      .populate({
+        path: "shared_user_ids.user_id",
+        select: "user_email",
+      })
+      .exec();
+
+    // Trả về danh sách đã cập nhật hoặc trạng thái thành công
+    return updatedQuiz.shared_user_ids;
   }
 }
 
