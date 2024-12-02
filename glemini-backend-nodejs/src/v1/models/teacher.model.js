@@ -14,6 +14,10 @@ const teacherSchema = new Schema({
         type: Array,
         default: []
     },
+    schools:{
+        type: Array,
+        default: []
+    },
     file_urls:{
         type: Array,
         default: []
