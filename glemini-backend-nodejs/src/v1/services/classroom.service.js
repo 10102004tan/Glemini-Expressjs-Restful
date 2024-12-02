@@ -211,39 +211,41 @@ class ClassroomService {
 
             // Add student to classroom if not already there
             if (!classroom.students.includes(user._id)) {
-                await classroomModel.updateOne(
-                    { _id: classroomId },
-                    { $addToSet: { students: user._id } }
-                );
-
-                // Update student's classroom list
-                await studentModel.updateOne(
-                    { _id: user._id },
-                    { $addToSet: { classroom_ids: classroomId } },
-                    { upsert: true }
-                );
-
-                const noti = await pushNotiForSys({
-                    type: 'CLASSROOM-001',
-                    receiverId: user._id,
-                    senderId: classroom.user_id,
-                    content: `You have been added to the classroom ${classroom.class_name}`,
-                    options: {
-                        classroom_id: classroom._id,
-                        classroom_name: classroom.class_name,
-                    }
-                });
-
-                // push real-time notification for user
-                const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-                if (listUserOnline.length == 0) {
-                    // push notification with expo notification
-                } else {
-                    listUserOnline.forEach((item) => {
-                        item.socket.emit('notification', noti);
+                if (user.user_type === 'student') {
+                    await classroomModel.updateOne(
+                        { _id: classroomId },
+                        { $addToSet: { students: user._id } }
+                    );
+    
+                    // Update student's classroom list
+                    await studentModel.updateOne(
+                        { _id: user._id },
+                        { $addToSet: { classroom_ids: classroomId } },
+                        { upsert: true }
+                    );
+    
+                    const noti = await pushNotiForSys({
+                        type: 'CLASSROOM-001',
+                        receiverId: user._id,
+                        senderId: classroom.user_id,
+                        content: `You have been added to the classroom ${classroom.class_name}`,
+                        options: {
+                            classroom_id: classroom._id,
+                            classroom_name: classroom.class_name,
+                        }
                     });
-
-                };
+    
+                    // push real-time notification for user
+                    const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+                    if (listUserOnline.length == 0) {
+                        // push notification with expo notification
+                    } else {
+                        listUserOnline.forEach((item) => {
+                            item.socket.emit('notification', noti);
+                        });
+    
+                    };
+                }
 
             }
         });
@@ -257,81 +259,101 @@ class ClassroomService {
 
     // Hàm thêm một học sinh
     async addStudent({ classroomId, user_email }) {
-        const classroom = await classroomModel.findById(classroomId);
-        if (!classroom) throw new BadRequestError('Classroom not found');
-
-        let user = await userModel.findOne({ user_email: user_email });
-
-        // If the student is already in the classroom, throw an error
-        if (user && classroom.students.includes(user._id)) {
-            throw new BadRequestError('Student is already in this classroom');
-        }
-
-        if (!user) {
-            const fullname = user_email.split('@')[0];
-            const signupData = {
-                fullname: fullname,
-                email: user_email,
-                password: '12345678',
-                type: 'student',
-                attributes: {}
-            };
-
-            const newUser = await AccessService.signup(signupData);
-            user = newUser.user;
-        }
-
-        // Thêm học sinh vào lớp nếu chưa có
-        if (!classroom.students.includes(user._id)) {
-            await classroomModel.updateOne(
-                { _id: classroomId },
-                { $addToSet: { students: user._id } }
-            );
-            await studentModel.updateOne(
-                { _id: user._id },
-                { $addToSet: { classroom_ids: classroomId } },
-                { upsert: true }
-            );
-
-            const noti = await pushNotiForSys({
-                type: 'CLASSROOM-001',
-                receiverId: user._id,
-                senderId: classroom.user_id,
-                content: `You have been added to the classroom ${classroom.class_name}`,
-                options: {
-                    classroom_id: classroom._id,
-                    classroom_name: classroom.class_name,
+        try {
+            const classroom = await classroomModel.findById(classroomId);
+            if (!classroom) throw new BadRequestError('Classroom not found');
+    
+            let user = await userModel.findOne({ user_email });
+            
+            // Kiểm tra nếu người dùng là giáo viên
+            if (user && user.user_type === 'teacher') {
+                console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
+                return false;
+            }
+    
+            // Nếu học sinh đã ở trong lớp, trả về false
+            if (user && classroom.students.includes(user._id)) {
+                return false;
+            }
+    
+            // Nếu người dùng chưa tồn tại, tạo mới
+            if (!user) {
+                const fullname = user_email.split('@')[0];
+                const signupData = {
+                    fullname: fullname,
+                    email: user_email,
+                    password: '12345678',
+                    type: 'student',
+                    attributes: {},
+                };
+    
+                const newUser = await AccessService.signup(signupData);
+                user = newUser.user;
+    
+                // Kiểm tra nếu người dùng mới được tạo là giáo viên
+                if (user.user_type === 'teacher') {
+                    console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
+                    return false;
                 }
-            });
-
-            const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-            console.log("list:::", listUserOnline);
-            if (listUserOnline.length == 0) {
-                // push notification with expo notification
-                const expoToken = await expoTokenModel.findOne({ user_id: user._id });
-                const { tokens } = expoToken;
-                if (tokens.length > 0) {
-                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
-                    // push notification with expo notification
-                    pushNoti({
-                        somePushTokens: listTokens,
-                        data: {
-                            body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
-                            title: 'Thông báo',
-                            data: noti.options
-                        }
+            }
+    
+            // Thêm học sinh vào lớp nếu chưa có
+            if (!classroom.students.includes(user._id)) {
+                if (user.user_type === 'student') {
+                    await classroomModel.updateOne(
+                        { _id: classroomId },
+                        { $addToSet: { students: user._id } }
+                    );
+                    await studentModel.updateOne(
+                        { _id: user._id },
+                        { $addToSet: { classroom_ids: classroomId } },
+                        { upsert: true }
+                    );
+    
+                    const noti = await pushNotiForSys({
+                        type: 'CLASSROOM-001',
+                        receiverId: user._id,
+                        senderId: classroom.user_id,
+                        content: `You have been added to the classroom ${classroom.class_name}`,
+                        options: {
+                            classroom_id: classroom._id,
+                            classroom_name: classroom.class_name,
+                        },
                     });
+    
+                    const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+                    if (listUserOnline.length == 0) {
+                        // Push notification with expo notification
+                        const expoToken = await expoTokenModel.findOne({ user_id: user._id });
+                        const { tokens } = expoToken;
+                        if (tokens.length > 0) {
+                            const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+                            pushNoti({
+                                somePushTokens: listTokens,
+                                data: {
+                                    body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
+                                    title: 'Thông báo',
+                                    data: noti.options,
+                                },
+                            });
+                        }
+                    } else {
+                        listUserOnline.forEach((item) => {
+                            item.socket.emit('notification', noti);
+                        });
+                    }
                 }
             } else {
-                listUserOnline.forEach((item) => {
-                    item.socket.emit('notification', noti);
-                });
-            };
+                return false; // Học sinh đã tồn tại trong lớp
+            }
+    
+            await classroom.save();
+            return true;
+        } catch (error) {
+            console.error("Error in addStudent:", error);
+            return false; // Trả về false nếu xảy ra lỗi
         }
-
-        await classroom.save()
-        return classroom;
-    }
+    }       
 
     // Xóa học sinh ra khỏi lớp
     async removeStudentFromClass(classroomId, studentId) {
