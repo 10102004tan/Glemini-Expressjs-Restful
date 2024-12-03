@@ -69,6 +69,14 @@ class RoomController {
 			metadata: check,
 		}).send(res);
 	}
+
+	async getRoomByCode(req, res) {
+		const room = await roomService.getRoomByCode(req.body);
+		return new OK({
+			message: 'Get room by code successfully!',
+			metadata: room,
+		}).send(res);
+	}
 }
 
 module.exports = new RoomController();

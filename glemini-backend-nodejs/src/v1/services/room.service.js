@@ -32,8 +32,13 @@ class RoomService {
 		return newRoom;
 	}
 
-	async getListCreatedRoom({ user_created_id }) {
-		const rooms = await roomModel.find({ user_created_id });
+	async getListCreatedRoom({ user_created_id, page, limit }) {
+		const rooms = await roomModel
+			.find({ user_created_id })
+			.skip((page - 1) * limit)
+			.limit(limit)
+			.sort({ createdAt: -1 });
+
 		if (!rooms) {
 			throw new BadRequestError('No room found');
 		}
@@ -164,6 +169,15 @@ class RoomService {
 		if (room.user_join_ids.length >= room.user_max) {
 			return true;
 		}
+	}
+
+	// Hàm tìm phòng theo mã phòng
+	async getRoomByCode({ room_code }) {
+		const room = await roomModel.findOne({ room_code });
+		if (!room) {
+			throw new BadRequestError('No room found');
+		}
+		return room;
 	}
 }
 
