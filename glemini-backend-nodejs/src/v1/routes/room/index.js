@@ -16,4 +16,5 @@ router.post('/report', asynHandler(roomController.detailRoom));
 router.post('/add-user', asynHandler(roomController.addUserToRoom));
 router.post('/remove-user', asynHandler(roomController.removeUserFromRoom));
 router.post('/check-joined', asynHandler(roomController.checkJoinedUser));
+router.post('/room-code', asynHandler(roomController.getRoomByCode));
 module.exports = router;
