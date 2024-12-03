@@ -173,7 +173,11 @@ class RoomService {
 
 	// Hàm tìm phòng theo mã phòng
 	async getRoomByCode({ room_code }) {
-		const room = await roomModel.findOne({ room_code });
+		// Tìm tất cả phòng có mã gần đúng với mã phòng
+		const room = await roomModel.find({
+			room_code: { $regex: new RegExp(room_code, 'i') },
+		});
+
 		if (!room) {
 			throw new BadRequestError('No room found');
 		}
