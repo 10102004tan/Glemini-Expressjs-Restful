@@ -10,5 +10,6 @@ const schoolController = require('../../controllers/school.controller');
 /* AUTHENTICATION */
 
 router.post('', schoolController.getAllSchools);
+router.post('/filter', schoolController.filter);
 
 module.exports = router;

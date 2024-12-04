@@ -4,21 +4,30 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const schoolSchema = new Schema({
+    district:{
+        type: Schema.Types.ObjectId,
+        ref: 'District',
+        required: false,
+        default:null,
+    },
+    province:{
+        type: Schema.Types.ObjectId,
+        ref: 'Province',
+        required: false,
+        default:null,
+    },
     school_name: {
         type: String,
         required: true
     },
-    address:{
-        type:String,
-        required:true
+    isHidden: {
+        type: Boolean,
+        default: true
     },
-    school_code:{
-        type:String,
-    },
-    teacher_ids:{
-        type:Array,
-        default:[],
-        ref: 'Teacher'
+    governing_body:{
+        type: String,
+        required: false,
+        default: null
     }
 }, {
     timestamps: true

@@ -30,6 +30,13 @@ const userSchema = new Schema({
         type:String,
         default:''
     },
+    user_schoolIds:[
+        {
+            type:Schema.Types.ObjectId,
+            ref:'School',
+            default:[]
+        }
+    ],
     user_status:{
         type:String,
         enum:['active','inactive'],
