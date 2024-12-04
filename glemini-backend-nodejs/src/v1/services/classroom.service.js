@@ -270,6 +270,10 @@ class ClassroomService {
 				user = newUser.user;
 			}
 
+			if (user.user_type === 'teacher') {
+				return;
+			}
+			
 			// Add student to classroom if not already there
 			if (!classroom.students.includes(user._id)) {
 				if (user.user_type === 'student') {
@@ -327,9 +331,6 @@ class ClassroomService {
 
 			// Kiểm tra nếu người dùng là giáo viên
 			if (user && user.user_type === 'teacher') {
-				console.warn(
-					`User with email ${user_email} is a teacher and cannot be added to the classroom.`
-				);
 				return false;
 			}
 
