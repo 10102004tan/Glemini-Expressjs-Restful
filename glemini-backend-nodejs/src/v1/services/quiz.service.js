@@ -29,18 +29,51 @@ class QuizService {
   }
 
   // Hàm lấy danh sách quiz theo user
-  async getQuizByUser({ user_id, skip = 0, limit = 2 }) {
-    const quizzies = await quizModel
-      .find({
-        user_id,
-        quiz_status: { $ne: "deleted" }, // Lấy các quiz mà quiz_status khác 'deleted'
-      })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+  async getQuizByUser({
+    user_id,
+    skip = 0,
+    limit = 2,
+    quiz_name,
+    quiz_status,
+    start_filter_date,
+    end_filter_date,
+    quiz_subjects,
+  }) {
+    // Kiểm tra nếu không có user_id
+    if (!user_id) {
+      throw new BadRequestError("User ID is required");
+    }
 
-    if (!quizzies) {
-      throw new BadRequestError("Quiz not found");
+    // Tạo query cơ bản
+    let query = {
+      user_id,
+      quiz_status: { $ne: "deleted" }, // Lấy quiz có trạng thái khác 'deleted'
+    };
+
+    // Áp dụng các bộ lọc nếu có
+    if (quiz_name) {
+      query.quiz_name = { $regex: quiz_name, $options: "i" }; // Tìm kiếm theo tên
+    }
+
+    if (quiz_status) {
+      query.quiz_status = quiz_status; // Tìm theo trạng thái cụ thể
+    }
+
+    if (start_filter_date || end_filter_date) {
+      query.createdAt = {};
+      if (start_filter_date) query.createdAt.$gte = new Date(start_filter_date);
+      if (end_filter_date) query.createdAt.$lte = new Date(end_filter_date);
+    }
+
+    if (quiz_subjects && quiz_subjects.length > 0) {
+      query.subject_ids = { $in: quiz_subjects }; // Lọc theo danh sách môn học
+    }
+
+    // Truy vấn dữ liệu với skip & limit cho load more
+    const quizzies = await quizModel.find(query).skip(skip).limit(limit).lean();
+
+    if (!quizzies || quizzies.length === 0) {
+      throw new BadRequestError("No quizzes found");
     }
 
     return quizzies;
@@ -489,17 +522,22 @@ class QuizService {
     quiz_name,
     start_filter_date,
     end_filter_date,
+    skip = 0, // Số bản ghi cần bỏ qua (phân trang)
+    limit = 10, // Số lượng bản ghi cần lấy
   }) {
     // Kiểm tra nếu không có id người dùng thì trả về lỗi
     if (!user_id) {
       throw new BadRequestError("User ID is required");
     }
+
     // Tạo query để tìm kiếm
     let query = { user_id };
+
     // Kiểm tra nếu có tên quiz thì thêm vào query
     if (quiz_name) {
       query.quiz_name = { $regex: quiz_name, $options: "i" };
     }
+
     // Kiểm tra nếu có trạng thái quiz thì thêm vào query
     if (quiz_status) {
       query.quiz_status = quiz_status;
@@ -507,6 +545,7 @@ class QuizService {
       query.quiz_status = { $ne: "deleted" }; // Chỉ khi không có quiz_status
     }
 
+    // Kiểm tra ngày tạo
     if (start_filter_date || end_filter_date) {
       query.createdAt = {};
       if (start_filter_date) query.createdAt.$gte = new Date(start_filter_date);
@@ -518,13 +557,21 @@ class QuizService {
       query.subject_ids = { $in: quiz_subjects };
     }
 
-    // Tìm kiếm quiz theo query
-    const quizzes = await quizModel.find(query);
+    // Tìm kiếm quiz theo query và áp dụng phân trang
+    const quizzes = await quizModel
+      .find(query)
+      .skip(skip) // Bỏ qua các bản ghi đầu tiên
+      .limit(limit) // Lấy số lượng bản ghi giới hạn
+      .lean(); // Tăng hiệu suất khi chỉ lấy dữ liệu gốc
 
-    if (!quizzes) {
-      throw new BadRequestError("Quizzes not found");
-    }
-    return quizzes;
+    // Trả về dữ liệu và trạng thái còn dữ liệu
+    const totalQuizzes = await quizModel.countDocuments(query); // Đếm tổng số quiz phù hợp
+    const hasMore = skip + limit < totalQuizzes; // Xác định còn dữ liệu hay không
+
+    return {
+      quizzes, // Danh sách quiz
+      hasMore, // Còn dữ liệu để load thêm không
+    };
   }
 
   // Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt

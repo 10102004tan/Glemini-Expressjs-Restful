@@ -1,9 +1,9 @@
-'use strict';
-const mongoose = require('mongoose');
-const { host, port, name } = require('../configs/mongodb.config');
-const colors = require('../configs/colors.config');
-const subjectService = require('../services/subject.service');
-const schoolService = require('../services/school.service');
+"use strict";
+const mongoose = require("mongoose");
+const { host, port, name } = require("../configs/mongodb.config");
+const colors = require("../configs/colors.config");
+const subjectService = require("../services/subject.service");
+const schoolService = require("../services/school.service");
 class Database {
 	constructor() {
 		this.connect();
