@@ -19,8 +19,7 @@ const { pushNotiForSys } = require('./notification.service');
 const expoTokenModel = require('../models/expoToken.model');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, user_expotoken, attributes, files }) {
-
+    static async signup({ fullname, email, password, type, user_expotoken, attributes, files,schoolIds }) {
 
         //
         if (!user_expotoken) {
@@ -68,7 +67,8 @@ class AccessSevice {
                 user_password: hashPassword,
                 user_attributes: attributes,
                 user_expotoken,
-                user_type: type
+                user_type: type,
+                user_schoolIds: schoolIds
             }
         );
 
@@ -115,24 +115,6 @@ class AccessSevice {
             await EmailService.sendEmailWelcome({
                 email: newUser.user_email
             });
-
-
-            // send notification to expo server
-
-            // if(user_expotoken){
-            //     const queueName = 'notificationQueue';
-            //     const message = {
-            //         to: user_expotoken,
-            //         title: `Welcome ${newUser.user_fullname} to Glemini`,
-            //         body: 'Thank you for joining us'
-            //     }
-
-            //     producerQueue(queueName, message).then(()=>{
-            //         console.log('Message sent');
-            //     }).catch(console.error);
-
-            // }
-
 
 
             // add user_expotoken to expoToken

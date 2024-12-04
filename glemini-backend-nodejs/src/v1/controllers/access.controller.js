@@ -8,6 +8,7 @@ class AccessController {
      */
 
     signup = async (req, res, next) => {
+        console.log("constroller:::",req.body.schoolIds);
         return new CREATED({
             message: "User created successfully",
             metadata: await accessService.signup({
@@ -17,7 +18,8 @@ class AccessController {
                 type: req.body.type,
                 user_expotoken: req.body.expo_push_token,
                 attributes: req.body.attributes,
-                files: req.files
+                files: req.files,
+                schoolIds: req.body.schoolIds
             })
         }).send(res);
     }

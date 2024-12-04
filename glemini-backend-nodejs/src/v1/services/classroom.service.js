@@ -80,26 +80,29 @@ class ClassroomService {
                     exercise_id: newExercise._id
                 }
             });
-            console.log("studentnoti::",noti);
+            console.log("studentnoti::", noti);
             // push real-time notification for user
             const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
             console.log("list:::", listUserOnline);
             if (listUserOnline.length == 0) {
                 // push notification with expo notification
                 const expoToken = await expoTokenModel.findOne({ user_id: studentId.toString() });
-                const { tokens } = expoToken;
-                if (tokens.length > 0) {
-                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
-                    // push notification with expo notification
-                    pushNoti({
-                        somePushTokens: listTokens,
-                        data: {
-                            body: `Bạn được giao bài tập trong lớp ${classroom.class_name}`,
-                            title: 'Thông báo',
-                            data: noti.options
-                        }
-                    });
+                if (expoToken) {
+                    const { tokens } = expoToken;
+                    if (tokens.length > 0) {
+                        const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+                        // push notification with expo notification
+                        pushNoti({
+                            somePushTokens: listTokens,
+                            data: {
+                                body: `Bạn được giao bài tập trong lớp ${classroom.class_name}`,
+                                title: 'Thông báo',
+                                data: noti.options
+                            }
+                        });
+                    }
                 }
+
             } else {
                 listUserOnline.forEach((item) => {
                     item.socket.emit('notification', noti);
@@ -309,7 +312,8 @@ class ClassroomService {
             if (listUserOnline.length == 0) {
                 // push notification with expo notification
                 const expoToken = await expoTokenModel.findOne({ user_id: user._id });
-                const { tokens } = expoToken;
+                if (expoToken){
+                    const { tokens } = expoToken;
                 if (tokens.length > 0) {
                     const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
                     // push notification with expo notification
@@ -321,6 +325,7 @@ class ClassroomService {
                             data: noti.options
                         }
                     });
+                }
                 }
             } else {
                 listUserOnline.forEach((item) => {

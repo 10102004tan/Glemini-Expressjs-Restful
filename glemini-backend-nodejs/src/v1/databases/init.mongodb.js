@@ -9,8 +9,8 @@ class Database {
 		this.connect();
 	}
 	connect() {
-		const connectString = `mongodb://${host}:${port}/${name}`;
-		//  const connectString = process.env.PRO_DB_URL;
+		// const connectString = `mongodb://${host}:${port}/${name}`;
+		 const connectString = process.env.PRO_DB_URL;
 		mongoose
 			.connect(connectString)
 			.then(() => {
@@ -21,7 +21,7 @@ class Database {
 				);
 				// Khởi tạo dữ liệu mẫu
 				subjectService.initialize();
-				schoolService.initialize();
+				// schoolService.initialize();
 			})
 			.catch((err) => {
 				console.log(
