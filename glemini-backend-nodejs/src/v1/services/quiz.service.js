@@ -646,7 +646,7 @@ class QuizService {
 		const response = JSON.parse(result.response.text());
 		return response;
 	}
-	//lấy tất cả quiz mà shared_user_ids có chứa user_id
+	// lấy tất cả quiz mà shared_user_ids có chứa user_id
 	async getAllQuizShared({ user_id, skip = 0, limit = 2 }) {
 		console.log('skip', skip);
 		const quizzies = await quizModel
@@ -666,7 +666,7 @@ class QuizService {
 		return quizzies;
 	}
 
-	//Hàm xóa quiz đã chia sẻ dựa trên user_id
+	// Hàm xóa quiz đã chia sẻ dựa trên user_id
 	async removeQuizShared({ user_id, quiz_id }) {
 		const quiz = await quizModel.updateOne(
 			{ _id: quiz_id },
@@ -680,7 +680,7 @@ class QuizService {
 		return quiz;
 	}
 
-	//sao chép lại tất cả thông tin cùa quiz đã chia sẻ
+	// sao chép lại tất cả thông tin cùa quiz đã chia sẻ
 	async copyQuizShared({ user_id, quiz_id }) {
 		const quiz = await quizModel.findOne({ _id: quiz_id });
 
@@ -729,7 +729,7 @@ class QuizService {
 		return newQuiz;
 	}
 
-	//lấy tất cả user_id và trạng thái của isEdit trong shared_user_ids
+	// lấy tất cả user_id và trạng thái của isEdit trong shared_user_ids
 	async getSharedUserIds({ quiz_id }) {
 		// Tìm quiz dựa trên quiz_id và populate thông tin user trong user_id
 		const quiz = await quizModel
@@ -779,6 +779,19 @@ class QuizService {
 
 		// Trả về danh sách đã cập nhật hoặc trạng thái thành công
 		return updatedQuiz.shared_user_ids;
+	}
+
+	// Lấy 5 bộ câu hỏi mới nhất của giáo viên
+	async getNewestQuizzes({ user_id }) {
+		// Tìm kiếm quiz mới nhất của giáo viên
+		const quizzes = await quizModel
+			.find({ user_id })
+			.sort({ createdAt: -1 }) // Sắp xếp theo thời gian tạo mới nhất
+			.limit(5) // Giới hạn số lượng bản ghi
+			.lean(); // Tăng hiệu suất khi chỉ lấy dữ liệu gốc
+
+		// Trả về danh sách quiz mới nhất
+		return quizzes;
 	}
 }
 
