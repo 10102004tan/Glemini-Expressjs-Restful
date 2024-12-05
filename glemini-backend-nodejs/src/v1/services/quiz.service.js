@@ -260,7 +260,8 @@ class QuizService {
 		if (quiz_on !== -1) {
 			query.quiz_turn = { $gte: quiz_on };
 		}
-		const quizzes = await quizModel.aggregate([
+
+		return await quizModel.aggregate([
 			{
 				$match: query,
 			},
@@ -306,8 +307,6 @@ class QuizService {
 			{ $skip: skip },
 			{ $limit: limit },
 		]);
-
-		return quizzes;
 	}
 
 	// Hàm lấy thông tin chi tiết của quiz
@@ -531,14 +530,6 @@ class QuizService {
 		skip = 0, // Số bản ghi cần bỏ qua (phân trang)
 		limit = 10, // Số lượng bản ghi cần lấy
 	}) {
-		console.log('quiz_subjects', quiz_subjects);
-		console.log('quiz_status', quiz_status);
-		console.log('quiz_name', quiz_name);
-		console.log('start_filter_date', start_filter_date);
-		console.log('end_filter_date', end_filter_date);
-		console.log('skip', skip);
-		console.log('limit', limit);
-		console.log('user_id', user_id);
 		// Kiểm tra nếu không có id người dùng thì trả về lỗi
 		if (!user_id) {
 			throw new BadRequestError('User ID is required');

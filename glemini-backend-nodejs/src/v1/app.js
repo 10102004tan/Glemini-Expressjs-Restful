@@ -7,6 +7,7 @@ const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
+const { initSchool } = require('./utils');
 const io = require('socket.io')(server,{
 	cors:{
 		origin: '*',
@@ -38,6 +39,11 @@ require('./databases/init.mongodb');
 
 global._io.on('connection', socketService.connection);
 /* SOCKET CONNECTION END*/
+
+// app.get('/init', async (req, res) => {
+// 	await initSchool();
+// 	return res.json({ message: 'Init data success' });
+// });
 
 /* ROUTES START*/
 app.use('/', require('./routes'));

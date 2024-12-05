@@ -21,7 +21,11 @@ class Database {
 				);
 				// Khởi tạo dữ liệu mẫu
 				subjectService.initialize();
+<<<<<<< HEAD
 				schoolService.initialize();
+=======
+				// schoolService.initialize();
+>>>>>>> 7e0c0f2edc53d171ce92890c047dd94c8de59d81
 			})
 			.catch((err) => {
 				console.log(

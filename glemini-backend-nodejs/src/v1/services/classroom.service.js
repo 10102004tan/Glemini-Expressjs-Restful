@@ -119,6 +119,7 @@ class ClassroomService {
 		classroom.exercises.push(newExercise._id);
 		await classroom.save();
 
+
 		await classroom.populate('exercises');
 
 		// push notification for student
@@ -133,40 +134,37 @@ class ClassroomService {
 					classroom_name: classroom.class_name,
 					quiz_id: quizId,
 					exercise_name: name,
-					exercise_id: newExercise._id,
-				},
+					exercise_id: newExercise._id
+				}
 			});
-			console.log('studentnoti::', noti);
+			console.log("studentnoti::", noti);
 			// push real-time notification for user
-			const listUserOnline = _listUserOnline.filter(
-				(item) => item.userId === studentId.toString()
-			);
-			console.log('list:::', listUserOnline);
+			const listUserOnline = _listUserOnline.filter((item) => item.userId === studentId.toString());
+			console.log("list:::", listUserOnline);
 			if (listUserOnline.length == 0) {
 				// push notification with expo notification
-				const expoToken = await expoTokenModel.findOne({
-					user_id: studentId.toString(),
-				});
-				const { tokens } = expoToken;
-				if (tokens.length > 0) {
-					const listTokens = tokens.filter(
-						(item) => item && item.includes('ExponentPushToken')
-					);
-					// push notification with expo notification
-					pushNoti({
-						somePushTokens: listTokens,
-						data: {
-							body: `Bạn được giao bài tập trong lớp ${classroom.class_name}`,
-							title: 'Thông báo',
-							data: noti.options,
-						},
-					});
+				const expoToken = await expoTokenModel.findOne({ user_id: studentId.toString() });
+				if (expoToken) {
+					const { tokens } = expoToken;
+					if (tokens.length > 0) {
+						const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+						// push notification with expo notification
+						pushNoti({
+							somePushTokens: listTokens,
+							data: {
+								body: `Bạn được giao bài tập trong lớp ${classroom.class_name}`,
+								title: 'Thông báo',
+								data: noti.options
+							}
+						});
+					}
 				}
+
 			} else {
 				listUserOnline.forEach((item) => {
 					item.socket.emit('notification', noti);
 				});
-			}
+			};
 		}
 		return classroom;
 	}
@@ -272,6 +270,10 @@ class ClassroomService {
 				user = newUser.user;
 			}
 
+			if (user.user_type === 'teacher') {
+				return;
+			}
+			
 			// Add student to classroom if not already there
 			if (!classroom.students.includes(user._id)) {
 				if (user.user_type === 'student') {
@@ -329,9 +331,6 @@ class ClassroomService {
 
 			// Kiểm tra nếu người dùng là giáo viên
 			if (user && user.user_type === 'teacher') {
-				console.warn(
-					`User with email ${user_email} is a teacher and cannot be added to the classroom.`
-				);
 				return false;
 			}
 
@@ -364,60 +363,52 @@ class ClassroomService {
 			}
 
 			// Thêm học sinh vào lớp nếu chưa có
+			// Thêm học sinh vào lớp nếu chưa có
 			if (!classroom.students.includes(user._id)) {
-				if (user.user_type === 'student') {
-					await classroomModel.updateOne(
-						{ _id: classroomId },
-						{ $addToSet: { students: user._id } }
-					);
-					await studentModel.updateOne(
-						{ _id: user._id },
-						{ $addToSet: { classroom_ids: classroomId } },
-						{ upsert: true }
-					);
+				await classroomModel.updateOne(
+					{ _id: classroomId },
+					{ $addToSet: { students: user._id } }
+				);
+				await studentModel.updateOne(
+					{ _id: user._id },
+					{ $addToSet: { classroom_ids: classroomId } },
+					{ upsert: true }
+				);
 
-					const noti = await pushNotiForSys({
-						type: 'CLASSROOM-001',
-						receiverId: user._id,
-						senderId: classroom.user_id,
-						content: `You have been added to the classroom ${classroom.class_name}`,
-						options: {
-							classroom_id: classroom._id,
-							classroom_name: classroom.class_name,
-						},
-					});
+				const noti = await pushNotiForSys({
+					type: 'CLASSROOM-001',
+					receiverId: user._id,
+					senderId: classroom.user_id,
+					content: `You have been added to the classroom ${classroom.class_name}`,
+					options: {
+						classroom_id: classroom._id,
+						classroom_name: classroom.class_name,
+					}
+				});
 
-					const listUserOnline = _listUserOnline.filter(
-						(item) => item.userId === user._id.toString()
-					);
-					if (listUserOnline.length == 0) {
-						// Push notification with expo notification
-						const expoToken = await expoTokenModel.findOne({
-							user_id: user._id,
-						});
-						const { tokens } = expoToken;
-						if (tokens.length > 0) {
-							const listTokens = tokens.filter(
-								(item) =>
-									item && item.includes('ExponentPushToken')
-							);
-							pushNoti({
-								somePushTokens: listTokens,
-								data: {
-									body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
-									title: 'Thông báo',
-									data: noti.options,
-								},
-							});
-						}
-					} else {
-						listUserOnline.forEach((item) => {
-							item.socket.emit('notification', noti);
+				const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
+				console.log("list:::", listUserOnline);
+				if (listUserOnline.length == 0) {
+					// push notification with expo notification
+					const expoToken = await expoTokenModel.findOne({ user_id: user._id });
+					const { tokens } = expoToken;
+					if (tokens.length > 0) {
+						const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+						// push notification with expo notification
+						pushNoti({
+							somePushTokens: listTokens,
+							data: {
+								body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
+								title: 'Thông báo',
+								data: noti.options
+							}
 						});
 					}
-				}
-			} else {
-				return false; // Học sinh đã tồn tại trong lớp
+				} else {
+					listUserOnline.forEach((item) => {
+						item.socket.emit('notification', noti);
+					});
+				};
 			}
 
 			await classroom.save();

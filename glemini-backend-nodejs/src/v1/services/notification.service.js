@@ -45,6 +45,10 @@ const updateStatusNotificationService = async({notiId, status}) => {
     return true;
 }
 
+const readAll = (userId) => {
+    return NOTI.updateMany({noti_receiverId: userId}, {noti_status: 'read'});
+};
+
 const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},title="It's working",body="hello world",content})=>{
      const data = {
         title,
@@ -91,4 +95,5 @@ module.exports = {
     getNotificationReceiverIdService,
     updateStatusNotificationService,
     sendNotificationAdminService,
+    readAll
 };

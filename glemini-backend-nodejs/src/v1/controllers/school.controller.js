@@ -13,6 +13,13 @@ class SchoolController {
         }).send(res);
     };
 
+    filter = async (req, res) => {
+        return new OK({
+            message: 'Filter data schools successfully!',
+            metadata: await schoolService.filter(req.body),
+        }).send(res);
+    };
+
 }
 
 module.exports = new SchoolController();

@@ -55,9 +55,11 @@ class UserService {
     user_type,
     user_phone,
     user_avatar,
+    user_schoolIds = [],
     user_status = "active",
     user_attributes = {},
   }) {
+    console.log("user_schoolIds::",user_schoolIds);
     this.user_fullname = user_fullname;
     this.user_email = user_email;
     this.user_password = user_password;
@@ -65,6 +67,7 @@ class UserService {
     this.user_phone = user_phone;
     this.user_avatar = user_avatar;
     this.user_status = user_status;
+    this.user_schoolIds = user_schoolIds;
     this.user_attributes = user_attributes;
   }
 
@@ -84,19 +87,15 @@ class UserService {
   static async profile({ user_id }) {
     const user = await findUserByIdV2({
       id: user_id,
-      select: { user_fullname: 1, user_email: 1 },
     });
-
     if (!user) {
       throw new BadRequestError("User not found");
     }
-
     return user;
   }
 
-  static async updateProfile({ user_id, fullname, email, avatar }) {
+  static async updateProfile({ user_id, fullname, email, avatar,schoolIds }) {
     // update full name,email,avatar
-    console.log(fullname);
     let uploadUrl = null;
     if (avatar) {
       uploadUrl = await UploadService.uploadImageFromOneFile({
@@ -113,6 +112,7 @@ class UserService {
       id: user_id,
       user_fullname: fullname,
       user_email: email,
+      user_schoolIds:schoolIds,
       user_avatar: uploadUrl && uploadUrl.thumbnail,
     });
     if (!updated) {
@@ -133,48 +133,36 @@ class UserService {
     });
   }
 
-  static async profile({ user_id }) {
-    const user = await findUserByIdV2({
-      id: user_id,
-      select: { user_fullname: 1, user_email: 1 },
-    });
 
-    if (!user) {
-      throw new BadRequestError("User not found");
-    }
+  // static async updateProfile({ user_id, fullname, email, avatar }) {
+  //   // update full name,email,avatar
+  //   let uploadUrl = null;
+  //   if (avatar) {
+  //     uploadUrl = await UploadService.uploadImageFromOneFile({
+  //       path: avatar,
+  //       folderName: `users/${user_id}/avatars`,
+  //     });
 
-    return user;
-  }
+  //     if (!uploadUrl) {
+  //       throw new BadRequestError("Cannot upload avatar");
+  //     }
+  //   }
 
-  static async updateProfile({ user_id, fullname, email, avatar }) {
-    // update full name,email,avatar
-    let uploadUrl = null;
-    if (avatar) {
-      uploadUrl = await UploadService.uploadImageFromOneFile({
-        path: avatar,
-        folderName: `users/${user_id}/avatars`,
-      });
-
-      if (!uploadUrl) {
-        throw new BadRequestError("Cannot upload avatar");
-      }
-    }
-
-    const updated = await findAndUpdateUserById({
-      id: user_id,
-      user_fullname: fullname,
-      user_email: email,
-      user_avatar: uploadUrl && uploadUrl.thumbnail,
-    });
-    if (!updated) {
-      throw new BadRequestError("Cannot update user");
-    }
-    return {
-      user_fullname: fullname,
-      user_email: email,
-      user_avatar: uploadUrl && uploadUrl.thumbnail,
-    };
-  }
+  //   const updated = await findAndUpdateUserById({
+  //     id: user_id,
+  //     user_fullname: fullname,
+  //     user_email: email,
+  //     user_avatar: uploadUrl && uploadUrl.thumbnail,
+  //   });
+  //   if (!updated) {
+  //     throw new BadRequestError("Cannot update user");
+  //   }
+  //   return {
+  //     user_fullname: fullname,
+  //     user_email: email,
+  //     user_avatar: uploadUrl && uploadUrl.thumbnail,
+  //   };
+  // }
 
   // chia sẻ quiz cho giáo viên khác
   static async shareQuizToTeacher({ email, quiz_id, user_id, isEdit }) {
