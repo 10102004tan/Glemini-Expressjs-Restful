@@ -1,7 +1,7 @@
 'use strict';
 
 const { OK } = require("../cores/success.response");
-const { updateStatusNotificationService, sendNotificationAdminService } = require("../services/notification.service");
+const { updateStatusNotificationService, sendNotificationAdminService, readAll } = require("../services/notification.service");
 
 class NotificationController {
     // update
@@ -17,6 +17,15 @@ class NotificationController {
         return new OK({
             message:"Send notification ok",
             metadata: await sendNotificationAdminService(req.body)
+        }).send(res);
+    }
+
+    // read all
+    async readAll(req, res) {
+        console.log('req.user',req.user);
+        return new OK({
+            message: "Read all notification success",
+            data: await readAll(req.user.user_id)
         }).send(res);
     }
 }
