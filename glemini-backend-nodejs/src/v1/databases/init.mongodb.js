@@ -1,16 +1,16 @@
-"use strict";
-const mongoose = require("mongoose");
-const { host, port, name } = require("../configs/mongodb.config");
-const colors = require("../configs/colors.config");
-const subjectService = require("../services/subject.service");
-const schoolService = require("../services/school.service");
+'use strict';
+const mongoose = require('mongoose');
+const { host, port, name } = require('../configs/mongodb.config');
+const colors = require('../configs/colors.config');
+const subjectService = require('../services/subject.service');
+const schoolService = require('../services/school.service');
 class Database {
 	constructor() {
 		this.connect();
 	}
 	connect() {
-		// const connectString = `mongodb://${host}:${port}/${name}`;
-		 const connectString = process.env.PRO_DB_URL;
+		const connectString = `mongodb://${host}:${port}/${name}`;
+		//  const connectString = process.env.PRO_DB_URL;
 		mongoose
 			.connect(connectString)
 			.then(() => {
@@ -21,7 +21,7 @@ class Database {
 				);
 				// Khởi tạo dữ liệu mẫu
 				subjectService.initialize();
-				// schoolService.initialize();
+				schoolService.initialize();
 			})
 			.catch((err) => {
 				console.log(
