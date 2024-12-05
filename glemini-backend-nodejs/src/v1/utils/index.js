@@ -4,7 +4,7 @@ const provinceModel = require('../models/province.model');
 const schoolModel = require('../models/school.model');
 const districtModel = require('../models/district.model');
 const { default: mongoose } = require('mongoose');
-const universities = require('./schoolData');
+const {universities,colleges, universitiesV2, universitiesV3, universitiesV4, universitiesV5, universitiesV6, universitiesV7} = require('./schoolData');
 
 const getInfoData = ({fields=[],object={}}) => {
     return _.pick(object,fields);
@@ -101,58 +101,100 @@ const initSchool = async () => {
 	// 2. for item
 
 	// INIT 1
-	try {
-		for (let i = 0 ; i < listIdsProvince.length; i++) {
-			const province = listIdsProvince[i];
-			// 3. get all district
-			const provinceStore = await provinceModel.create({province_name: province.name});
-			if (!provinceStore) return;
-			let districts = await fetchDistrictQuery(province.id);
-			districts = JSON.parse(districts).data.fetchDistrict;
-			// 4. for item
-			for (let j = 0; j < districts.length; j++) {
-				const district = districts[j];
-				const districtStore = await districtModel.create({province: provinceStore._id, district_name: district.name});
-				if (!districtStore) return;
-				let schoolData = await fetchSchoolQuery(district.id);
-				// 5. for item
-				schoolData = JSON.parse(schoolData).data.fetchSchool;
-				// for (let k = 0; k < schoolData.length; k++) {
-				// 	const school = schoolData[k];
-				// 	const schoolStore = await schoolModel.create({district: districtStore._id, school_name: school.name});
-				// 	// if (!schoolStore) return;
-				// }
-				const schoolStore = await schoolModel.insertMany(schoolData.map(school => ({district: districtStore._id,province:provinceStore._id, school_name: school.name,isHidden:false})));
-				console.log("schoolStore::",schoolStore);
-			}
-		}
+	// try {
+	// 	for (let i = 0 ; i < listIdsProvince.length; i++) {
+	// 		const province = listIdsProvince[i];
+	// 		// 3. get all district
+	// 		const provinceStore = await provinceModel.create({province_name: province.name});
+	// 		if (!provinceStore) return;
+	// 		let districts = await fetchDistrictQuery(province.id);
+	// 		districts = JSON.parse(districts).data.fetchDistrict;
+	// 		// 4. for item
+	// 		for (let j = 0; j < districts.length; j++) {
+	// 			const district = districts[j];
+	// 			const districtStore = await districtModel.create({province: provinceStore._id, district_name: district.name});
+	// 			if (!districtStore) return;
+	// 			let schoolData = await fetchSchoolQuery(district.id);
+	// 			// 5. for item
+	// 			schoolData = JSON.parse(schoolData).data.fetchSchool;
+	// 			// for (let k = 0; k < schoolData.length; k++) {
+	// 			// 	const school = schoolData[k];
+	// 			// 	const schoolStore = await schoolModel.create({district: districtStore._id, school_name: school.name});
+	// 			// 	// if (!schoolStore) return;
+	// 			// }
+	// 			const schoolStore = await schoolModel.insertMany(schoolData.map(school => ({district: districtStore._id,province:provinceStore._id, school_name: school.name,isHidden:false})));
+	// 			console.log("schoolStore::",schoolStore);
+	// 		}
+	// 	}
 
-		await session.commitTransaction();
-		session.endSession();
-		console.log("initSchool success");
-	} catch (error) {
-		await session.abortTransaction();
-		session.endSession();
-		console.log("initSchool error::",error);
-	}
+	// 	await session.commitTransaction();
+	// 	session.endSession();
+	// 	console.log("initSchool success");
+	// } catch (error) {
+	// 	await session.abortTransaction();
+	// 	session.endSession();
+	// 	console.log("initSchool error::",error);
+	// }
 
 	// 	INIT 2
-	for (let i = 0 ; i < universities.length; i++) {
-		const university = universities[i];
-		console.log("university::",university);
+	// for (let i = 0 ; i < universities.length; i++) {
+	// 	const university = universities[i];
+	// 	console.log("university::",university);
+	// 	// check province exist
+	// 	let provinceExist = await provinceModel.findOne({province_name: university.provice});
+	// 	// if not exist => create
+	// 	if (!provinceExist){
+	// 		provinceExist = await provinceModel.create({province_name: university.provice});
+	// 	}
+
+	// 	// insert school
+	// 	const schoolStore = await schoolModel.create({province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false});
+	// 	// insert many
+	
+	// 	//const schoolStore = await schoolModel.insertMany([{province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false}]);
+	// 	console.log("schoolStore::",schoolStore);
+	// }
+
+	// INIT 3
+	// for (let i = 0 ; i < colleges.length; i++) {
+	// 	const college = colleges[i];
+	// 	console.log("university::",college);
+	// 	// check province exist
+	// 	let provinceExist = await provinceModel.findOne({province_name: college.province});
+	// 	// if not exist => create
+	// 	if (!provinceExist){
+	// 		provinceExist = await provinceModel.create({province_name: college.province});
+	// 	}
+
+	// 	// insert school
+	// 	const schoolStore = await schoolModel.create({province: provinceExist._id, school_name: college.name,governing_body:college.governing_body,isHidden:false});
+	// 	// insert many
+	
+	// 	//const schoolStore = await schoolModel.insertMany([{province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false}]);
+	// 	console.log("schoolStore::",schoolStore);
+	// }
+
+	for (let i = 0 ; i < universitiesV7.length; i++) {
+		const university = universitiesV7[i];
 		// check province exist
-		let provinceExist = await provinceModel.findOne({province_name: university.provice});
+		let provinceExist = await provinceModel.findOne({province_name: university.province});
 		// if not exist => create
 		if (!provinceExist){
-			provinceExist = await provinceModel.create({province_name: university.provice});
+			provinceExist = await provinceModel.create({province_name: university.province});
 		}
 
 		// insert school
-		const schoolStore = await schoolModel.create({province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false});
-		// insert many
-	
-		//const schoolStore = await schoolModel.insertMany([{province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false}]);
-		console.log("schoolStore::",schoolStore);
+
+		// find school exist
+		let schoolExist = await schoolModel.findOne({school_name:university.name,province:provinceExist._id});
+
+		if (!schoolExist){
+			const schoolStore = await schoolModel.create({province: provinceExist._id, school_name: university.name,governing_body:university.governing_body,isHidden:false});
+			console.log("schoolStore::",schoolStore);
+		}else{
+			console.log("schoolExist::",schoolExist);
+			continue;
+		}
 	}
 
 }
@@ -198,10 +240,15 @@ const fetchSchoolQuery = async (districtId) => {
     return JSON.stringify(data,null,2);
 }
 
+const removeDiacritics = (str) => {
+	return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
 module.exports = {
 	HEADER,
 	replacePlaceHolder,
 	getInfoData,
 	randomHexColor,
-	initSchool
+	initSchool,
+	removeDiacritics
 };

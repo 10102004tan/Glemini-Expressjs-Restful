@@ -33,4 +33,7 @@ const schoolSchema = new Schema({
     timestamps: true
 });
 
+// create index for school_name full text search
+schoolSchema.index({school_name: 'text'});
+
 module.exports = model('School', schoolSchema);

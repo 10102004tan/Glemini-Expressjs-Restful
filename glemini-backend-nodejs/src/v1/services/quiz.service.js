@@ -254,54 +254,53 @@ class QuizService {
     if (quiz_on !== -1) {
       query.quiz_turn = { $gte: quiz_on };
     }
-    const quizzes = await quizModel.aggregate([
-      {
-        $match: query,
-      },
-      {
-        $lookup: {
-          from: "questions",
-          localField: "_id",
-          foreignField: "quiz_id",
-          as: "questions",
-        },
-      },
-      {
-        // lookup with user and unwind
-        $lookup: {
-          from: "users",
-          localField: "user_id",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $unwind: "$user",
-      },
-      {
-        $project: {
-          quiz_name: 1,
-          quiz_description: 1,
-          quiz_thumb: 1,
-          user_id: 1,
-          quiz_turn: 1,
-          quiz_status: 1,
-          createdAt: 1,
-          subject_ids: 1,
-          user_avatar: "$user.user_avatar",
-          user_fullname: "$user.user_fullname",
-          question_count: { $size: "$questions" }, // Count of questions
-        },
-      },
-      {
-        $match: { question_count: { $gt: 0 } },
-      },
-      { $sort: { createdAt: sortStatus } },
-      { $skip: skip },
-      { $limit: limit },
-    ]);
 
-    return quizzes;
+      return await quizModel.aggregate([
+        {
+          $match: query,
+        },
+        {
+          $lookup: {
+            from: "questions",
+            localField: "_id",
+            foreignField: "quiz_id",
+            as: "questions",
+          },
+        },
+        {
+          // lookup with user and unwind
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
+          $project: {
+            quiz_name: 1,
+            quiz_description: 1,
+            quiz_thumb: 1,
+            user_id: 1,
+            quiz_turn: 1,
+            quiz_status: 1,
+            createdAt: 1,
+            subject_ids: 1,
+            user_avatar: "$user.user_avatar",
+            user_fullname: "$user.user_fullname",
+            question_count: { $size: "$questions" }, // Count of questions
+          },
+        },
+        {
+          $match: { question_count: { $gt: 0 } },
+        },
+        { $sort: { createdAt: sortStatus } },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
   }
 
   // Hàm lấy thông tin chi tiết của quiz
@@ -512,7 +511,7 @@ class QuizService {
   }
 
   // Hàm lấy template file docx
-  async getDocsTemplate(req, res) {}
+  async getDocsTemplate(req, res) { }
 
   // Hàm tìm kiếm quiz theo yêu cầu của người dùng
   async filterQuizzes({
