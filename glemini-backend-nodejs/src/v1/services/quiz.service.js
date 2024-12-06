@@ -783,9 +783,9 @@ class QuizService {
 
 	// Lấy 5 bộ câu hỏi mới nhất của giáo viên
 	async getNewestQuizzes({ user_id }) {
-		// Tìm kiếm quiz mới nhất của giáo viên
+		// Tìm kiếm quiz mới nhất của giáo viên trạng thái khác deleted
 		const quizzes = await quizModel
-			.find({ user_id })
+			.find({ user_id, quiz_status: { $ne: 'deleted' } })
 			.sort({ createdAt: -1 }) // Sắp xếp theo thời gian tạo mới nhất
 			.limit(5) // Giới hạn số lượng bản ghi
 			.lean(); // Tăng hiệu suất khi chỉ lấy dữ liệu gốc
