@@ -82,9 +82,6 @@ const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},
         });
     });
 
-
-    // pushNoti({somePushTokens,data});
-
     return 1;
 }
 
