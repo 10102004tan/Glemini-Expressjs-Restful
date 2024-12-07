@@ -9,6 +9,7 @@ const classroomModel = require('../models/classroom.model');
 const answerModel = require('../models/answer.model');
 const roomModel = require('../models/room.model');
 const mongoose = require('mongoose');
+const resultModel = require('../models/result.model');
 
 class ResultService {
 	static async saveQuestion({
@@ -114,6 +115,23 @@ class ResultService {
 		await result.save();
 
 		return result;
+	}
+
+	static async resetResultOfQuiz({ resultId }) {
+		
+			const result = await resultModel.findByIdAndUpdate(
+				resultId,
+				{
+					$set: {
+						status: 'doing',
+						result_questions: []
+					},
+				},
+				{ new: false }
+			);
+	
+			return !!result;
+		
 	}
 
 	static async completeQuiz({ exercise_id, room_id, user_id, quiz_id }) {
