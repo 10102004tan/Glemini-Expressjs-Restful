@@ -15,7 +15,7 @@ router.use('/get-templates', templateRouter);
 router.post('/search', asynHandler(quizController.search));
 
 // AUTHENTICATION
-// router.use(asynHandler(authentication));
+router.use(asynHandler(authentication));
 // AUTHENTICATION
 
 router.post(
@@ -84,5 +84,7 @@ router.post(
 	'/get-newest-quizzes',
 	asynHandler(quizController.getNewestQuizzes)
 );
+
+router.post('/duplicate', asynHandler(quizController.duplicateQuiz));
 
 module.exports = router;

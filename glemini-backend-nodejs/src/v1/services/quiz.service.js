@@ -12,6 +12,7 @@ const { model } = require('../configs/gemini.config');
 const {
 	Types: { ObjectId },
 } = require('mongoose');
+const notificationModel = require('../models/notification.model');
 
 class QuizService {
 	// Hàm tạo quiz
@@ -307,6 +308,56 @@ class QuizService {
 			{ $skip: skip },
 			{ $limit: limit },
 		]);
+	}
+
+	// create duplicate quiz
+	async duplicateQuiz({ quiz_id,user_id }) {
+		const quiz = await quizModel.findById(quiz_id).populate('user_id');
+		if (!quiz) {
+			throw new BadRequestError('Quiz not found');
+		}
+
+		console.log(quiz.user_id);
+
+		const newQuiz = await quizModel.create({
+			user_id: user_id,			
+			quiz_name: quiz.quiz_name + ' (copy)',
+			quiz_description: `${quiz.quiz_name} copy from ${quiz.user_id.user_fullname}`,
+			quiz_thumb: quiz.quiz_thumb,
+			subject_ids: quiz.subject_ids,
+			quiz_status: 'unpublished',
+			quiz_turn: quiz.quiz_turn,
+		});
+
+		if (!newQuiz) {
+			throw new BadRequestError('Quiz not created');
+		}
+
+		const questions = await questionModel.find({ quiz_id: quiz_id });
+
+		if (questions.length > 0) {
+			// Create new questions
+			const newQuestions = questions.map((question) => {
+				return {
+					quiz_id: newQuiz._id,
+					question_excerpt: question.question_excerpt,
+					question_description: question.question_description,
+					question_audio: question.question_audio,
+					question_image: question.question_image,
+					question_video: question.question_video,
+					question_point: question.question_point,
+					question_time: question.question_time,
+					question_explanation: question.question_explanation,
+					question_type: question.question_type,
+					question_answer_ids: question.question_answer_ids,
+					correct_answer_ids: question.correct_answer_ids,
+				};
+			});
+
+			await questionModel.insertMany(newQuestions);
+		}
+
+		return newQuiz;
 	}
 
 	// Hàm lấy thông tin chi tiết của quiz

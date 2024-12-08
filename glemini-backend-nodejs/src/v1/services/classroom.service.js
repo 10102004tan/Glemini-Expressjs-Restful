@@ -306,6 +306,7 @@ class ClassroomService {
 					);
 					if (listUserOnline.length == 0) {
 						// push notification with expo notification
+
 					} else {
 						listUserOnline.forEach((item) => {
 							item.socket.emit('notification', noti);
@@ -317,6 +318,15 @@ class ClassroomService {
 
 		// Wait for all promises to resolve before returning
 		await Promise.all(studentPromises);
+
+		const listExpoTokens = await findExpoTokenByListUserId(classroom.students);
+		await pushNoti({
+			somePushTokens: listExpoTokens,
+			data: {
+				body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
+				title: 'Thông báo',
+			}
+		});
 
 		return classroom;
 	};
