@@ -3,6 +3,8 @@
 const User = require('../../models/user.model');
 const Teacher = require('../../models/teacher.model');
 const { BadRequestError } = require('../../cores/error.repsone');
+const { Types } = require('mongoose');
+const { default: mongoose } = require('mongoose');
 
 const findUserByEmail = async (email) => {
     const foundUser = await User.findOne({ user_email: email }).lean();
@@ -21,9 +23,35 @@ const findUserById = async (id) => {
     return foundUser;
 };
 
-const findUserByIdV2 = async ({id,select={}}) => {
-    const foundUser = await User.findById(id,select).lean();
-    return foundUser;
+const findUserByIdV2 = async ({id}) => {
+    // const found = await User.findById(id,select).lean();
+    // return found;
+    const aggregate = [
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(id)
+            }
+        },
+        {
+            $lookup: {
+                from: "schools",
+                localField: "user_schoolIds",
+                foreignField: "_id",
+                as: "schools"
+            }
+        },
+        {
+            $project: {
+                user_fullname: 1,
+                user_email: 1,
+                user_avatar: 1,
+                schools: 1
+            }
+        }
+    ];
+
+    const found = await User.aggregate(aggregate);
+    return found[0];
 };
 
 
@@ -47,15 +75,17 @@ const findStatusByUserId= async ({id,type}) => {
     }
 };
 
-const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar}) => {
+const findAndUpdateUserById = async ({id,user_fullname,user_email,user_avatar,user_schoolIds}) => {
     //  find email
     if (user_email) {
         const found = await User.findOne({ user_email}).lean();
-        if(found) throw new BadRequestError("Email already exists");
+        if(found && id !== found._id.toString()) throw new BadRequestError("Email already exists");
     }
+    console.log("schoolIds::",user_schoolIds);
     const updateData = {user_fullname};
     if(user_email) updateData.user_email = user_email;
     if(user_avatar) updateData.user_avatar = user_avatar;
+    if(user_schoolIds) updateData.user_schoolIds = user_schoolIds;
     const updated = await User.updateOne({_id:id}, updateData);
     return updated;
 };

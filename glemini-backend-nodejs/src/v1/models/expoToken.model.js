@@ -8,12 +8,10 @@ const expoTokenSchema = new Schema({
         required:true,
         ref:'User'
     },
-    // user->login->expoToken
-    // user->logout-> remove expoToken
-    // {token: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]',status:'active'}
-    tokens:{
-        type:Array,
-        default:[]
+    token:{
+        type:Schema.Types.String,
+        required:false,
+        default:'',
     }
 },{
     timestamps:true

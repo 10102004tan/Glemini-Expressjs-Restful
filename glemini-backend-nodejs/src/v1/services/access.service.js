@@ -14,13 +14,12 @@ const OTPService = require('./otp.service');
 const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
 const { pushNoti } = require('./expo.service');
 const { producerQueue } = require('./producerQueue.service');
-const { storeNewExpoToken, removeExpoToken } = require('./expoToken.service');
+const { storeNewExpoToken, removeExpoToken, findExpoTokenByListUserId } = require('./expoToken.service');
 const { pushNotiForSys } = require('./notification.service');
 const expoTokenModel = require('../models/expoToken.model');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, user_expotoken, attributes, files }) {
-
+    static async signup({ fullname, email, password, type, user_expotoken, attributes, files,schoolIds }) {
 
         //
         if (!user_expotoken) {
@@ -68,7 +67,8 @@ class AccessSevice {
                 user_password: hashPassword,
                 user_attributes: attributes,
                 user_expotoken,
-                user_type: type
+                user_type: type,
+                user_schoolIds: schoolIds
             }
         );
 
@@ -115,24 +115,6 @@ class AccessSevice {
             await EmailService.sendEmailWelcome({
                 email: newUser.user_email
             });
-
-
-            // send notification to expo server
-
-            // if(user_expotoken){
-            //     const queueName = 'notificationQueue';
-            //     const message = {
-            //         to: user_expotoken,
-            //         title: `Welcome ${newUser.user_fullname} to Glemini`,
-            //         body: 'Thank you for joining us'
-            //     }
-
-            //     producerQueue(queueName, message).then(()=>{
-            //         console.log('Message sent');
-            //     }).catch(console.error);
-
-            // }
-
 
 
             // add user_expotoken to expoToken
@@ -460,29 +442,23 @@ class AccessSevice {
 
             // get list user online by userId
             const listUserOnline = _listUserOnline.filter((item) => item.userId === user_id);
-            if (listUserOnline.length == 0) {
-                // push notification with expo notification
-                const expoToken = await expoTokenModel.findOne({ user_id });
-                const { tokens } = expoToken;
-                if (tokens.length > 0) {
-                    const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
-                    // push notification with expo notification
-                    pushNoti({
-                        somePushTokens: listTokens,
-                        data: {
-                            body: message,
-                            title: 'Thông báo',
-                        }
-                    });
-                }
-            } else {
-                console.log("listUserOnline::",listUserOnline.length);
-                console.log("list:::",listUserOnline)
-                listUserOnline.forEach((item) => {
-                    item.socket.emit('notification', noti);
-                });
+            listUserOnline.forEach((item) => {
+                item.socket.emit('notification', noti);
+            });
 
-            };
+            const tokens = await findExpoTokenByListUserId([user_id]);
+            if (tokens.length > 0){
+                await pushNoti({
+                    somePushTokens: tokens,
+                    data: {
+                        body: message,
+                        title: 'Thông báo',
+                        data:{
+                            teacher_status,
+                        }
+                    }
+                });
+            }
 
             return updatedStatus;
         }

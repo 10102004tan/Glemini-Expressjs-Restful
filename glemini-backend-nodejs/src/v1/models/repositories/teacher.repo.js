@@ -22,8 +22,14 @@ const updateImagesVerification = async (user_id, file_urls) => {
     return updatedImages;
 };
 
+const findStatusTeacher = async (user_id) => {
+    const foundStatus = await teacherModel.findOne({ _id: user_id }, { teacher_status: 1, _id: 0 }).lean();
+    return foundStatus;
+};
+
 module.exports = {
     findImagesVerification,
     updateStatusTeacher,
-    updateImagesVerification
+    updateImagesVerification,
+    findStatusTeacher
 }

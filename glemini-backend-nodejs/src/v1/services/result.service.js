@@ -6,7 +6,10 @@ const exerciseModel = require('../models/exercise.model');
 const RoomModel = require('../models/room.model');
 const { BadRequestError } = require('../cores/error.repsone');
 const classroomModel = require('../models/classroom.model');
+const answerModel = require('../models/answer.model');
 const roomModel = require('../models/room.model');
+const mongoose = require('mongoose');
+const resultModel = require('../models/result.model');
 
 class ResultService {
 	static async saveQuestion({
@@ -18,6 +21,7 @@ class ResultService {
 		answer,
 		correct,
 		score,
+		question_type,
 	}) {
 		console.log(
 			exercise_id,
@@ -27,14 +31,16 @@ class ResultService {
 			question_id,
 			answer,
 			correct,
-			score
+			score,
+			question_type
 		);
+
 		const query = {
 			user_id,
 			quiz_id,
 		};
 
-		// Thêm `type` vào truy vấn
+		// Add `type` to query
 		if (exercise_id) {
 			query.exercise_id = exercise_id;
 			query.type = 'exercise';
@@ -48,13 +54,13 @@ class ResultService {
 		let result = await ResultModel.findOne(query);
 
 		if (!result) {
-			// Tạo mới `result` nếu chưa có
+			// Create new `result` if it doesn't exist
 			result = new ResultModel({
 				user_id,
 				quiz_id,
 				status: 'doing',
 				result_questions: [],
-				type: query.type, // Thiết lập `type` theo loại
+				type: query.type, // Set `type` according to context
 			});
 
 			if (exercise_id) {
@@ -64,9 +70,9 @@ class ResultService {
 				result.room_id = room_id;
 			}
 
-			await result.save(); // Lưu `result` mới
+			await result.save(); // Save new `result`
 
-			// Nếu có `exercise_id`, thêm `result._id` vào `exercise.result_ids`
+			// If `exercise_id` exists, add `result._id` to `exercise.result_ids`
 			if (exercise_id) {
 				await exerciseModel.findByIdAndUpdate(
 					exercise_id,
@@ -79,29 +85,53 @@ class ResultService {
 			if (room_id) {
 				await roomModel.findByIdAndUpdate(
 					{ _id: room_id },
-					{ $addToSet: { result_ids: result._id } }, // Ensures result_id is added only once
+					{ $addToSet: { result_ids: result._id } },
 					{ new: true, runValidators: true }
 				);
 			}
 		} else {
-			// Nếu đã có `result`, cập nhật trạng thái và xóa câu hỏi nếu đã hoàn thành
 			if (result.status === 'completed') {
 				result.status = 'doing';
-				result.result_questions = []; // Xóa câu hỏi cũ
+				result.result_questions = [];
 			}
 		}
 
-		// Thêm câu trả lời mới vào `result.result_questions`
-		result.result_questions.push({
-			question_id,
-			answer,
-			correct,
-			score,
-		});
+		if (question_type === 'box') {
+			result.result_questions.push({
+				question_id,
+				answer: answer.toString(),
+				correct,
+				score,
+			});
+		} else {
+			result.result_questions.push({
+				question_id,
+				answer,
+				correct,
+				score,
+			});
+		}
 
-		await result.save(); // Lưu `result` đã cập nhật
+		await result.save();
 
 		return result;
+	}
+
+	static async resetResultOfQuiz({ resultId }) {
+		
+			const result = await resultModel.findByIdAndUpdate(
+				resultId,
+				{
+					$set: {
+						status: 'doing',
+						result_questions: []
+					},
+				},
+				{ new: false }
+			);
+	
+			return !!result;
+		
 	}
 
 	static async completeQuiz({ exercise_id, room_id, user_id, quiz_id }) {
@@ -171,21 +201,93 @@ class ResultService {
 
 		const result = await ResultModel.findOne(query)
 			.populate({
-				path: 'result_questions.question_id',
-				model: 'Question',
-				populate: {
-					path: 'question_answer_ids',
-					model: 'Answer',
-				},
+				path: 'user_id',
+				select: 'user_fullname user_avatar',
 			})
 			.populate({
-				path: 'result_questions.answer',
-				model: 'Answer',
+				path: 'quiz_id',
+				select: 'quiz_name quiz_thumb',
+			})
+			.populate({
+				path: 'result_questions.question_id',
+				model: 'Question',
 			});
 
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
+
+		// Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
+		const updatedQuestions = await Promise.all(
+			result.result_questions.map(async (question) => {
+				// Populate `answer`
+				let populatedAnswer = null;
+				if (typeof question.answer === 'string') {
+					populatedAnswer = question.answer;
+				} else if (Array.isArray(question.answer)) {
+					populatedAnswer = await Promise.all(
+						question.answer.map(async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						})
+					);
+					populatedAnswer = populatedAnswer.filter(Boolean);
+				} else if (mongoose.Types.ObjectId.isValid(question.answer)) {
+					populatedAnswer = await answerModel
+						.findById(question.answer)
+						.select('text image');
+				}
+
+				// Populate `question_answer_ids`
+				const populatedQuestionAnswers = await Promise.all(
+					question.question_id.question_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				// Populate `correct_answer_ids`
+				const populatedCorrectAnswers = await Promise.all(
+					question.question_id.correct_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				return {
+					...question.toObject(),
+					answer: populatedAnswer,
+					question_id: {
+						...question.question_id.toObject(),
+						question_answer_ids:
+							populatedQuestionAnswers.filter(Boolean),
+						correct_answer_ids:
+							populatedCorrectAnswers.filter(Boolean),
+					},
+				};
+			})
+		);
+
+		// Update the `result_questions` field
+		result.result_questions = updatedQuestions;
+
+		return result;
 
 		return result;
 	}
@@ -211,8 +313,9 @@ class ResultService {
 		answer,
 		correct,
 		score,
+		question_type,
 	}) {
-		console.log(room_id);
+		// console.log(room_id);
 		// Kiểm tra tham số đầu vào
 		if (!user_id || !quiz_id || !question_id) {
 			throw new Error('Thiếu tham số bắt buộc');
@@ -250,13 +353,23 @@ class ResultService {
 				answered_at: new Date(),
 			};
 		} else {
-			result.result_questions.push({
-				question_id,
-				answer,
-				correct,
-				score,
-				answered_at: new Date(),
-			});
+			if (question_type === 'box') {
+				result.result_questions.push({
+					question_id,
+					answer: answer.toString(),
+					correct,
+					score,
+					answered_at: new Date(),
+				});
+			} else {
+				result.result_questions.push({
+					question_id,
+					answer,
+					correct,
+					score,
+					answered_at: new Date(),
+				});
+			}
 		}
 
 		if (room_id) {
@@ -523,25 +636,81 @@ class ResultService {
 			.populate({
 				path: 'result_questions.question_id',
 				model: 'Question',
-				populate: [
-					{
-						path: 'question_answer_ids',
-						model: 'Answer',
-					},
-					{
-						path: 'correct_answer_ids',
-						model: 'Answer',
-					},
-				],
-			})
-			.populate({
-				path: 'result_questions.answer',
-				model: 'Answer',
 			});
 
 		if (!result) {
 			throw new BadRequestError('Result not found');
 		}
+
+		// Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
+		const updatedQuestions = await Promise.all(
+			result.result_questions.map(async (question) => {
+				// Populate `answer`
+				let populatedAnswer = null;
+				if (typeof question.answer === 'string') {
+					populatedAnswer = question.answer;
+				} else if (Array.isArray(question.answer)) {
+					populatedAnswer = await Promise.all(
+						question.answer.map(async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						})
+					);
+					populatedAnswer = populatedAnswer.filter(Boolean);
+				} else if (mongoose.Types.ObjectId.isValid(question.answer)) {
+					populatedAnswer = await answerModel
+						.findById(question.answer)
+						.select('text image');
+				}
+
+				// Populate `question_answer_ids`
+				const populatedQuestionAnswers = await Promise.all(
+					question.question_id.question_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				// Populate `correct_answer_ids`
+				const populatedCorrectAnswers = await Promise.all(
+					question.question_id.correct_answer_ids.map(
+						async (answerId) => {
+							if (mongoose.Types.ObjectId.isValid(answerId)) {
+								return await answerModel
+									.findById(answerId)
+									.select('text image');
+							}
+							return null;
+						}
+					)
+				);
+
+				return {
+					...question.toObject(),
+					answer: populatedAnswer,
+					question_id: {
+						...question.question_id.toObject(),
+						question_answer_ids:
+							populatedQuestionAnswers.filter(Boolean),
+						correct_answer_ids:
+							populatedCorrectAnswers.filter(Boolean),
+					},
+				};
+			})
+		);
+
+		// Update the `result_questions` field
+		result.result_questions = updatedQuestions;
 
 		return result;
 	}

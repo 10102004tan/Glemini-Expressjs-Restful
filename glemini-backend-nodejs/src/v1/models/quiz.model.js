@@ -53,6 +53,9 @@ var quizSchema = new mongoose.Schema(
   }
 );
 
+// create index for quiz_name full text search
+quizSchema.index({ quiz_name: "text" });
+
 // if quiz_thumb null, set default image
 quizSchema.pre("save", function (next) {
   if (!this.quiz_thumb) {
@@ -61,5 +64,7 @@ quizSchema.pre("save", function (next) {
   }
   next();
 });
+
+
 
 module.exports = mongoose.model("Quiz", quizSchema);

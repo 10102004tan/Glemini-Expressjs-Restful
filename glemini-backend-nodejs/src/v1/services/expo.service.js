@@ -19,7 +19,10 @@ const pushNoti = ({somePushTokens=[],data}) => {
             sound: 'default',
             body:data.body,
             title:data.title,
-            data: { withSome: 'data' },
+            ttl: data.ttl,
+            data: {
+                url:data.url,
+            },
             logo:'https://banner2.cleanpng.com/20190618/y/kisspng-google-classroom-teacher-g-suite-education-school-lawson-takoa-google-classroom-1713886125563.webp',
         })
     }
@@ -44,6 +47,8 @@ const pushNoti = ({somePushTokens=[],data}) => {
             }
         }
     })();
+
+    return tickets;
 }
 
 module.exports = {
