@@ -85,6 +85,13 @@ class ResultController {
 			metadata: await resultService.resetResultRoom(req.body),
 		}).send(res);
 	}
+
+	async resetResultOfQuiz(req, res) {
+		return new OK({
+			message: 'Reset result successfully!',
+			metadata: await resultService.resetResultOfQuiz(req.body),
+		}).send(res);
+	}
 }
 
 module.exports = new ResultController();

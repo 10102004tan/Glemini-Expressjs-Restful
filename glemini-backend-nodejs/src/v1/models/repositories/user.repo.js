@@ -51,7 +51,6 @@ const findUserByIdV2 = async ({id}) => {
     ];
 
     const found = await User.aggregate(aggregate);
-    console.log("tets111::",found);
     return found[0];
 };
 

@@ -6,7 +6,7 @@ const { asynHandler } = require('../../auths/utils');
 const resultController = require('../../controllers/result.controller');
 
 /* AUTHENTICATION */
-// router.use(asynHandler(authentication));
+router.use(asynHandler(authentication));
 /* AUTHENTICATION */
 
 router.post('/student', asynHandler(resultController.getResultsByUserId));
@@ -23,5 +23,6 @@ router.post('/overview', asynHandler(resultController.overview));
 router.post('/reports', asynHandler(resultController.getReportResults));
 router.post('/rank', asynHandler(resultController.getRankBoard));
 router.post('/reset', asynHandler(resultController.resetResultRoom));
+router.post('/reset-v2', asynHandler(resultController.resetResultOfQuiz));
 
 module.exports = router;
