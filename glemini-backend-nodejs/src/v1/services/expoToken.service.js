@@ -44,9 +44,18 @@ const findExpoTokenByListUserId = async (userIds) => {
     return tokens.map(token => token.token);
 };
 
+const findAllExpotoken = async () => {
+    // get only token
+    const tokens = await expoTokenModel.find().select('token').lean();
+    return tokens.filter(token => (token.token && token.token.includes('ExponentPushToken'))).map(token => token.token);
+
+};
+
+
 module.exports = {
     storeNewExpoToken,
     removeExpoToken,
     findExpoTokenAllService,
-    findExpoTokenByListUserId
+    findExpoTokenByListUserId,
+    findAllExpotoken
 };

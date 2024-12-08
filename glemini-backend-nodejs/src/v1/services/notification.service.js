@@ -4,7 +4,7 @@ const NOTI = require('../models/notification.model');
 const { getNotificationByReceiverId, updateStatusNotification } = require('../models/repositories/notification.repo');
 const userModel = require('../models/user.model');
 const { pushNoti } = require('./expo.service');
-const { findExpoTokenAllService } = require('./expoToken.service');
+const { findExpoTokenAllService, findAllExpotoken } = require('./expoToken.service');
 const { producerQueue } = require('./producerQueue.service');
 const { UserService } = require('./user.service');
 const pushNotiForSys = async ({
@@ -32,13 +32,13 @@ const findNotiByType = async (type) => {
     return noti;
 }
 
-const getNotificationReceiverIdService = async ({userId,skip,limit}) => {
-    console.log('userId',userId);
-    return await getNotificationByReceiverId({userId,skip,limit});
+const getNotificationReceiverIdService = async ({ userId, skip, limit }) => {
+    console.log('userId', userId);
+    return await getNotificationByReceiverId({ userId, skip, limit });
 }
 
-const updateStatusNotificationService = async({notiId, status}) => {
-    const updated = await updateStatusNotification({notiId, status});
+const updateStatusNotificationService = async ({ notiId, status }) => {
+    const updated = await updateStatusNotification({ notiId, status });
     if (!updated) {
         throw new BadRequestError('Update status notification failed');
     }
@@ -46,42 +46,53 @@ const updateStatusNotificationService = async({notiId, status}) => {
 }
 
 const readAll = (userId) => {
-    return NOTI.updateMany({noti_receiverId: userId}, {noti_status: 'read'});
+    return NOTI.updateMany({ noti_receiverId: userId }, { noti_status: 'read' });
 };
 
-const sendNotificationAdminService = async ({senderId,type="SYS-001",options={},title="It's working",body="hello world",content})=>{
-     const data = {
+const sendNotificationAdminService = async ({ senderId, type = "SYS-001", options = {}, title = "It's working", body = "hello world", content }) => {
+    const data = {
         title,
         body
     };
     // const listExpoToken = await findExpoTokenAllService();
     // const somePushTokens = [];
-   
+
     // get all user
 
-    const users = await userModel.find({},{_id:1,
-      user_fullname:1,
-      user_email:1,
+    const users = await userModel.find({}, {
+        _id: 1,
+        user_fullname: 1,
+        user_email: 1,
     });
 
-    // push notification for all user
-    users.forEach(async (user) => {
+    const notifications = users.map(async (user) => {
         const noti = await pushNotiForSys({
             type,
             receiverId: user._id,
             senderId,
             content,
-            options
+            options,
         });
 
-        // get list user online by userId
         const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-        if (listUserOnline.length == 0) return;
         listUserOnline.forEach((item) => {
             item.socket.emit('notification', noti);
         });
     });
 
+    await Promise.all(notifications);
+
+    // push notification for all user with expo token
+    const tokensExpo = await findAllExpotoken();
+    await pushNoti({
+        somePushTokens: tokensExpo,
+        data: {
+            title,
+            body,
+            url: '/(app)/notification',
+            ttl: 60 * 60
+        },
+    }); 
     return 1;
 }
 

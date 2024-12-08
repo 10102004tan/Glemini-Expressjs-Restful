@@ -2,8 +2,9 @@
 const JWT = require('jsonwebtoken');
 const { HEADER } = require('../utils');
 const { UnauthorizedError, NotFoundError } = require('../cores/error.repsone');
-const { findUserByEmail, findUserById } = require('../models/repositories/user.repo');
+const { findUserByEmail, findUserById, findUserByIdV2 } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId } = require('../models/repositories/keyToken.repo');
+const { findStatusTeacher } = require('../models/repositories/teacher.repo');
 
 const createKeyPair = async ({
     payload,
@@ -42,6 +43,15 @@ const authentication = async (req, res, next) => {
     if (!tokens) {
         throw new NotFoundError("Access denied");
     }
+
+    // check type teacher , if teacher then check status
+    // const user = await findUserById(userId);
+    // if (user.user_type === 'teacher') {
+    //     const teacher = await findStatusTeacher(userId);
+    //     if (!(teacher.teacher_status === 'active')) {
+    //         throw new UnauthorizedError("Your account is not verified yet");
+    //     }
+    // }
 
     // check endpoint is refresh 
     if (req.path === '/refresh-token') {
