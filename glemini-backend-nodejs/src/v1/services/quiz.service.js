@@ -372,7 +372,7 @@ class QuizService {
 	}
 
 	// Hàm xóa quiz
-	async deleteQuiz({ quiz_id }) {
+	async deleteQuiz({ quiz_id }) {``
 		const quiz = await quizModel.findByIdAndUpdate(quiz_id, {
 			quiz_status: 'deleted',
 		});
@@ -381,6 +381,9 @@ class QuizService {
 		}
 		return quiz;
 	}
+
+	//kiểm tra quiz đó có phải của user chủ hay là của người khác chia sẻ , nếu chủ thì lấy hàm xóa quiz, nếu không thì xóa user_id trong mảng shared_user_ids
+	
 
 	// Hàm cập nhật thông tin quiz
 	async updateQuiz({
