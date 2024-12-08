@@ -183,6 +183,23 @@ class QuizController {
 			metadata: await quizService.getNewestQuizzes(req.body),
 		}).send(res);
 	};
+
+
+	/**
+	 * Duplicate quiz
+	 * @param req
+	 * @param res
+	 * @returns {Promise<void>}
+	 */
+	duplicateQuiz = async (req, res) => {
+		return new CREATED({
+			message: 'Quiz duplicated successfully',
+			metadata: await quizService.duplicateQuiz({
+				...req.body,
+				user_id: req.user.user_id,
+			}),
+		}).send(res);
+	};
 }
 
 module.exports = new QuizController();
