@@ -111,6 +111,7 @@ class RoomService {
 		// Kiểm tra nếu người dùng đã tham gia vào phòng
 		let check = false;
 		room.user_join_ids.forEach((user) => {
+			// console.log(user.toString(), user_id.toString());
 			if (user.toString() === user_id.toString()) {
 				check = true;
 				return;
