@@ -73,19 +73,16 @@ class ClassroomService {
 			const listUserOnline = _listUserOnline.filter(
 				(item) => item.userId === student._id.toString()
 			);
-			if (listUserOnline.length == 0) {
+
+			if (listUserOnline.length === 0) {
 				// push notification with expo notification
-				const expoToken = await expoTokenModel.findOne({
-					user_id: student._id,
-				});
-				const { tokens } = expoToken;
-				if (tokens.length > 0) {
-					const listTokens = tokens.filter(
-						(item) => item && item.includes('ExponentPushToken')
-					);
-					// push notification with expo notification
+				const listExpoTokens = await findExpoTokenByListUserId(
+					classroom.students
+				);
+
+				if (listExpoTokens.length > 0) {
 					pushNoti({
-						somePushTokens: listTokens,
+						somePushTokens: listExpoTokens,
 						data: {
 							body: `Giáo viên của bạn vừa mở một phòng kiểm tra mới trong lớp ${classroom.class_name}`,
 							title: 'Thông báo',
@@ -120,7 +117,6 @@ class ClassroomService {
 		classroom.exercises.push(newExercise._id);
 		await classroom.save();
 
-
 		await classroom.populate('exercises');
 
 		// push notification for student
@@ -135,11 +131,13 @@ class ClassroomService {
 					classroom_name: classroom.class_name,
 					quiz_id: quizId,
 					exercise_name: name,
-					exercise_id: newExercise._id
-				}
+					exercise_id: newExercise._id,
+				},
 			});
 			// send notification to user online
-			const userSocket = _listUserOnline.find((item) => item.userId === studentId.toString());
+			const userSocket = _listUserOnline.find(
+				(item) => item.userId === studentId.toString()
+			);
 			if (userSocket) {
 				userSocket.socket.emit('notification', noti);
 			}
@@ -147,7 +145,9 @@ class ClassroomService {
 
 		// push notification
 
-		const listExpoTokens = await findExpoTokenByListUserId(classroom.students);
+		const listExpoTokens = await findExpoTokenByListUserId(
+			classroom.students
+		);
 		await pushNoti({
 			somePushTokens: listExpoTokens,
 			data: {
@@ -161,10 +161,10 @@ class ClassroomService {
 						classroom_name: classroom.class_name,
 						quiz_id: quizId,
 						exercise_name: name,
-						exercise_id: newExercise._id
-					}
-				}
-			}
+						exercise_id: newExercise._id,
+					},
+				},
+			},
 		});
 		return classroom;
 	}
@@ -306,6 +306,7 @@ class ClassroomService {
 					);
 					if (listUserOnline.length == 0) {
 						// push notification with expo notification
+
 					} else {
 						listUserOnline.forEach((item) => {
 							item.socket.emit('notification', noti);
@@ -317,6 +318,15 @@ class ClassroomService {
 
 		// Wait for all promises to resolve before returning
 		await Promise.all(studentPromises);
+
+		const listExpoTokens = await findExpoTokenByListUserId(classroom.students);
+		await pushNoti({
+			somePushTokens: listExpoTokens,
+			data: {
+				body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
+				title: 'Thông báo',
+			}
+		});
 
 		return classroom;
 	};
@@ -383,19 +393,27 @@ class ClassroomService {
 					options: {
 						classroom_id: classroom._id,
 						classroom_name: classroom.class_name,
-					}
+					},
 				});
 
-				const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-				console.log("list:::", listUserOnline);
+				const listUserOnline = _listUserOnline.filter(
+					(item) => item.userId === user._id.toString()
+				);
+				console.log('list:::', listUserOnline);
 				if (listUserOnline.length == 0) {
 					// push notification with expo notification
 					// get expo token , get token not null
-					const expoToken = await expoTokenModel.findOne({ user_id: user._id }, {
-						token: 1
-					}).select('token').lean();
+					const expoToken = await expoTokenModel
+						.findOne(
+							{ user_id: user._id },
+							{
+								token: 1,
+							}
+						)
+						.select('token')
+						.lean();
 
-					console.log("expotoken::", expoToken);
+					console.log('expotoken::', expoToken);
 
 					if (expoToken) {
 						pushNoti({
@@ -403,15 +421,15 @@ class ClassroomService {
 							data: {
 								body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
 								title: 'Thông báo',
-								data: noti.options
-							}
+								data: noti.options,
+							},
 						});
 					}
 				} else {
 					listUserOnline.forEach((item) => {
 						item.socket.emit('notification', noti);
 					});
-				};
+				}
 			}
 
 			await classroom.save();

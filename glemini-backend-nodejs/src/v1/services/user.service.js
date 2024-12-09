@@ -187,6 +187,8 @@ class UserService {
       throw new BadRequestError("Quiz not shared for student");
     }
 
+    console.log("quizIdInShared::", quiz_id);
+
     // Kiểm tra xem quiz đã được chia sẻ cho người dùng này chưa
     const quiz = await quizModel.findOne({
       _id: quiz_id,
@@ -232,12 +234,13 @@ class UserService {
 
     // Gửi thông báo realtime
     const listUserOnline = _listUserOnline.filter((item) => item.userId === user._id.toString());
-    if (listUserOnline.length == 0) {
-      // push notification with expo notification
-      const expoToken = await expoTokenModel.findOne({ user_id: user._id });
-      const { tokens } = expoToken;
+    listUserOnline.forEach((item) => {
+      item.socket.emit('notification', noti);
+    });
+
+    const tokens = await expoTokenModel.find({ user_id: user._id });
       if (tokens.length > 0) {
-        const listTokens = tokens.filter((item) => item && item.includes('ExponentPushToken'));
+        const listTokens = tokens.filter(item=>item.token).map((item) => item.token);
         // push notification with expo notification
         pushNoti({
           somePushTokens: listTokens,
@@ -247,14 +250,6 @@ class UserService {
           }
         });
       }
-    } else {
-      listUserOnline.forEach((item) => {
-        item.socket.emit('notification', noti);
-      });
-
-    };
-
-
     return updated;
   }
 
