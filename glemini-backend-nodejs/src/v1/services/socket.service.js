@@ -91,6 +91,23 @@ class SocketService {
 			_io.in(roomCode).emit('updateUserList', getUsersInRoom(roomCode));
 		});
 
+		// Xóa người dùng ra khỏi phòng chơi
+		socket.on('kickUser', ({ roomCode, userId }) => {
+			console.log(`User ${userId} is kicked from room: ${roomCode}`);
+			const userSocket = _listUserOnline.find(
+				(user) => user.userId === userId
+			);
+
+			if (userSocket) {
+				userSocket.socket.leave(roomCode);
+				userSocket.socket.emit('kicked', {
+					message: 'You are kicked from room',
+				});
+			}
+			// Cập nhật danh sách user hiện tại trong room
+			_io.in(roomCode).emit('updateUserList', getUsersInRoom(roomCode));
+		});
+
 		// Xử lý khi user gửi câu trả lời và cập nhật điểm
 		socket.on(
 			'submitAnswer',
