@@ -26,6 +26,7 @@ router.get('/api/v1/working', (req, res, next) => {
 });
 router.use('/api/v1', require('./email'));
 router.use('/api/v1/uploads', routerUpload);
+router.use('/api/v1/rbac', require('./rbac'));
 router.use('/api/v1/schools', routeSchool);
 router.use('/api/v1/admin', routeAdmin);
 router.use('/api/v1/auth', routeAccess);
@@ -39,5 +40,6 @@ router.use('/api/v1/result', routeResult);
 router.use('/api/v1/classroom', routeClassroom);
 router.use('/api/v1/exercise', routeExercise);
 router.use('/api/v1/room', routeRoom);
+router.use('/api/v2/auth', require('./accessV2'));
 
 module.exports = router;

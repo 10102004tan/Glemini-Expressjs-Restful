@@ -1,5 +1,8 @@
 'use strict';
 const {CREATED, OK} = require('../cores/success.response');
+const { loginDto } = require('../dtos/access/login.dto');
+const { signUpDto } = require('../dtos/access/sign-up.dto');
+const { validation } = require('../dtos/util');
 const accessService = require('../services/access.service');
 
 class AccessController {
@@ -116,7 +119,30 @@ class AccessController {
         }).send(res);
     };
 
+    /* =================== V2===================== */
+    signupV2 = async (req, res, next) => {
+        return new CREATED({
+            message: "user created successfully",
+            metadata: await accessService.signupV2(validation(signUpDto,req.body))
+        }).send(res);
+    }
 
+    loginV2 = async (req, res, next) => {
+        return new OK({
+            message: "user login successfully",
+            metadata: await accessService.loginV2(validation(loginDto,req.body))
+        }).send(res);
+    }
+
+    logoutV2 = async (req, res, next) => {
+        console.log(req.user);
+        return new OK({
+            message: "user logout successfully",
+            metadata: await accessService.logoutV2({
+                user:req.user
+            })
+        }).send(res);
+    }
 
 }
 

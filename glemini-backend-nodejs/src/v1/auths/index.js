@@ -5,6 +5,7 @@ const { UnauthorizedError, NotFoundError } = require('../cores/error.repsone');
 const { findUserByEmail, findUserById, findUserByIdV2 } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId } = require('../models/repositories/keyToken.repo');
 const { findStatusTeacher } = require('../models/repositories/teacher.repo');
+const {get} = require("../models/repositories/kvStore.repo")
 
 const createKeyPair = async ({
     payload,
@@ -34,24 +35,15 @@ const authentication = async (req, res, next) => {
     const userId = req.headers[HEADER.CLIENT_ID];
 
     if (!userId) {
-        throw new NotFoundError("Unauthorized access");
+        throw new UnauthorizedError("unauthorized");
     }
 
     const tokens = await findKeyTokenByUserId(userId);
 
 
     if (!tokens) {
-        throw new NotFoundError("Access denied");
+        throw new UnauthorizedError("unauthorized");
     }
-
-    // check type teacher , if teacher then check status
-    // const user = await findUserById(userId);
-    // if (user.user_type === 'teacher') {
-    //     const teacher = await findStatusTeacher(userId);
-    //     if (!(teacher.teacher_status === 'active')) {
-    //         throw new UnauthorizedError("Your account is not verified yet");
-    //     }
-    // }
 
     // check endpoint is refresh 
     if (req.path === '/refresh-token') {
@@ -72,6 +64,7 @@ const authentication = async (req, res, next) => {
             if (decoded.user_id !== userId) {
                 throw new UnauthorizedError("Invalid refresh token 2");
             }
+            // check token in blacklist
             req.user = decoded;
             req.refreshToken = refreshToken;
             next();
@@ -84,7 +77,7 @@ const authentication = async (req, res, next) => {
             throw new UnauthorizedError("Access token is required");
         }
     
-        await JWT.verify(accessToken, tokens.public_key, (err, decoded) => {
+        await JWT.verify(accessToken, tokens.public_key, async(err, decoded) => {
             if (err) {
                 if (err.name === 'TokenExpiredError') {
                     throw new UnauthorizedError("expired");
@@ -96,6 +89,11 @@ const authentication = async (req, res, next) => {
     
             if (decoded.user_id !== userId) {
                 throw new UnauthorizedError("Invalid access token");
+            }
+
+            const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
+            if (isTokenBlkacklist) {
+                throw new UnauthorizedError("token expired!!!, pls login again");
             }
             req.user = decoded;
             next();

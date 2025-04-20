@@ -1,7 +1,6 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const { randomHexColor } = require('../utils');
 const { Schema,model } = mongoose;
 
 const userSchema = new Schema({
@@ -17,14 +16,20 @@ const userSchema = new Schema({
         type:String,
         required:true
     },
-    user_type:{
-        type:String,
-        enum:['teacher','student'],
+    // user_type:{
+    //     type:String,
+    //     enum:['teacher','student'],
+    //     required:true,
+    //     default:'student'
+    // },
+    user_role:{
+        type:mongoose.Types.ObjectId,
+        ref:'Role',
         required:true,
-        default:'student'
     },
     user_phone:{
         type:String,
+        default:''
     },
     user_avatar:{
         type:String,

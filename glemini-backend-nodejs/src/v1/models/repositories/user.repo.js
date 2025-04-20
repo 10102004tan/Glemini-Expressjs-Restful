@@ -7,7 +7,7 @@ const { Types } = require('mongoose');
 const { default: mongoose } = require('mongoose');
 
 const findUserByEmail = async (email) => {
-    const foundUser = await User.findOne({ user_email: email }).lean();
+    const foundUser = await User.findOne({ user_email: email }).populate('user_role').lean();
     return foundUser;
 };
 

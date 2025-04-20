@@ -1,6 +1,6 @@
 'use strict';
 const { createKeyPair } = require('../auths');
-const { BadRequestError } = require('../cores/error.repsone');
+const { BadRequestError, InternalServerError } = require('../cores/error.repsone');
 const { findUserByEmail, findUserById, updatePasswordByEmail, findStatusByUserId, findUserByEmailV2, findUserByIdV2, updateStatusUser } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId, findKeyTokenByUserIdAndRefreshToken } = require('../models/repositories/keyToken.repo');
 const KeyTokenService = require('./keyToken.service');
@@ -13,13 +13,15 @@ const EmailService = require('./email.service');
 const OTPService = require('./otp.service');
 const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
 const { pushNoti } = require('./expo.service');
-const { producerQueue } = require('./producerQueue.service');
 const { storeNewExpoToken, removeExpoToken, findExpoTokenByListUserId } = require('./expoToken.service');
 const { pushNotiForSys } = require('./notification.service');
-const expoTokenModel = require('../models/expoToken.model');
+const userModel = require('../models/user.model');
+const roleModel = require('../models/role.model');
+const { v4: uuidv4 } = require('uuid');
+const { set } = require('../models/repositories/kvStore.repo');
 
 class AccessSevice {
-    static async signup({ fullname, email, password, type, user_expotoken, attributes, files,schoolIds }) {
+    static async signup({ fullname, email, password, type, user_expotoken, attributes, files, schoolIds }) {
 
         //
         if (!user_expotoken) {
@@ -447,13 +449,13 @@ class AccessSevice {
             });
 
             const tokens = await findExpoTokenByListUserId([user_id]);
-            if (tokens.length > 0){
+            if (tokens.length > 0) {
                 await pushNoti({
                     somePushTokens: tokens,
                     data: {
                         body: message,
                         title: 'Thông báo',
-                        data:{
+                        data: {
                             teacher_status,
                         }
                     }
@@ -470,6 +472,127 @@ class AccessSevice {
             return updatedStatus;
         }
 
+    }
+
+    /* ============== V2 ======================== */
+    static async signupV2(signupData) {
+        // check if email is already used
+        const { email, password, fullname } = signupData;
+        const foundUser = await findUserByEmailV2(email);
+
+        if (foundUser) {
+            throw new BadRequestError("email is already used");
+        }
+
+        // hash password
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        if (!hashPassword) {
+            throw new InternalServerError("sigup failed!!!");
+        }
+
+        // get role id by role name
+        const roleUser = await roleModel.findOne({ role_name: 'user' }).lean();
+
+        if (!roleUser) {
+            throw new BadRequestError("fail to get role !!!");
+        }
+        // create user
+        const newUser = await userModel.create({
+            user_fullname: fullname,
+            user_email: email,
+            user_password: hashPassword,
+            user_role: roleUser._id,
+        })
+
+        if (!newUser) {
+            throw new BadRequestError("Cannot create user !!!");
+        }
+
+        // create key pair for user
+        const publicKey = await crypto.randomBytes(64).toString('hex');
+        const privateKey = await crypto.randomBytes(64).toString('hex');
+
+        //store key pair
+        const keyToken = await KeyTokenService.storeKeyToken({
+            user_id: newUser._id,
+            public_key: publicKey,
+            private_key: privateKey
+        });
+
+        if (!keyToken) {
+            throw new BadRequestError("Cannot store key token");
+        }
+
+        return newUser;
+    }
+
+    static async loginV2(loginData) {
+        const { email, password } = loginData;
+        // check if email is already used
+        const foundUser = await findUserByEmail(email);
+        if (!foundUser) {
+            throw new BadRequestError("email is not exist");
+        }
+
+        // check if password is correct
+        const match = await bcrypt.compare(password, foundUser.user_password);
+        if (!match) {
+            throw new BadRequestError("password is incorrect");
+        }
+
+        // check if user is active
+        // if (foundUser.user_status !== "active") {
+        //     throw new BadRequestError('account is not active!!!');
+        // }
+
+        // create tokens
+        const keyToken = await findKeyTokenByUserId(foundUser._id);
+        if (!keyToken) {
+            throw new BadRequestError("login failed!!!,pls try again");
+        }
+
+
+        const jit = uuidv4();
+
+        // create access token and refresh token
+        const payload = {
+            user_id: foundUser._id,
+            user_email: foundUser.user_email,
+            user_role: foundUser.user_role.role_name,
+            jit: jit,
+            iat: Math.floor(Date.now() / 1000) // current time in seconds
+        }
+
+        const tokens = await createKeyPair({ payload, publicKey: keyToken.public_key, privateKey: keyToken.private_key });
+
+        if (!tokens) {
+            throw new BadRequestError("login failed!!!,pls try again");
+        }
+
+        return {
+            user: foundUser,
+            tokens: tokens
+        }
+    }
+
+    static async logoutV2({ user }) {
+        const { user_id, jit } = user;
+        console.log(user_id, jit);
+        // check if user is exist
+        const foundUser = await findUserById(user_id);
+
+        if (!foundUser) {
+            throw new BadRequestError("user not found!!!");
+        }
+
+        // set jit to kvStore
+        const setJit = await set(`TOKEN_BLACK_LIST_${user_id}_${jit}`, 1, 60 * 60 * 24 * 2);
+        if (!setJit) {
+            throw new BadRequestError("logout failed!!!,pls try again");
+        }
+
+        return true
     }
 }
 

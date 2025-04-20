@@ -56,8 +56,9 @@ app.use((req, res, next) => {
 
 app.use((error, req, res, next) => {
 	const statusCode = error.status || 500;
+	console.error(statusCode, error.message);
 	return res.status(statusCode).json({
-		status: 'error',
+		// status: 'error',
 		statusCode: statusCode,
 		stack: error.stack,
 		message: error.message || 'Internal Servel Error',

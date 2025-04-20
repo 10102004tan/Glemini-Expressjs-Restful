@@ -1,9 +1,10 @@
 "use strict";
 const mongoose = require("mongoose");
 const { host, port, name } = require("../configs/mongodb.config");
-const colors = require("../configs/colors.config");
-const subjectService = require("../services/subject.service");
-const schoolService = require("../services/school.service");
+// const colors = require("../configs/colors.config");
+// const subjectService = require("../services/subject.service");
+// const schoolService = require("../services/school.service");
+const chalk = require("chalk");
 class Database {
   constructor() {
     this.connect();
@@ -15,21 +16,17 @@ class Database {
       .connect(connectString)
       .then(() => {
         console.log(
-          colors.bg.green,
-          `MongoDB ${name} connection successful ☕︎`,
-          colors.reset
+          chalk.blue.bold("Glemini Backend Server"),
+          chalk.green.bold("is connected to database"),
+          chalk.yellow.bold(connectString)
         );
-        // Khởi tạo dữ liệu mẫu
-        subjectService.initialize();
-        schoolService.initialize();
       })
       .catch((err) => {
-        console.log(
-          colors.fg.white,
-          colors.bg.red,
-          "Error while connecting to database: ",
-          err.message,
-          colors.reset
+        console.error(
+          chalk.red.bold("Glemini Backend Server"),
+          chalk.red.bold("failed to connect to database"),
+          chalk.yellow.bold(connectString),
+          chalk.red.bold(err.message)
         );
       });
   }
