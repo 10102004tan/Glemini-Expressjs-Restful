@@ -560,6 +560,7 @@ class AccessSevice {
             user_id: foundUser._id,
             user_email: foundUser.user_email,
             user_role: foundUser.user_role.role_name,
+            user_avatar: foundUser.user_avatar,
             jit: jit,
             iat: Math.floor(Date.now() / 1000) // current time in seconds
         }
@@ -571,7 +572,13 @@ class AccessSevice {
         }
 
         return {
-            user: foundUser,
+            user: {
+                fullname: foundUser.user_fullname,
+                email: foundUser.user_email,
+                user_id: foundUser._id,
+                user_role: foundUser.user_role.role_name,
+                user_avatar: foundUser.user_avatar,
+            },
             tokens: tokens
         }
     }

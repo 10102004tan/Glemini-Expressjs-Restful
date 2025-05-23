@@ -9,22 +9,25 @@ const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
 const { initSchool } = require('./utils');
 const exerciseTask = require('./tasks/exercise.task');
+const errorHandler = require('./middlewares/error.handler');
 const io = require('socket.io')(server,{
 	cors:{
 		origin: '*',
-	}
+	},
 });
 global.__basedir = __dirname;
 global._io = io;
 // array list user online global
 global._listUserOnline = [];
 
+// global map user online
+global._mapUserOnline = new Map();
+global._userSockets = {};
+
 /* MIDDLEWARES START*/
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(require('cors')({
-	// set origin to http://localhost:8888 for development 
-	origin: 'http://localhost:8888',
 	credentials: true,
 }));
 app.use(helmet());
@@ -47,23 +50,14 @@ global._io.on('connection', socketService.connection);
 /* ROUTES START*/
 app.use('/', require('./routes'));
 
-// catch 404 and forward to error handler
-app.use((req, res, next) => {
-	const error = new Error('Not Found');
-	error.status = 404;
-	next(error);
-});
+// // catch 404 and forward to error handler
+// app.use((req, res, next) => {
+// 	const error = new Error('Not Found');
+// 	error.status = 404;
+// 	next(error);
+// });
 
-app.use((error, req, res, next) => {
-	const statusCode = error.status || 500;
-	console.error(statusCode, error.message);
-	return res.status(statusCode).json({
-		// status: 'error',
-		statusCode: statusCode,
-		stack: error.stack,
-		message: error.message || 'Internal Servel Error',
-	});
-});
+app.use(errorHandler);
 /* ROUTES END*/
 
 module.exports = server;

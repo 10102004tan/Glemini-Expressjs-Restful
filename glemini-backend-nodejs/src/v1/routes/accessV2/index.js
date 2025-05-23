@@ -22,4 +22,9 @@ router.post(
 	asynHandler(authentication),
 	asynHandler(accessController.logoutV2)
 );
+
+router.get('/me',
+	asynHandler(authentication),
+	asynHandler(accessController.me)
+);
 module.exports = router;

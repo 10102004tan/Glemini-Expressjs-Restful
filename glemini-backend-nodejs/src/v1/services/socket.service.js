@@ -2,34 +2,91 @@
 
 const ResultService = require('./result.service');
 
-// const usersJoinedRoom = []; // 👈🏻 Array to store users joined room
+const PING_INTERVAL = 20000; // 20s
+const PONG_TIMEOUT = 5000;
 class SocketService {
 	connection(socket) {
 		const generateID = () => Math.random().toString(36).substring(2, 10);
-		console.log(`Socket: ${socket.id}  user just connected! ⚡`);
+		
+		console.log("New socket connection", socket.id)
+        socket.auth = false
+        let userId;
 
-		// push socket to list user online global include userId, socket
-		socket.on('init', (userId) => {
-			// if socket.id exists in list user online
-			const userOnline = _listUserOnline.find(
-				(item) => item.socket === socket
-			);
-			if (userOnline) return;
-			_listUserOnline.push({ userId, socket });
-			console.log('🚪List user online:', _listUserOnline);
-		});
+        socket.on('authentication', async (data) => {
+            console.log("1.authentication data!!! include Authorization and x-client-id")
+            if (!data) {
+				console.log("No authentication data")
+                return
+            }
+
+			// check authentication
+            if (!socket.auth){
+                if (!data.Authorization) {
+                    console.log("No Authorization header")
+                    return
+                }
+                console.log("Authorization", data.Authorization)
+                const decoded = await verifyToken({
+                    authorization: data.Authorization
+                });
+
+    
+                if (!decoded) {
+                    console.log("Invalid token")
+                    socket.emit('unauthorized', 'Invalid token');
+                    return
+                }
+    
+                userId = decoded.userId;
+                socket.auth = true;
+                _userSockets[userId] = socket;
+                console.log(`Pong received from user ${userId}`);
+                // _lastPongAt = Date.now(); // Cập nhật thời điểm nhận pong mới nhất
+            }
+        });
+
+		// Xử lý sự kiện pong từ client
+        socket.on('pong', async ({
+            timestamp
+        }) => {
+           if (socket.auth){
+            _userLast[userId] = timestamp;
+           }
+        });
+
+		// 
+        const pingInterval = setInterval(() => {
+            console.log(`Checking user ${socket.id} connection`);
+            if (!socket.auth) {
+                console.log(`User ${socket.id} not authenticated yet, skip ping.`);
+                _userSockets[userId]; // Nếu chưa xác thực thì không gửi ping
+                socket.disconnect();
+                return;
+            }
+
+            console.log(`Sending ping to user ${userId}`);
+            socket.emit('ping', { timestamp: Date.now(),users: [
+                1,2
+            ] });
+
+            setTimeout(() => {
+                const now = Date.now();
+                if (now - _lastPongAt > PONG_TIMEOUT) {
+                    console.log(`User ${userId} pong timeout. Disconnecting.`);
+                    socket.disconnect();
+                }
+            }, PONG_TIMEOUT);
+        }, PING_INTERVAL);
+
+        socket.on('disconnect', () => {
+            console.log(`User ${userId} disconnected`);
+            clearInterval(pingInterval); // Clear interval khi user disconnect
+            delete _userSockets[userId];
+        });
+
+		
 
 		const chatRooms = [];
-
-		socket.on('disconnect', () => {
-			socket.disconnect();
-			// remove socket from list user online global
-			_listUserOnline = _listUserOnline.filter(
-				(user) => user.socket.id !== socket.id
-			);
-			console.log('🚪List user online prev:', _listUserOnline);
-			console.log('🔥: A user disconnected');
-		});
 
 		socket.on('createRoom', (roomName) => {
 			socket.join(roomName);

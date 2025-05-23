@@ -83,6 +83,11 @@ class RbacService {
         ])
         return roles
     }
+
+
+    /**
+     * * @description 
+     */
 }
 
 module.exports = RbacService;

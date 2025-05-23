@@ -4,7 +4,7 @@ const { createRoleDto } = require('../dtos/rbac/create-role.dto');
 const { validation } = require('../dtos/util');
 const RbacService = require('../services/rbac.service');
 
-class ResourceController {
+class RbacController {
 
     /**
      * @description create new resource for role
@@ -36,4 +36,4 @@ class ResourceController {
     }
 }
 
-module.exports = new ResourceController();
+module.exports = new RbacController();

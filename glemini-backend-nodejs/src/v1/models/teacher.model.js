@@ -5,11 +5,11 @@ const { type } = require('os');
 const { Schema, model } = mongoose;
 
 const teacherSchema = new Schema({
-    teacher_status: {
-        type:String,
-        enum: ['active', 'pedding','rejected'],
-        default:'pedding'
-    },
+    // teacher_status: {
+    //     type:String,
+    //     enum: ['active', 'pedding','rejected'],
+    //     default:'pedding'
+    // },
     teacher_attributes:{
         type: Array,
         default: []
