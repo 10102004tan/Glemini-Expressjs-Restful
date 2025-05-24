@@ -19,6 +19,7 @@ const userModel = require('../models/user.model');
 const roleModel = require('../models/role.model');
 const { v4: uuidv4 } = require('uuid');
 const { set } = require('../models/repositories/kvStore.repo');
+const teacherModel = require('../models/teacher.model');
 
 class AccessSevice {
     static async signup({ fullname, email, password, type, user_expotoken, attributes, files, schoolIds }) {
@@ -600,6 +601,97 @@ class AccessSevice {
         }
 
         return true
+    }
+
+    /**
+     * create teacher
+     */
+    static async createNewTeacher({ user_id,
+        files
+    }) {
+
+        const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
+            files,
+            folderName: `glemini/teachers/info/${user_id}`
+        });
+
+        if (!uploadedUrls) {
+            throw new BadRequestError("cannot upload images!!!");
+        }
+
+        // create new teacher
+        /**
+         * attributes:{
+                 type: Array,
+                 default: []
+             },
+             schools:{
+                 type: Array,
+                 default: []
+             },
+             file_urls:{
+                 type: Array,
+                 default: []
+             },
+             status:{
+                 type: String,
+                 enum: ['active', 'inactive','deleted','pending'],
+                 default: 'inactive'
+             },
+         */
+        // const newTeacher = await teacherModel.create({
+        //     user_id: user_id,
+        //     attributes: {
+        //         file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
+        //     },
+        //     schools: [],
+        //     status: 'pending'
+        // })
+        /*
+        [{
+            "name":"Cccd",
+            "url":"https://example.com/cccd.png",
+            "type":"image",
+            "items":[
+                {
+                    field:"Ho ten",
+                    value:"Nguyen Van A"
+                },
+                {
+                    field:"Ngay sinh",
+                    value:"01/01/2000"
+                },
+                {
+                    field:"Gioi tinh",
+                    value:"Nam"
+                },
+                {
+                    field:"Que quan",
+                    value:"Ha Noi"
+                }
+            ]
+    }]*/
+        const attributes = uploadedUrls.map(imageUrl => {
+            return {
+                name: imageUrl.original_filename,
+                url: imageUrl.image_url,
+                type: imageUrl.format,
+                items: []
+            }
+        })
+
+        const newTeacher = await teacherModel.create({
+            userId: user_id,
+            attributes: attributes,
+            schools: [],
+            status: 'pending'
+        })
+
+        if (!newTeacher) {
+            throw new BadRequestError("cannot create teacher!!!");
+        }
+
+        return newTeacher;
     }
 }
 

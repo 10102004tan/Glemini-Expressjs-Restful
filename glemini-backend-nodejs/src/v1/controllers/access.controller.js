@@ -151,13 +151,28 @@ class AccessController {
             metadata: {
                 fullname: user.user_fullname,
                 email: user.user_email,
-                user_id: user._id,
+                user_id: user.user_id,
                 user_role: user.user_role,
                 user_avatar: user.user_avatar,
             }
         }).send(res);
     }
 
+    /**
+     * Create a new teacher
+     * @param {Object} req - The request object
+     * @param {Object} res - The response object
+     */
+    createTeacher = async (req, res, next) => {
+        console.log("controller:::", req.user);
+        return new OK({
+            message: "user created successfully",
+            metadata: await accessService.createNewTeacher({
+                user_id: req.user.user_id,
+                files: req.files,
+            })
+        }).send(res);
+    }
 }
 
 module.exports = new AccessController();

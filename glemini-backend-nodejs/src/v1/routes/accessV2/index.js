@@ -27,4 +27,11 @@ router.get('/me',
 	asynHandler(authentication),
 	asynHandler(accessController.me)
 );
+
+router.post(
+	'/teacher/create',
+	asynHandler(authentication),
+	uploadDisk.array('files'),
+	asynHandler(accessController.createTeacher)
+);
 module.exports = router;

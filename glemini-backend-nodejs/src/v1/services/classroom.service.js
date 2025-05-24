@@ -39,7 +39,7 @@ class ClassroomService {
 			],
 		});
 
-		return classrooms.classroom_ids;
+		return classrooms?.classroom_ids ? classrooms.classroom_ids : [];
 	}
 
 	// Hàm thông báo cho sinh viên khi giáo viên tạo một phòng chơi mới

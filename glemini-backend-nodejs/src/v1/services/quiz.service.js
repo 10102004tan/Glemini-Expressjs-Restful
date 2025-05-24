@@ -80,7 +80,7 @@ class QuizService {
 			.lean();
 
 		if (!quizzies || quizzies.length === 0) {
-			throw new BadRequestError('No quizzes found');
+			return [];
 		}
 
 		return quizzies;
