@@ -21,20 +21,20 @@ const AdminLayout = ({ children }) => {
     return (
         <div className="flex flex-col h-screen">
             <main className="flex flex-1">
-                <aside className={`w-64 sticky left-0 top-0 h-screen border-r-1 transition-all duration-300`}>
+                <aside className={`w-64 sticky left-0 top-0 border-r-1 transition-all duration-300 h-screen`}>
                     {/* sidebar logo */}
-                    <div className="flex items-center px-4 pt-4 justify-between pb-3 border-b-1 border-gray-300 mb-5">
-                        <h5 className="text-lg font-semibold">
+                    <div className="flex items-center px-4 pt-4 bg-[#1E2129] text-gray-200 justify-between pb-7">
+                        <h5 className="text-lg">
                             <Link to="/dashboard" className="flex items-center gap-2">
                                 <Blocks className="w-6 h-6" />
                                 Admin Dashboard
                             </Link>
                         </h5>
                     </div>
-                    <nav className="px-4">
+                    <nav className="px-4 bg-[#2D323E] h-full text-white">
                         <ul className="space-y-2">
                             <li>
-                                <Link to="/dashboard" className={`flex items-center gap-2 p-2 rounded hover:bg-gray-100 ${currentActive === "dashboard" ? "bg-gray-200 font-semibold" : ""}`} onClick={() => setCurrentActive("dashboard")}>
+                                <Link to="/dashboard" className={`flex items-center gap-2 p-2 rounded  ${currentActive === "dashboard" ? "font-semibold" : ""}`} onClick={() => setCurrentActive("dashboard")}>
                                     <AlignJustify className="w-5 h-5" />
                                     <span>Dashboard</span>
                                 </Link>
@@ -65,7 +65,9 @@ const AdminLayout = ({ children }) => {
                             </div>
                         </div>
                     </header>
-                    <div className="p-4">
+                    <div
+                    className="h-screen overflow-y-auto"
+                    >
                         {children}
                     </div>
                 </section>
@@ -109,7 +111,7 @@ const ManagementMenu = ({
         <div>
             <div
                 onClick={handleToggle}
-                className="flex items-center p-2 rounded hover:bg-gray-100 cursor-pointer"
+                className="flex items-center p-2 rounded hover:bg-gray-500 cursor-pointer"
             >
                 {
                     isOpen ? (
@@ -119,7 +121,7 @@ const ManagementMenu = ({
                     )
                 }
                 <span
-                    className="flex items-center select-none gap-2 font-semibold ms-2 text-gray-700 hover:text-gray-900 transition-colors duration-200 cursor-pointer"
+                    className="flex items-center select-none gap-2 font-semibold ms-2 transition-colors duration-200 cursor-pointer"
                 >
                     {title}
                 </span>
@@ -130,7 +132,7 @@ const ManagementMenu = ({
                 {
                     options.map((option, index) => (
                         <li key={index}>
-                            <Link to={`/${option.path}`} className={`flex items-center gap-2 p-2 rounded hover:bg-gray-100 ${currentActive === option.path ? "bg-gray-200 font-semibold" : ""}`} onClick={() => setCurrentActive(option.label.toLowerCase())}>
+                            <Link to={`/${option.path}`} className={`flex items-center gap-2 p-2 rounded hover:bg-gray-500 ${currentActive === option.path ? "bg-gray-200 font-semibold" : ""}`} onClick={() => setCurrentActive(option.label.toLowerCase())}>
                                 <option.icon className="w-5 h-5" />
                                 <span>{option.label}</span>
                             </Link>

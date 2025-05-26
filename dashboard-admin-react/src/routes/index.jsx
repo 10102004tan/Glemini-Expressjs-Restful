@@ -4,6 +4,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import AdminLayout from '../layouts/AdminLayout';
 import { privateRoutes, publicRoutes } from './routes';
 import { useAuthStore } from '../store/useAuthStore';
+import NotFound from '../pages/_NotFound';
 export default function AppRouter() {
   const { checkAuth, isLoading, isAuthenticated } = useAuthStore();
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function AppRouter() {
             })
           }
 
-          {/* <Route path="*" element={<NotFound />} /> */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </div>

@@ -29,7 +29,7 @@ const Teachers = () => {
     useEffect(() => {
         fetchTeachers();
     }, []);
-    const fetchTeachers = async() => {
+    const fetchTeachers = async () => {
         try {
             const response = await api.post('/v1/user/teachers')
             const data = response.data;
@@ -42,19 +42,25 @@ const Teachers = () => {
     }
 
     return (
-        <div>
-            <h1
-                className="text-2xl font-bold mb-4"
-            >Quản lý giáo viên</h1>
+        <div className="relative h-screen">
 
-            <div>
+            {/* banner */}
+            <div className="bg-[#039BE5] text-white px-4 pt-[60px] pb-[100px] mb-4">
+                <h1
+                    className="text-3xl mb-4"
+                >
+                    Danh sách giáo viên
+                </h1>
+            </div>
+
+            <div className="p-4 bg-transparent absolute top-[120px] left-0 right-0 bottom-0">
                 {/* sort, find */}
                 <div
-                className="flex gap-2 items-center mb-4"
+                    className="flex gap-2 items-center mb-4"
                 >
                     <div className="flex items-center">
-                        <label className="mr-2">Sắp xếp theo:</label>
-                        <select className="border border-gray-300 rounded px-2 py-1">
+                        <select className="border border-gray-300 rounded bg-white text-gray-500 px-2 py-1">
+                            <option value="all">Sắp xếp theo: Tất cả</option>
                             <option value="name">Tên</option>
                             <option value="email">Email</option>
                             <option value="status">Trạng thái</option>
@@ -63,49 +69,59 @@ const Teachers = () => {
                     <div className="flex items-center">
                         <input
                             type="text"
-                            placeholder="Tìm kiếm..."
-                            className="border border-gray-300 rounded px-2 py-1 mr-2"
+                            placeholder="CCCD"
+                            className="border border-gray-300 bg-white text-gray-500  rounded px-2 py-1 mr-2"
                         />
-                        <button className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Tìm kiếm
-                        </button>
                     </div>
-                    {/* export */}
+                     <div className="flex items-center">
+                        <input
+                            type="text"
+                            placeholder="Họ tên"
+                            className="border border-gray-300 bg-white text-gray-500  rounded px-2 py-1 mr-2"
+                        />
+                    </div>
+                     <div className="flex items-center">
+                        <input
+                            type="text"
+                            placeholder="Email"
+                            className="border border-gray-300 bg-white text-gray-500  rounded px-2 py-1 mr-2"
+                        />
+                    </div>
                     <button className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
-                        Xuất danh sách
+                        Tìm kiếm
                     </button>
                 </div>
-                <table className="min-w-full bg-white border border-gray-200">
+                <table className="min-w-full bg-white border-gray-200 border-1 shadow-md rounded-lg overflow-hidden">
                     <thead>
-                        <tr className="bg-gray-100">
-                            <th className="px-4 py-2 border-b">ID</th>
-                            <th className="px-4 py-2 border-b">Tên</th>
-                            <th className="px-4 py-2 border-b">Email</th>
-                            <th className="px-4 py-2 border-b">Trạng thái</th>
+                        <tr className="bg-white">
+                            <th className="px-4 py-5 border-b text-xs text-gray-500 ">ID</th>
+                            <th className="px-4 py-5 border-b text-xs text-gray-500">Tên</th>
+                            <th className="px-4 py-5 border-b text-xs text-gray-500">Email</th>
+                            <th className="px-4 py-5 border-b text-xs text-gray-500">Trạng thái</th>
                             {/* các hành động */}
-                            <th className="px-4 py-2 border-b">Thao tác</th>
+                            <th className="px-4 py-5 border-b text-xs text-gray-500"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {teachers.map(({
-                            _id:id,
-                            userId:{
+                        {teachers.slice(0,10).map(({
+                            _id: id,
+                            userId: {
                                 user_fullname,
                                 user_email,
                                 user_avatar
                             } = {},
                             status
-                        },index) => (
-                            <tr key={id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-100'}`}>
-                                <td className="px-4 py-2 border-b">{index}</td>
-                                <td className="px-4 py-2 border-b">{user_fullname}</td>
-                                <td className="px-4 py-2 border-b">{user_email}</td>
-                                <td className={`px-4 py-2 border-b ${status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                        }, index) => (
+                            <tr key={id} className={`border-b-1 border-gray-300 font-stretch-50%`}>
+                                <td className="px-4 py-4">{index}</td>
+                                <td className="px-4 py-4">{user_fullname}</td>
+                                <td className="px-4 py-4">{user_email}</td>
+                                <td className={`px-4 py-4 text-gray-500`}>
                                     {status}
                                 </td>
-                                <td className="px-4 py-2 border-b">
+                                <td className="px-4 py-4">
                                     <Link to={`/admin/teachers/${id}`} className="text-blue-500 hover:underline">
-                                        Xem chi tiết
+                                        Chỉnh sửa
                                     </Link>
                                 </td>
                             </tr>
@@ -114,11 +130,20 @@ const Teachers = () => {
                 </table>
 
                 {/* pagination */}
-                <div className="mt-4 flex justify-center items-center">
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Trang trước</button>
-                    <span 
-                    className="mx-2 ">Trang 1/10</span>
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Trang sau</button>
+                <div className="flex justify-end items-center py-4">
+                    {/* so dong */}
+                   <div>
+                        <span className="text-gray-500 mr-2">Hiển thị 10 trên {teachers.length} giáo viên</span>
+                    </div>
+                    {/* pagination */}
+                    <div className="flex items-center">
+                        <button className="px-3 py-1 cursor-pointer bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mr-2">
+                            &lt;
+                        </button>
+                        <button className="px-3 py-1 cursor-pointer bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                             &gt;
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
