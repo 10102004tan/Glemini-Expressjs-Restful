@@ -254,16 +254,26 @@ class UserService {
   }
 
   static async getAllTeachersAccount({ skip, limit }) {
-    const teachers = await Teacher.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-    ]);
+    // const teachers = await Teacher.aggregate([
+    //   {
+    //     $lookup: {
+    //       from: "users",
+    //       localField: "userId",
+    //       foreignField: "_id",
+    //       as: "user",
+    //     },
+    //   },
+    // ]);
+    // if (!teachers) {
+    //   throw new BadRequestError("Cannot get teachers");
+    // }
+    // return teachers;
+    const teachers = await Teacher.find({})
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "user_fullname user_email user_avatar").sort({
+        createdAt: -1,
+      }).lean();
     if (!teachers) {
       throw new BadRequestError("Cannot get teachers");
     }

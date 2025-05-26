@@ -28,7 +28,7 @@ router.use('/api/v1', require('./email'));
 router.use('/api/v1/uploads', routerUpload);
 router.use('/api/v1/rbac', require('./rbac'));
 router.use('/api/v1/schools', routeSchool);
-router.use('/api/v1/admin', routeAdmin);
+router.use('/api/v1', routeAdmin);
 router.use('/api/v1/auth', routeAccess);
 router.use('/api/v1/notification', routeNotification);
 router.use('/api/v1/quizzes', routeQuizzes);

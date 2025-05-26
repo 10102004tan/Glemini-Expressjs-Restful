@@ -525,6 +525,8 @@ class AccessSevice {
             throw new BadRequestError("Cannot store key token");
         }
 
+        // verify email
+
         return newUser;
     }
 
@@ -609,6 +611,37 @@ class AccessSevice {
     static async createNewTeacher({ user_id,
         files
     }) {
+
+        // dev
+        if (!files) {
+            // console.log("files is required");
+            // throw new BadRequestError("files is required");
+
+            // find teacher
+            const foundTeacher = await teacherModel.findOne({ userId: user_id }).lean();
+            if (foundTeacher) {
+                if (foundTeacher.status === 'active') {
+                    throw new BadRequestError("You are already a teacher");
+                }
+                if (foundTeacher.status === 'pending') {
+                    throw new BadRequestError("Your request is pending, please wait for approval");
+                }
+                if (foundTeacher.status === 'deleted') {
+                    throw new BadRequestError("Your account has been deleted, please contact support");
+                }
+                // return found teacher
+                return foundTeacher;
+            }
+
+            const newTeacher = await teacherModel.create({
+                userId: user_id,
+                attributes: [],
+                schools: [],
+                status: 'pending'
+            })
+
+            return newTeacher;
+        }
 
         const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
             files,

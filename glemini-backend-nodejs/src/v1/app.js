@@ -7,8 +7,6 @@ const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
 const socketService = require('./services/socket.service');
-const { initSchool } = require('./utils');
-const exerciseTask = require('./tasks/exercise.task');
 const errorHandler = require('./middlewares/error.handler');
 const io = require('socket.io')(server,{
 	cors:{
@@ -28,6 +26,7 @@ global._userSockets = {};
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(require('cors')({
+	origin:"http://localhost:8000",
 	credentials: true,
 }));
 app.use(helmet());
