@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../libs/axios"
+import socket from "../../libs/socket";
 
 export default function Teacher() {
     const {id} = useParams();
@@ -93,17 +94,21 @@ export default function Teacher() {
     const saveHandle = async(e) => {
         e.preventDefault();
         // Handle form submission logic here
-        console.log("Form submitted");
-        try {
-            const body = {
+        // console.log("Form submitted");
+        // try {
+        //     const body = {
 
-            }
-            const response = await api.post('/api/teachers', body);
-            const data = response.data;
+        //     }
+        //     const response = await api.post('/api/teachers', body);
+        //     const data = response.data;
             
-        } catch (error) {
+        // } catch (error) {
             
-        }
+        // }
+        socket.emit("react-dashboard-call",{
+            message: "Hello from React Dashboard"
+        });
+        console.log("Form saved");
     }
 
     const rejectHandle = (e) => {
