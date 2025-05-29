@@ -1,5 +1,7 @@
 'use strict';
 
+const { verifyToken } = require('../auths');
+const { findKeyTokenByUserId } = require('../models/repositories/keyToken.repo');
 const ResultService = require('./result.service');
 
 const PING_INTERVAL = 20000; // 20s
@@ -7,84 +9,113 @@ const PONG_TIMEOUT = 5000;
 class SocketService {
 	connection(socket) {
 		const generateID = () => Math.random().toString(36).substring(2, 10);
-		
-		console.log("New socket connection", socket.id)
-        socket.auth = false
-        let userId;
 
-        socket.on('authentication', async (data) => {
-            console.log("1.authentication data!!! include Authorization and x-client-id")
-            if (!data) {
+		console.log("New socket connection", socket.id)
+		socket.auth = false
+		let userId;
+
+		socket.on('authentication', async (data) => {
+			console.log("1.authentication data!!! include Authorization and x-client-id")
+			if (!data) {
 				console.log("No authentication data")
-                return
-            }
+				return
+			}
 
 			// check authentication
-            if (!socket.auth){
-                if (!data.Authorization) {
-                    console.log("No Authorization header")
-                    return
-                }
-                console.log("Authorization", data.Authorization)
-                const decoded = await verifyToken({
-                    authorization: data.Authorization
-                });
+			if (!socket.auth) {
+				if (!data.authorization) {
+					console.log("No Authorization header")
+					return
+				}
+				const { xClientId, authorization } = data;
+				console.log("xClientId", xClientId)
+				console.log("authorization", authorization)
+				// find keyToken by xClientId
 
-    
-                if (!decoded) {
-                    console.log("Invalid token")
-                    socket.emit('unauthorized', 'Invalid token');
-                    return
-                }
-    
-                userId = decoded.userId;
-                socket.auth = true;
-                _userSockets[userId] = socket;
-                console.log(`Pong received from user ${userId}`);
-                // _lastPongAt = Date.now(); // Cập nhật thời điểm nhận pong mới nhất
-            }
-        });
+				// verify token
+				await verifyToken({
+					token: authorization,
+					xClientId
+				})
+					.then((decoded) => {
+						const { user_id } = decoded;
+						// console.log(`socket ${socket.id} authenticated with userId: ${user_id}`);
+						socket.auth = true;
+						_userSockets[user_id] = socket;
+						console.log(`Pong received from user ${user_id}`);
+					})
+					.catch(err => {
+						console.log("Token verification failed:", err);
+						socket.emit('unauthorized', 'Invalid token');
+						return;
+					});
+
+			}
+		});
 
 		// Xử lý sự kiện pong từ client
-        socket.on('pong', async ({
-            timestamp
-        }) => {
-           if (socket.auth){
-            _userLast[userId] = timestamp;
-           }
-        });
+		socket.on('pong', async ({
+			timestamp
+		}) => {
+			if (socket.auth) {
+				_userLast[userId] = timestamp;
+			}
+		});
 
 		// 
-        const pingInterval = setInterval(() => {
-            console.log(`Checking user ${socket.id} connection`);
-            if (!socket.auth) {
-                console.log(`User ${socket.id} not authenticated yet, skip ping.`);
-                _userSockets[userId]; // Nếu chưa xác thực thì không gửi ping
-                socket.disconnect();
-                return;
-            }
+		const pingInterval = setInterval(() => {
+			console.log(`Checking user ${socket.id} connection`);
+			if (!socket.auth) {
+				console.log(`User ${socket.id} not authenticated yet, skip ping.`);
+				_userSockets[userId]; // Nếu chưa xác thực thì không gửi ping
+				socket.disconnect();
+				return;
+			}
 
-            console.log(`Sending ping to user ${userId}`);
-            socket.emit('ping', { timestamp: Date.now(),users: [
-                1,2
-            ] });
+			console.log(`Sending ping to user ${userId}`);
+			socket.emit('ping', {
+				timestamp: Date.now(), users: [
+					1, 2
+				]
+			});
 
-            setTimeout(() => {
-                const now = Date.now();
-                if (now - _lastPongAt > PONG_TIMEOUT) {
-                    console.log(`User ${userId} pong timeout. Disconnecting.`);
-                    socket.disconnect();
-                }
-            }, PONG_TIMEOUT);
-        }, PING_INTERVAL);
+			setTimeout(() => {
+				const now = Date.now();
+				if (now - _lastPongAt > PONG_TIMEOUT) {
+					console.log(`User ${userId} pong timeout. Disconnecting.`);
+					socket.disconnect();
+				}
+			}, PONG_TIMEOUT);
+		}, PING_INTERVAL);
 
-        socket.on('disconnect', () => {
-            console.log(`User ${userId} disconnected`);
-            clearInterval(pingInterval); // Clear interval khi user disconnect
-            delete _userSockets[userId];
-        });
+		socket.on('disconnect', () => {
+			console.log(`User ${userId} disconnected`);
+			clearInterval(pingInterval); // Clear interval khi user disconnect
+			delete _userSockets[userId];
+		});
 
-		
+
+		socket.on('react-dashboard-call', (data) => {
+			// Xử lý logic cho react-dashboard-call tại đây
+			// chi gửi đến client react native, không gửi đến react web
+			console.log('react-dashboard-call received:', data);
+			// socket.emit('reactNative', {
+			// 	message: 'React Native Call Received',
+			// 	data: data,
+			// }, (response) => {
+			// 	if (response && response.error) {
+			// 		console.error('Error from client:', response.error);
+			// 	} else if (response) {
+			// 		console.log('Response from reactNative:', response);
+			// 	} else {
+			// 		console.log('No response from reactNative');
+			// 	}
+			// });
+			_io.emit('reactNative', {
+				message: 'React Native Call Received',
+			});
+		})
+
 
 		const chatRooms = [];
 

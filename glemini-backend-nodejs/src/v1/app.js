@@ -21,6 +21,8 @@ global._listUserOnline = [];
 // global map user online
 global._mapUserOnline = new Map();
 global._userSockets = {};
+global._userLast = {};
+global._lastPongAt = Date.now()
 
 /* MIDDLEWARES START*/
 app.use(express.json());

@@ -5,7 +5,7 @@ const { UnauthorizedError, NotFoundError } = require('../cores/error.repsone');
 const { findUserByEmail, findUserById, findUserByIdV2 } = require('../models/repositories/user.repo');
 const { findKeyTokenByUserId } = require('../models/repositories/keyToken.repo');
 const { findStatusTeacher } = require('../models/repositories/teacher.repo');
-const {get} = require("../models/repositories/kvStore.repo")
+const { get } = require("../models/repositories/kvStore.repo")
 
 const createKeyPair = async ({
     payload,
@@ -13,7 +13,7 @@ const createKeyPair = async ({
     privateKey
 }) => {
     // use public key for access token
-    
+
     const accessToken = await JWT.sign(payload, publicKey, {
         expiresIn: '2 days'
     });
@@ -54,10 +54,10 @@ const authentication = async (req, res, next) => {
 
         await JWT.verify(refreshToken, tokens.private_key, (err, decoded) => {
             if (err) {
-                if(err.name === 'TokenExpiredError'){
+                if (err.name === 'TokenExpiredError') {
                     throw new UnauthorizedError("expired");
                 }
-                else{
+                else {
                     throw new UnauthorizedError("Invalid refresh token 1");
                 }
             }
@@ -70,30 +70,30 @@ const authentication = async (req, res, next) => {
             next();
         });
     }
-    else{
+    else {
         const accessToken = req.headers[HEADER.AUTHORIZATION];
 
         if (!accessToken) {
             throw new UnauthorizedError("Access token is required");
         }
-    
-        await JWT.verify(accessToken, tokens.public_key, async(err, decoded) => {
+
+        await JWT.verify(accessToken, tokens.public_key, async (err, decoded) => {
             if (err) {
                 if (err.name === 'TokenExpiredError') {
                     throw new UnauthorizedError("expired");
                 }
                 else {
-                    throw new UnauthorizedError("Invalid access token");
+                    throw new UnauthorizedError("invalid token");
                 }
             }
-    
+
             if (decoded.user_id !== userId) {
-                throw new UnauthorizedError("Invalid access token");
+                throw new UnauthorizedError("invalid token");
             }
 
             const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
             if (isTokenBlkacklist) {
-                throw new UnauthorizedError("token expired!!!, pls login again");
+                throw new UnauthorizedError("expired");
             }
             req.user = decoded;
             next();
@@ -102,8 +102,43 @@ const authentication = async (req, res, next) => {
 
 }
 
+const verifyToken = async ({
+    token, xClientId
+}) => {
+    if (!token) {
+        throw new UnauthorizedError("unauthorized");
+    }
+
+    const keyToken = await findKeyTokenByUserId(xClientId);
+    if (!keyToken) {
+        console.log("No keyToken found for xClientId:", xClientId);
+        socket.emit('unauthorized', 'No keyToken found');
+        return;
+    }
+
+    try {
+        const decoded = JWT.verify(token, keyToken.public_key);
+        if (decoded.user_id !== xClientId) {
+            throw new UnauthorizedError("invalid token");
+        }
+         const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
+        if (isTokenBlkacklist) {
+            throw new UnauthorizedError("expired");
+        }
+
+        return decoded;
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            throw new UnauthorizedError("expired");
+        } else {
+            throw new UnauthorizedError("invalid token");
+        }
+    }
+}
+
 
 module.exports = {
     createKeyPair,
-    authentication
+    authentication,
+    verifyToken
 };
