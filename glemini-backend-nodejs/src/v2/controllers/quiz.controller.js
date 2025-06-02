@@ -7,8 +7,8 @@
  */
 'use strict';
 
-const { OK } = require('../../v1/cores/success.response');
-const QuizService = require('../services/quiz.service');
+const { OK } = require('@cores/success.response');
+const QuizService = require('@v2/services/quiz.service');
 
 class QuizController {
   async search(req, res, next) {
@@ -19,6 +19,28 @@ class QuizController {
     return new OK({
       message: 'Search successfully',
       metadata: await QuizService.search(newBody),
+    }).send(res);
+  }
+
+  async getQuestionsByQuiz(req, res, next) {
+    return new OK({
+      message: 'Get questions by quiz successfully',
+      metadata: await QuizService.getQuestionsByQuiz({
+        ...req.params,
+      }),
+    }).send(res);
+  }
+
+  /**
+   * create quiz
+   */
+  async create(req, res, next) {
+    return new OK({
+      message: 'Create quiz successfully',
+      metadata: await QuizService.createQuiz({
+        ...req.body,
+        ...req.user,
+      }),
     }).send(res);
   }
 }

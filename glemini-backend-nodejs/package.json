@@ -18,6 +18,7 @@
     "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
     "mammoth": "^1.8.0",
+    "module-alias": "^2.2.3",
     "mongoose": "^8.7.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
@@ -56,5 +57,11 @@
       "restart": "cls"
     }
   },
-  "description": ""
+  "description": "",
+  "_moduleAliases": {
+    "@": "src",
+    "@v1": "src/v1",
+    "@v2": "src/v2",
+    "@cores": "src/v1/cores"
+  }
 }

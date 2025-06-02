@@ -1,7 +1,10 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const { asynHandler } = require('../../../v1/auths/utils');
-const quizController = require('../../controllers/quiz.controller');
+const { asynHandler } = require('@v1/auths/utils');
+const {authentication} = require('@v1/auths');
+const quizController = require('@v2/controllers/quiz.controller');
 router.post('/search', asynHandler(quizController.search));
+router.post('/:quizId/questions', asynHandler(quizController.getQuestionsByQuiz));
+router.post('/create',asynHandler(authentication), asynHandler(quizController.create));
 module.exports = router;

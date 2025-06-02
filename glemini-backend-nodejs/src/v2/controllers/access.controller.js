@@ -1,11 +1,11 @@
 'use strict';
 
-const { CREATED } = require('../../v1/cores/success.response');
-const { OK } = require('../../v1/cores/success.response');
-const accessService = require('../services/access.service');
-const { validation } = require('../dtos/util');
-const { loginDto } = require('../dtos/access/login.dto');
-const { signUpDto } = require('../dtos/access/sign-up.dto');
+const { CREATED } = require('@cores/success.response');
+const { OK } = require('@cores/success.response');
+const accessService = require('@v2/services/access.service');
+const { validation } = require('@v2/dtos/util');
+const { loginDto } = require('@v2/dtos/access/login.dto');
+const { signUpDto } = require('@v2/dtos/access/sign-up.dto');
 
 /**
  * @file access.controller.js

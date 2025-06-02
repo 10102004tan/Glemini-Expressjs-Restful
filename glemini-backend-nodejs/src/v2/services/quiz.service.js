@@ -7,10 +7,15 @@
  */
 'use strict';
 
-const quizModel = require('../../v1/models/quiz.model');
+const questionModel = require('@v1/models/question.model');
+const quizModel = require('@v1/models/quiz.model');
 const {
   Types: { ObjectId },
 } = require('mongoose');
+const { subjectsIsExit } = require('@v1/models/repositories/subject.repo');
+const {BadRequestError} = require('@v1/cores/error.repsone');
+const { answersIsExit } = require('@v1/models/repositories/answer.repo');
+const answerModel = require('@v1/models/answer.model');
 
 class QuizService {
   /**
@@ -94,6 +99,187 @@ class QuizService {
     result.totalItems = await quizModel.countDocuments(query);
     result.totalPage = Math.ceil(result.totalItems / limit);
     return result;
+  }
+
+  /**
+   * Get questions by quiz ID.
+   * @param {ObjectId} quizId - The ID of the quiz.
+   * @returns {Promise<Array>} - An array of questions associated with the quiz.
+   */
+  static async getQuestionsByQuiz({
+    quizId
+  }){
+    /**
+     * {
+      id: 1,
+      question: 'What is the capital of France?',
+      options: [
+        {
+          id: 1,
+          text: 'Paris',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 2,
+          text: 'London',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 3,
+          text: 'Berlin',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 4,
+          text: 'Madrid',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+      ],
+      type: 'single',
+    }
+     */
+    const result = {
+      items: [],
+      totalPage: 0,
+      totalItems: 0,
+    }
+
+    const questions = await questionModel
+          .find({ quiz_id:quizId })
+          .populate('question_answer_ids')
+          .populate('correct_answer_ids')
+          .exec();
+
+    result.totalItems = questions.length;
+    result.totalPage = Math.ceil(result.totalItems / 20);
+
+    const newQuestions = questions.map((question) => {
+      const item = {
+        id: question._id.toString(),
+        question: question.question_excerpt,
+        options: question.question_answer_ids.map((answer) => ({
+          id: answer._id.toString(),
+          text: answer.text,
+          image: answer.image || '',
+        })),
+        type: question.question_type,
+      }
+      if (question.question_type === 'box'){
+
+      }
+      return item;
+    });
+
+    result.items = newQuestions;
+
+    return result;
+  }
+
+  /**
+   * create quiz
+   * @param {Object} quizData - The data for the quiz to be created.
+   * @returns {Promise<Object>} - The created quiz object.
+   */
+
+  static async createQuiz({
+    name,
+    user_id,
+    description,
+    status,
+    thumb,
+    subject_ids=[]
+  }) {
+    const isSubjectsExist = await subjectsIsExit(subject_ids);
+    if (!isSubjectsExist) {
+      throw new Error('subject invalid');
+    }
+
+    const quizStore = await quizModel.create({
+      quiz_name: name,
+      user_id,
+      quiz_description: description,
+      quiz_status: status,
+      quiz_thumb: thumb,
+      subject_ids: subject_ids.map((subjectId) => ObjectId.createFromHexString(subjectId)),
+    });
+
+    return quizStore;
+  }
+
+  /**
+   * create question for quiz
+   * @param {Object} questionData - The data for the question to be created.
+   * @returns {Promise<Object>} - The created question object.
+   */
+  static async createQuestion({
+    quizId,
+    excerpt,
+    description = '',
+    audio = '',
+    image = '',
+    video = '',
+    point = 1,
+    time = 30,
+    explanation = '',
+    type = 'single',
+    answerIds = [],
+    correctAnswerIds = [],
+  }) {
+
+    const quizFound = await quizModel.findById(quizId);
+
+    if (!quizFound) {
+      throw new BadRequestError("quiz not found!!!")
+    }
+
+    const isAnswerExit = await answersIsExit(answerIds);
+    if (!isAnswerExit) {
+      throw new BadRequestError("answer invalid!!!");
+    }
+
+    const isCorrectAnswerExit = await answersIsExit(correctAnswerIds);
+
+    if (!isCorrectAnswerExit) {
+      throw new BadRequestError("answer invalid!!!");
+    }
+
+    const questionStore = await questionModel.create({
+      quiz_id: quizId,
+      question_excerpt: excerpt,
+      question_description: description,
+      question_audio: audio,
+      question_image: image,
+      question_video: video,
+      question_point: point,
+      question_time: time,
+      question_explanation: explanation,
+      question_type: type,
+      question_answer_ids: answerIds.map((answerId) => ObjectId.createFromHexString(answerId)),
+      correct_answer_ids: correctAnswerIds.map((answerId) => ObjectId.createFromHexString(answerId)),
+    });
+    return questionStore;
+  }
+
+  /**
+   * create answer for question
+   * @param {Object} answerData - The data for the answer to be created.
+   * @returns {Promise<Object>} - The created answer object.
+   */
+
+  static async createAnswer({
+    text,
+    image = '',
+  }) {
+    
+    const answerStore = await answerModel.create({
+      text,
+      image,
+    })
+    return answerStore;
   }
 }
 

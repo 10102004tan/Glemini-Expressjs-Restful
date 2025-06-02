@@ -11,28 +11,28 @@
  * @author 10102004tan
  * @license MIT
  */
-const { createKeyPair } = require('../../v1/auths');
+const { createKeyPair } = require('@v1/auths');
 const {
   BadRequestError,
   InternalServerError,
   NotFoundError,
 } = require('../../v1/cores/error.repsone');
 
-const { findKeyTokenByUserId } = require('../../v1/models/repositories/keyToken.repo');
-const { updateStatusTeacherV2 } = require('../../v1/models/repositories/teacher.repo');
+const { findKeyTokenByUserId } = require('@v1/models/repositories/keyToken.repo');
+const { updateStatusTeacherV2 } = require('@v1/models/repositories/teacher.repo');
 const {
   findUserByEmail,
   findUserByEmailV2,
   findUserById,
-} = require('../../v1/models/repositories/user.repo');
+} = require('@v1/models/repositories/user.repo');
 
-const roleModel = require('../../v1/models/role.model');
-const teacherModel = require('../../v1/models/teacher.model');
-const userModel = require('../../v1/models/user.model');
+const roleModel = require('@v1/models/role.model');
+const teacherModel = require('@v1/models/teacher.model');
+const userModel = require('@v1/models/user.model');
 
-const KeyTokenService = require('../../v1/services/keyToken.service');
-const { set } = require('../../v1/services/redis.service');
-const UploadService = require('../../v1/services/upload.service');
+const KeyTokenService = require('@v1/services/keyToken.service');
+const { set } = require('@v1/services/redis.service');
+const UploadService = require('@v1/services/upload.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
