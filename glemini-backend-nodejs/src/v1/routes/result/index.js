@@ -15,10 +15,7 @@ router.post('/complete-quiz', asynHandler(resultController.completeQuiz));
 router.post('/review', asynHandler(resultController.review));
 router.post('/get-results', asynHandler(resultController.getResultsByRoomId));
 router.post('/get-rank', asynHandler(resultController.getUserRank));
-router.post(
-	'/update-result',
-	asynHandler(resultController.updateResultWhileRealtimePlay)
-);
+router.post('/update-result', asynHandler(resultController.updateResultWhileRealtimePlay));
 router.post('/overview', asynHandler(resultController.overview));
 router.post('/reports', asynHandler(resultController.getReportResults));
 router.post('/rank', asynHandler(resultController.getRankBoard));

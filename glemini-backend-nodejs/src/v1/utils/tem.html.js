@@ -149,12 +149,12 @@ const htmlOTP = `
         </body>
         </html>
         `;
-        
-const htmlWelcome =  `
+
+const htmlWelcome = `
   <h1>Welcome u to Glemini</h1>
 `;
 module.exports = {
-    htmlEmailToken,
-    htmlOTP,
-    htmlWelcome
+  htmlEmailToken,
+  htmlOTP,
+  htmlWelcome,
 };

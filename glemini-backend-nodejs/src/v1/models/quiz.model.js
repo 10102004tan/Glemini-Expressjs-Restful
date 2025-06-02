@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
-const { type } = require("os");
+const mongoose = require('mongoose');
+const { type } = require('os');
 
 var quizSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Liên kết tới bảng User
+      ref: 'User', // Liên kết tới bảng User
       required: true,
     },
     quiz_name: {
@@ -14,16 +14,16 @@ var quizSchema = new mongoose.Schema(
     },
     quiz_description: {
       type: String,
-      default: "",
+      default: '',
     },
     quiz_status: {
       type: String,
-      enum: ["deleted", "published", "unpublished"],
-      default: "unpublished",
+      enum: ['deleted', 'published', 'unpublished'],
+      default: 'unpublished',
     },
     quiz_thumb: {
       type: String,
-      default: "",
+      default: '',
     },
     quiz_turn: {
       type: Number,
@@ -34,7 +34,7 @@ var quizSchema = new mongoose.Schema(
       {
         user_id: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
         },
         isEdit: { type: Boolean, default: false },
       },
@@ -43,28 +43,26 @@ var quizSchema = new mongoose.Schema(
     subject_ids: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Subject",
+        ref: 'Subject',
         default: [],
       },
     ],
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // create index for quiz_name full text search
-quizSchema.index({ quiz_name: "text" });
+quizSchema.index({ quiz_name: 'text' });
 
 // if quiz_thumb null, set default image
-quizSchema.pre("save", function (next) {
+quizSchema.pre('save', function (next) {
   if (!this.quiz_thumb) {
     this.quiz_thumb =
-      "https://elearningindustry.com/wp-content/uploads/2021/10/Shareable-Quizzes-In-Online-Training-7-Reasons.jpg";
+      'https://elearningindustry.com/wp-content/uploads/2021/10/Shareable-Quizzes-In-Online-Training-7-Reasons.jpg';
   }
   next();
 });
 
-
-
-module.exports = mongoose.model("Quiz", quizSchema);
+module.exports = mongoose.model('Quiz', quizSchema);

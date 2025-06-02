@@ -1,68 +1,66 @@
-'use strict';
-require('dotenv').config();
-const express = require('express');
-const app = express();
-const morgan = require('morgan');
-const { default: helmet } = require('helmet');
-const compression = require('compression');
-const server = require('http').createServer(app);
-const socketService = require('./services/socket.service');
-const { initSchool } = require('./utils');
-const exerciseTask = require('./tasks/exercise.task');
-const io = require('socket.io')(server,{
-	cors:{
-		origin: '*',
-	}
-});
-global.__basedir = __dirname;
-global._io = io;
-// array list user online global
-global._listUserOnline = [];
+// 'use strict';
+// require('dotenv').config();
+// const express = require('express');
+// const app = express();
+// const morgan = require('morgan');
+// const { default: helmet } = require('helmet');
+// const compression = require('compression');
+// const server = require('http').createServer(app);
+// const socketService = require('./services/socket.service');
+// const errorHandler = require('./middlewares/error.handler');
+// const io = require('socket.io')(server,{
+// 	cors:{
+// 		origin: '*',
+// 	},
+// });
+// global.__basedir = __dirname;
+// global._io = io;
+// // array list user online global
+// global._listUserOnline = [];
 
-/* MIDDLEWARES START*/
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(require('cors')({
-	// set origin to http://localhost:8888 for development 
-	origin: 'http://localhost:8888',
-	credentials: true,
-}));
-app.use(helmet());
-app.use(morgan('dev'));
-app.use(compression());
-/* MIDDLEWARES END*/
+// // global map user online
+// global._mapUserOnline = new Map();
+// global._userSockets = {};
+// global._userLast = {};
+// global._lastPongAt = Date.now()
 
-/* DATABASE CONNECTION START*/
-require('./databases/init.mongodb');
-/* DATABASE CONNECTION END*/
+// /* MIDDLEWARES START*/
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
+// app.use(require('cors')({
+// 	origin:"http://localhost:8000",
+// 	credentials: true,
+// }));
+// app.use(helmet());
+// app.use(morgan('dev'));
+// app.use(compression());
+// /* MIDDLEWARES END*/
 
-/* SOCKET CONNECTION START*/
+// /* DATABASE CONNECTION START*/
+// require('./databases/init.mongodb');
+// const redis = require('./databases/init.redis');
+// redis.initRedis();
+// /* DATABASE CONNECTION END*/
 
-global._io.on('connection', socketService.connection);
-/* SOCKET CONNECTION END*/
+// /* SOCKET CONNECTION START*/
 
-// task scheduler
-// exerciseTask();
+// global._io.on('connection', socketService.connection);
+// /* SOCKET CONNECTION END*/
 
-/* ROUTES START*/
-app.use('/', require('./routes'));
+// // task scheduler
+// // exerciseTask();
 
-// catch 404 and forward to error handler
-app.use((req, res, next) => {
-	const error = new Error('Not Found');
-	error.status = 404;
-	next(error);
-});
+// /* ROUTES START*/
+// app.use('/', require('./routes'));
 
-app.use((error, req, res, next) => {
-	const statusCode = error.status || 500;
-	return res.status(statusCode).json({
-		status: 'error',
-		statusCode: statusCode,
-		stack: error.stack,
-		message: error.message || 'Internal Servel Error',
-	});
-});
-/* ROUTES END*/
+// // // catch 404 and forward to error handler
+// // app.use((req, res, next) => {
+// // 	const error = new Error('Not Found');
+// // 	error.status = 404;
+// // 	next(error);
+// // });
 
-module.exports = server;
+// app.use(errorHandler);
+// /* ROUTES END*/
+
+// module.exports = server;

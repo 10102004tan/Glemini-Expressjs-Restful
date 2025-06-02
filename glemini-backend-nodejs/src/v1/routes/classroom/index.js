@@ -15,33 +15,17 @@ router.use(asynHandler(authentication));
 
 router.post('/create', asynHandler(classroomController.createClassroom));
 router.post('/info', asynHandler(classroomController.getClassroomById));
-router.post(
-	'/teacher',
-	asynHandler(classroomController.getClassroomsByTeacherId)
-);
-router.post(
-	'/student',
-	asynHandler(classroomController.getClassroomsByStudentId)
-);
+router.post('/teacher', asynHandler(classroomController.getClassroomsByTeacherId));
+router.post('/student', asynHandler(classroomController.getClassroomsByStudentId));
 router.post('/add-student', asynHandler(classroomController.addStudent));
 router.post('/add-quiz', asynHandler(classroomController.addQuizToClassroom));
 router.delete(
-	'/rm-student/:classroomId/students/:studentId',
-	asynHandler(classroomController.removeStudent)
+  '/rm-student/:classroomId/students/:studentId',
+  asynHandler(classroomController.removeStudent),
 );
-router.delete(
-	'/delete/:classroomId',
-	asynHandler(classroomController.deleteClassroom)
-);
-router.post(
-	'/notify-student',
-	asynHandler(classroomController.notifyStudentWhenTeacherCreateRoom)
-);
+router.delete('/delete/:classroomId', asynHandler(classroomController.deleteClassroom));
+router.post('/notify-student', asynHandler(classroomController.notifyStudentWhenTeacherCreateRoom));
 
-router.post(
-	'/upload',
-	uploadExcel.single('file'),
-	asynHandler(classroomController.uploadExcel)
-);
+router.post('/upload', uploadExcel.single('file'), asynHandler(classroomController.uploadExcel));
 
 module.exports = router;

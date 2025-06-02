@@ -3,28 +3,31 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-const studentSchema = new Schema({
+const studentSchema = new Schema(
+  {
     student_code: {
-        type: String,
-        default: ''
+      type: String,
+      default: '',
     },
     school_id: {
-        type: Schema.Types.ObjectId,
-        default: null,
-        ref: 'School'
+      type: Schema.Types.ObjectId,
+      default: null,
+      ref: 'School',
     },
     student_parent_email: {
-        type: String,
-        default: ''
+      type: String,
+      default: '',
     },
     classroom_ids: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Classroom'
-        }
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Classroom',
+      },
     ],
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  },
+);
 
 module.exports = model('Student', studentSchema);

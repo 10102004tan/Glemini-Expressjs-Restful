@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-const { model, Schema } = require("mongoose");
+const { model, Schema } = require('mongoose');
 
 const collectionSchema = new Schema(
   {
@@ -10,20 +10,20 @@ const collectionSchema = new Schema(
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     quizzes: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Quiz",
+        ref: 'Quiz',
         default: [],
       },
     ],
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = model("Collection", collectionSchema);
+module.exports = model('Collection', collectionSchema);

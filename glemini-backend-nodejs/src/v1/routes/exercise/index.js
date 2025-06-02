@@ -9,6 +9,6 @@ const { authentication } = require('../../auths');
 // router.use(asynHandler(authentication));
 // AUTHENTICATION
 
-router.post("/report", asynHandler(exerciseController.detailExercise));
+router.post('/report', asynHandler(exerciseController.detailExercise));
 
 module.exports = router;

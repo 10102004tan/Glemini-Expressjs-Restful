@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const routeAccess = require('./access');
 const routeQuizzes = require('./quizzes');
@@ -18,26 +18,31 @@ const routeClassroom = require('./classroom');
 const routeExercise = require('./exercise');
 const routeRoom = require('./room');
 
-router.get('/api/v1/working', (req, res, next) => {
-	res.send({
-		message: 'It works!',
-		metadata: [],
-	}).status(200);
+router.get('/working', (req, res, next) => {
+  res
+    .send({
+      message: 'It works!',
+      metadata: [],
+    })
+    .status(200);
 });
-router.use('/api/v1', require('./email'));
-router.use('/api/v1/uploads', routerUpload);
-router.use('/api/v1/schools', routeSchool);
-router.use('/api/v1/admin', routeAdmin);
-router.use('/api/v1/auth', routeAccess);
-router.use('/api/v1/notification', routeNotification);
-router.use('/api/v1/quizzes', routeQuizzes);
-router.use('/api/v1/collections', routeCollection);
-router.use('/api/v1/questions', routeQuestions);
-router.use('/api/v1/subjects', routeSubjects);
-router.use('/api/v1/user', routeUser);
-router.use('/api/v1/result', routeResult);
-router.use('/api/v1/classroom', routeClassroom);
-router.use('/api/v1/exercise', routeExercise);
-router.use('/api/v1/room', routeRoom);
+router.use('', require('./email'));
+router.use('/uploads', routerUpload);
+router.use('/rbac', require('./rbac'));
+router.use('/schools', routeSchool);
+router.use('', routeAdmin);
+router.use('/auth', routeAccess);
+router.use('/notification', routeNotification);
+router.use('/quizzes', routeQuizzes);
+router.use('/collections', routeCollection);
+router.use('/questions', routeQuestions);
+router.use('/subjects', routeSubjects);
+router.use('/user', routeUser);
+router.use('/result', routeResult);
+router.use('/classroom', routeClassroom);
+router.use('/exercise', routeExercise);
+router.use('/room', routeRoom);
+// router.use('/api/v2/auth', require('./accessV2'));
+// router.use('/api/v2/system', require('./system'));
 
 module.exports = router;
