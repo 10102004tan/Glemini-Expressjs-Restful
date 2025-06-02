@@ -7,11 +7,7 @@ const { authentication } = require('../../auths');
 const { uploadDisk } = require('../../configs/multer.config');
 const path = require('path');
 
-router.post(
-	'/signup',
-	uploadDisk.array('images'),
-	asynHandler(accessController.signup)
-);
+router.post('/signup', uploadDisk.array('images'), asynHandler(accessController.signup));
 router.post('/login', asynHandler(accessController.login));
 router.post('/forgot-password', asynHandler(accessController.forgotPassword));
 router.post('/verify-otp', asynHandler(accessController.verifyOtp));

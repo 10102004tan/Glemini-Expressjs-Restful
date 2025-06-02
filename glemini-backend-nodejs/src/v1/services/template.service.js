@@ -5,39 +5,34 @@ const { BadRequestError } = require('../cores/error.repsone');
 const { htmlEmailToken, htmlOTP, htmlWelcome } = require('../utils/tem.html');
 
 class TemplateService {
-    static async newTemplate({
-        tem_name,
-        tem_html,
-    }) {
-        //1. check exist
+  static async newTemplate({ tem_name, tem_html }) {
+    //1. check exist
 
-        //2. create new template
+    //2. create new template
 
-        const newTemplate = await Template.create({
-            tem_name, // unique
-            tem_html:htmlWelcome
-        });
+    const newTemplate = await Template.create({
+      tem_name, // unique
+      tem_html: htmlWelcome,
+    });
 
-        if (!newTemplate) {
-            throw new BadRequestError("Cannot create template");
-        }
-
-        return newTemplate;
+    if (!newTemplate) {
+      throw new BadRequestError('Cannot create template');
     }
 
-    static async getTemplate({
-        tem_name
-    }) {
-        const template = await Template.findOne({
-            tem_name
-        });
+    return newTemplate;
+  }
 
-        if (!template) {
-            throw new BadRequestError("Cannot find template");
-        }
+  static async getTemplate({ tem_name }) {
+    const template = await Template.findOne({
+      tem_name,
+    });
 
-        return template;
+    if (!template) {
+      throw new BadRequestError('Cannot find template');
     }
+
+    return template;
+  }
 }
 
 module.exports = TemplateService;

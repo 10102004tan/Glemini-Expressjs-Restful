@@ -8,9 +8,9 @@ const { authentication } = require('../../auths');
 const router = express.Router();
 
 router.use(asynHandler(authentication));
-router.post('/user/update-status',asynHandler(accessController.updateStatus));
+router.post('/user/update-status', asynHandler(accessController.updateStatus));
 router.use('/template', require('./template'));
 router.use('/notification', require('./notifications'));
-router.use('/user',grantAccess("readAny","user"), require('./user'));
+router.use('/user', grantAccess('readAny', 'user'), require('./user'));
 
 module.exports = router;

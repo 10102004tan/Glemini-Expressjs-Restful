@@ -1,47 +1,44 @@
-"use strict";
+'use strict';
 
-const { BadRequestError } = require("../cores/error.repsone");
-const User = require("../models/user.model");
-const Student = require("../models/student.model");
-const Teacher = require("../models/teacher.model");
-const userConfig = require("../utils/userConfig");
-const { OK } = require("../utils/statusCode");
-const { uploadDisk } = require("../configs/multer.config");
+const { BadRequestError } = require('../cores/error.repsone');
+const User = require('../models/user.model');
+const Student = require('../models/student.model');
+const Teacher = require('../models/teacher.model');
+const userConfig = require('../utils/userConfig');
+const { OK } = require('../utils/statusCode');
+const { uploadDisk } = require('../configs/multer.config');
 const {
   Types: { ObjectId },
   default: mongoose,
-} = require("mongoose");
+} = require('mongoose');
 const {
   findUserByIdV2,
   findUserById,
   findAndUpdateUserById,
-} = require("../models/repositories/user.repo");
+} = require('../models/repositories/user.repo');
 const {
   findImagesVerification,
   updateImagesVerification,
   updateStatusTeacher,
-} = require("../models/repositories/teacher.repo");
-const UploadService = require("./upload.service");
-const {
-  getNotificationReceiverIdService,
-  pushNotiForSys,
-} = require("./notification.service");
-const { pushNoti } = require("./expo.service");
-const quizModel = require("../models/quiz.model");
-const ExpoToken = require("../models/expoToken.model");
-const notificationModel = require("../models/notification.model");
-const expoTokenModel = require("../models/expoToken.model");
+} = require('../models/repositories/teacher.repo');
+const UploadService = require('./upload.service');
+const { getNotificationReceiverIdService, pushNotiForSys } = require('./notification.service');
+const { pushNoti } = require('./expo.service');
+const quizModel = require('../models/quiz.model');
+const ExpoToken = require('../models/expoToken.model');
+const notificationModel = require('../models/notification.model');
+const expoTokenModel = require('../models/expoToken.model');
 
 class UserFactory {
   static createUser(type, payload) {
     console.log(type);
     switch (type) {
-      case "student":
+      case 'student':
         return new StudentService(payload).createUser();
-      case "teacher":
+      case 'teacher':
         return new TeacherService(payload).createUser();
       default:
-        throw new BadRequestError("User type is invalid");
+        throw new BadRequestError('User type is invalid');
     }
   }
   // get status
@@ -56,10 +53,10 @@ class UserService {
     user_phone,
     user_avatar,
     user_schoolIds = [],
-    user_status = "active",
+    user_status = 'active',
     user_attributes = {},
   }) {
-    console.log("user_schoolIds::",user_schoolIds);
+    console.log('user_schoolIds::', user_schoolIds);
     this.user_fullname = user_fullname;
     this.user_email = user_email;
     this.user_password = user_password;
@@ -78,7 +75,7 @@ class UserService {
     });
 
     if (!newUser) {
-      throw new BadRequestError("Cannot create user");
+      throw new BadRequestError('Cannot create user');
     }
 
     return newUser;
@@ -89,12 +86,12 @@ class UserService {
       id: user_id,
     });
     if (!user) {
-      throw new BadRequestError("User not found");
+      throw new BadRequestError('User not found');
     }
     return user;
   }
 
-  static async updateProfile({ user_id, fullname, email, avatar,schoolIds }) {
+  static async updateProfile({ user_id, fullname, email, avatar, schoolIds }) {
     // update full name,email,avatar
     let uploadUrl = null;
     if (avatar) {
@@ -104,7 +101,7 @@ class UserService {
       });
 
       if (!uploadUrl) {
-        throw new BadRequestError("Cannot upload avatar");
+        throw new BadRequestError('Cannot upload avatar');
       }
     }
 
@@ -112,11 +109,11 @@ class UserService {
       id: user_id,
       user_fullname: fullname,
       user_email: email,
-      user_schoolIds:schoolIds,
+      user_schoolIds: schoolIds,
       user_avatar: uploadUrl && uploadUrl.thumbnail,
     });
     if (!updated) {
-      throw new BadRequestError("Cannot update user");
+      throw new BadRequestError('Cannot update user');
     }
     return {
       user_fullname: fullname,
@@ -132,7 +129,6 @@ class UserService {
       limit,
     });
   }
-
 
   // static async updateProfile({ user_id, fullname, email, avatar }) {
   //   // update full name,email,avatar
@@ -179,15 +175,15 @@ class UserService {
     const user = await User.findOne({ user_email: email });
 
     if (!user) {
-      throw new BadRequestError("Email does not exist");
+      throw new BadRequestError('Email does not exist');
     }
 
     // check type user
-    if (user.user_type !== "teacher") {
-      throw new BadRequestError("Quiz not shared for student");
+    if (user.user_type !== 'teacher') {
+      throw new BadRequestError('Quiz not shared for student');
     }
 
-    console.log("quizIdInShared::", quiz_id);
+    console.log('quizIdInShared::', quiz_id);
 
     // Kiểm tra xem quiz đã được chia sẻ cho người dùng này chưa
     const quiz = await quizModel.findOne({
@@ -201,7 +197,7 @@ class UserService {
     });
 
     if (quiz) {
-      throw new BadRequestError("Quiz này đã được chia sẻ");
+      throw new BadRequestError('Quiz này đã được chia sẻ');
     }
 
     // Cập nhật quiz với user nhận và quyền chỉnh sửa
@@ -211,16 +207,16 @@ class UserService {
         $push: {
           shared_user_ids: { user_id: user._id, isEdit }, // Lưu isEdit cho người dùng nhận
         },
-      }
+      },
     );
 
     // Gửi thông báo cho người dùng
     // Tạo thông báo chia sẻ
     const noti = await pushNotiForSys({
-      type: "SHARE-001",
+      type: 'SHARE-001',
       receiverId: user._id,
       senderId: user_id,
-      content: "Bạn đã nhận được 1 bài quiz từ giáo viên khác",
+      content: 'Bạn đã nhận được 1 bài quiz từ giáo viên khác',
       options: {
         name: infoSender.user_fullname,
         avatar: infoSender.user_avatar,
@@ -229,7 +225,7 @@ class UserService {
     });
 
     if (!noti) {
-      throw new BadRequestError("Cannot send notification");
+      throw new BadRequestError('Cannot send notification');
     }
 
     // Gửi thông báo realtime
@@ -239,17 +235,17 @@ class UserService {
     });
 
     const tokens = await expoTokenModel.find({ user_id: user._id });
-      if (tokens.length > 0) {
-        const listTokens = tokens.filter(item=>item.token).map((item) => item.token);
-        // push notification with expo notification
-        pushNoti({
-          somePushTokens: listTokens,
-          data: {
-            body: "Bạn có 1 bài quiz được chia sẻ từ một giáo viên nào đó :)",
-            title: 'Thông báo',
-          }
-        });
-      }
+    if (tokens.length > 0) {
+      const listTokens = tokens.filter((item) => item.token).map((item) => item.token);
+      // push notification with expo notification
+      pushNoti({
+        somePushTokens: listTokens,
+        data: {
+          body: 'Bạn có 1 bài quiz được chia sẻ từ một giáo viên nào đó :)',
+          title: 'Thông báo',
+        },
+      });
+    }
     return updated;
   }
 
@@ -271,11 +267,13 @@ class UserService {
     const teachers = await Teacher.find({})
       .skip(skip)
       .limit(limit)
-      .populate("userId", "user_fullname user_email user_avatar").sort({
+      .populate('userId', 'user_fullname user_email user_avatar')
+      .sort({
         createdAt: -1,
-      }).lean();
+      })
+      .lean();
     if (!teachers) {
-      throw new BadRequestError("Cannot get teachers");
+      throw new BadRequestError('Cannot get teachers');
     }
     return teachers;
   }
@@ -292,13 +290,13 @@ class StudentService extends UserService {
     });
 
     if (!newStudent) {
-      throw new BadRequestError("Cannot create user");
+      throw new BadRequestError('Cannot create user');
     }
 
     const newUser = await super.createUser(newStudent._id);
 
     if (!newUser) {
-      throw new BadRequestError("Cannot create user");
+      throw new BadRequestError('Cannot create user');
     }
 
     return newUser;
@@ -315,13 +313,13 @@ class TeacherService extends UserService {
     });
 
     if (!newTeacher) {
-      throw new BadRequestError("Cannot create user");
+      throw new BadRequestError('Cannot create user');
     }
 
     const newUser = await super.createUser(newTeacher._id);
 
     if (!newUser) {
-      throw new BadRequestError("Cannot create user");
+      throw new BadRequestError('Cannot create user');
     }
 
     return newUser;
@@ -330,7 +328,7 @@ class TeacherService extends UserService {
   static async getImagesVerification({ user_id }) {
     const images = await findImagesVerification(user_id);
     if (!images) {
-      throw new BadRequestError("User not found");
+      throw new BadRequestError('User not found');
     }
     return images;
   }
@@ -338,7 +336,7 @@ class TeacherService extends UserService {
   static async getImagesVerification({ user_id }) {
     const images = await findImagesVerification(user_id);
     if (!images) {
-      throw new BadRequestError("User not found");
+      throw new BadRequestError('User not found');
     }
     return images;
   }
@@ -360,22 +358,22 @@ class TeacherService extends UserService {
       });
 
       if (!uploadedUrls) {
-        throw new BadRequestError("Cannot upload images");
+        throw new BadRequestError('Cannot upload images');
       }
 
       // update images
 
       const updated = await updateImagesVerification(
         user_id,
-        uploadedUrls.map((imageUrl) => imageUrl.image_url)
+        uploadedUrls.map((imageUrl) => imageUrl.image_url),
       );
 
       if (!updated) {
-        throw new BadRequestError("Cannot update images");
+        throw new BadRequestError('Cannot update images');
       }
 
       // update status teacher to pending
-      await updateStatusTeacher(user_id, "pedding");
+      await updateStatusTeacher(user_id, 'pedding');
 
       await session.commitTransaction();
       session.endSession();
@@ -384,9 +382,8 @@ class TeacherService extends UserService {
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
-      throw new BadRequestError("Cannot update images");
+      throw new BadRequestError('Cannot update images');
     }
-
   }
 }
 
@@ -398,13 +395,13 @@ const newUser = async ({ email = null, captcha = null }) => {
 
   //2. if exists
   if (foundUser) {
-    throw new BadRequestError("Email is already exists");
+    throw new BadRequestError('Email is already exists');
   }
 
   //3. send email
 
   return new OK({
-    message: "Send email success",
+    message: 'Send email success',
     metadata: {
       token,
     },
