@@ -16,7 +16,7 @@ const { subjectsIsExit } = require('@v1/models/repositories/subject.repo');
 const {BadRequestError} = require('@v1/cores/error.repsone');
 const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
-const { sortRandomArray } = require('../util');
+const { sortRandomArray, isPairInCorrectAnswers, convertArrayToGroups } = require('../util');
 
 class QuizService {
   /**
@@ -171,17 +171,28 @@ class QuizService {
         type: question.question_type,
       }
       if (question.question_type === "match"){
-        const leftOptions = item.options.map((option) => {
+        const leftOptions = item.options.filter((option) => {
+          return option.attributes?.col_match === 'left';
+        }).map(({
+          id,
+          text,
+        }) => {
           return {
-            text: option.text,
+            id,
+            text,
           }
         });
-        const rightOptions = item.options.map((option) => {
-          console.log("option.attributes", option);
+        const rightOptions = item.options.filter((option) => {
+          return option.attributes?.col_match === 'right';
+        }).map(({
+          id,
+          text,
+        }) => {
           return {
-            text: option.attributes?.match || "",
+            id,
+            text,
           }
-        })
+        });
 
         item.options = [
           {
@@ -304,6 +315,8 @@ class QuizService {
    * create answer for question
    * @param {Object} answerData - The data for the answer to be created.
    * @returns {Promise<Object>} - The created answer object.
+   * @description This method creates an answer for a question with the provided text, image, and attributes.
+   * @throws {BadRequestError} - If the answer data is invalid.
    */
 
   static async createAnswer({
@@ -322,6 +335,12 @@ class QuizService {
 
   /**
    * check correct answer for question
+   * @param {Object} param0 - The parameters for checking the correct answer.
+   * @param {string} param0.questionId - The ID of the question.
+   * @param {Array} [param0.answerIds=[]] - The IDs of the answers to check.
+   * @returns {Promise<Object>} - An object containing the result of the check.
+   * @throws {BadRequestError} - If the question is not found or if the answer IDs are invalid.
+   * @description This method checks if the provided answer IDs match the correct answer IDs for the specified question.
    */
   static async checkCorrectAnswer({
     questionId,
@@ -374,7 +393,43 @@ class QuizService {
           return correctAnswerId.toString() === answerIds[index];
         });
       case 'match':
-        return true;
+        // ===== match v2 =======
+//"683e6b67c8abb09d6daef625"
+// "683e6b86c8abb09d6daef628"
+// => right
+//683e6b9dc8abb09d6daef62b
+//683e6ba8c8abb09d6daef62e
+
+        /**
+         * input [
+             683e6b67c8abb09d6daef625,
+              683e6b9dc8abb09d6daef62b
+         ]
+         */
+        
+         /**
+          * correctAnswerIds [
+             683e6b67c8abb09d6daef625,
+             683e6b9dc8abb09d6daef62b,
+              683e6b86c8abb09d6daef628,
+              683e6ba8c8abb09d6daef62e
+          ]
+          => convert to 
+          [
+            [683e6b67c8abb09d6daef625, 683e6b86c8abb09d6daef628],
+            [683e6b9dc8abb09d6daef62b, 683e6ba8c8abb09d6daef62e]
+          ]
+          */
+         if (answerIds.length !== 2) {
+          throw new BadRequestError("invalid answerIds")
+         }
+         const correctAnswerIds = questionFound.correct_answer_ids.map((correctAnswerId) => correctAnswerId.toString());
+         const newCorrectAnswerIds = convertArrayToGroups(correctAnswerIds, 2);
+        if (isPairInCorrectAnswers(answerIds, newCorrectAnswerIds)) {
+          result.isCorrect = true;
+          result.point = questionFound.question_point;
+        }
+        return result;
       default: {
         throw new BadRequestError("type invalid");
       }
