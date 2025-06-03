@@ -48,7 +48,8 @@
     "start:dev": "nodemon server.js",
     "start:prod": "node server.js",
     "prepare": "husky",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "seed":"node src/v2/seed/index.js"
   },
   "nodemonConfig": {
     "verbose": true,

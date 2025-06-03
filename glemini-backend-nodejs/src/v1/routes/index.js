@@ -42,7 +42,5 @@ router.use('/result', routeResult);
 router.use('/classroom', routeClassroom);
 router.use('/exercise', routeExercise);
 router.use('/room', routeRoom);
-// router.use('/api/v2/auth', require('./accessV2'));
-// router.use('/api/v2/system', require('./system'));
 
 module.exports = router;
