@@ -43,6 +43,44 @@ class QuizController {
       }),
     }).send(res);
   }
+
+  /**
+   * create question
+   */
+  async createQuestion(req, res, next) {
+    return new OK({
+      message: 'Create question successfully',
+      metadata: await QuizService.createQuestion({
+        ...req.body,
+        ...req.user,
+      })
+    }).send(res);
+  }
+
+  /**
+   * create answer
+   */
+  async createAnswer(req, res, next) {
+    return new OK({
+      message: 'Create answer successfully',
+      metadata: await QuizService.createAnswer({
+        ...req.body,
+        ...req.user,
+      })
+    }).send(res);
+  }
+
+  /**
+   * check correct answer
+   */
+  async checkCorrectAnswer(req, res, next) {
+    return new OK({
+      message: 'Check correct answer successfully',
+      metadata: await QuizService.checkCorrectAnswer({
+        ...req.body,
+      })
+    }).send(res);
+  }
 }
 
 module.exports = new QuizController();

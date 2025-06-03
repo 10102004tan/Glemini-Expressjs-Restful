@@ -41,7 +41,7 @@ var questionSchema = new mongoose.Schema(
     },
     question_type: {
       type: String,
-      enum: ['single', 'multiple', 'truefalse', 'blank', 'box'],
+      enum: ['single', 'multiple', 'truefalse', 'blank', 'box','match','order','fill'],
       default: 'single',
     },
     question_answer_ids: [

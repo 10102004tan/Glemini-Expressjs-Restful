@@ -16,6 +16,7 @@ const { subjectsIsExit } = require('@v1/models/repositories/subject.repo');
 const {BadRequestError} = require('@v1/cores/error.repsone');
 const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
+const { sortRandomArray } = require('../util');
 
 class QuizService {
   /**
@@ -165,12 +166,38 @@ class QuizService {
           id: answer._id.toString(),
           text: answer.text,
           image: answer.image || '',
+          attributes: answer.attributes || {},
         })),
         type: question.question_type,
       }
-      if (question.question_type === 'box'){
+      if (question.question_type === "match"){
+        const leftOptions = item.options.map((option) => {
+          return {
+            text: option.text,
+          }
+        });
+        const rightOptions = item.options.map((option) => {
+          console.log("option.attributes", option);
+          return {
+            text: option.attributes?.match || "",
+          }
+        })
 
+        item.options = [
+          {
+            id: 'left',
+            items: sortRandomArray(leftOptions),
+          },
+          {
+            id: 'right',
+            items: sortRandomArray(rightOptions),
+          }
+        ]
+      }else{
+        item.options = sortRandomArray(item.options);
       }
+      // remove attributes
+      delete item.options.attributes;
       return item;
     });
 
@@ -247,6 +274,15 @@ class QuizService {
       throw new BadRequestError("answer invalid!!!");
     }
 
+    if (type === 'match') {
+      if (answerIds.length < 2) {
+        throw new BadRequestError("match question must have at least 2 answers");
+      }
+      if (correctAnswerIds.length !== answerIds.length) {
+        throw new BadRequestError("match question must have the same number of correct answers as answers");
+      }
+    }
+
     const questionStore = await questionModel.create({
       quiz_id: quizId,
       question_excerpt: excerpt,
@@ -273,13 +309,76 @@ class QuizService {
   static async createAnswer({
     text,
     image = '',
+    attributes = {},
   }) {
     
     const answerStore = await answerModel.create({
       text,
       image,
+      attributes
     })
     return answerStore;
+  }
+
+  /**
+   * check correct answer for question
+   */
+  static async checkCorrectAnswer({
+    questionId,
+    answerIds = [],
+  }) {
+    const questionFound = await questionModel.findById(questionId);
+    if (!questionFound) {
+      throw new BadRequestError("invalid");
+    }
+    const result = {
+      isCorrect: false,
+      point:0,
+    }
+    switch (questionFound.question_type) {
+      case 'single':
+        result.isCorrect = questionFound.correct_answer_ids.some((correctAnswerId) => {
+          return answerIds.includes(correctAnswerId.toString());
+        });
+        result.point = result.isCorrect ? questionFound.question_point : 0;
+        return result;
+      case 'multiple':
+        result.isCorrect = questionFound.correct_answer_ids.every((correctAnswerId) => {
+          return answerIds.includes(correctAnswerId.toString());
+        }) && questionFound.correct_answer_ids.length === answerIds.length;
+
+        if (result.isCorrect) {
+          result.point = questionFound.question_point;
+        }else {
+          // count correct answer
+          const correctCount = questionFound.correct_answer_ids.filter((correctAnswerId) => {
+            return answerIds.includes(correctAnswerId.toString());
+          }).length;
+          result.point = questionFound.question_point / questionFound.correct_answer_ids.length * correctCount;
+        }
+        return result;
+      case 'fill':
+        // check length and index
+        if (questionFound.correct_answer_ids.length !== answerIds.length) {
+          return false;
+        }
+        return questionFound.correct_answer_ids.every((correctAnswerId, index) => {
+          return correctAnswerId.toString() === answerIds[index];
+        });
+      case 'order':
+        // check length and index
+        if (questionFound.correct_answer_ids.length !== answerIds.length) {
+          return false;
+        }
+        return questionFound.correct_answer_ids.every((correctAnswerId, index) => {
+          return correctAnswerId.toString() === answerIds[index];
+        });
+      case 'match':
+        return true;
+      default: {
+        throw new BadRequestError("type invalid");
+      }
+    }
   }
 }
 
