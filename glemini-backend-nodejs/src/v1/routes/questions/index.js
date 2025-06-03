@@ -15,9 +15,9 @@ router.post('/get', asynHandler(questionController.get));
 router.post('/update', asynHandler(questionController.update));
 router.post('/get-details', asynHandler(questionController.getDetails));
 router.post(
-	'/upload',
-	uploadQuestions.single('file'),
-	asynHandler(questionController.uploadQuizIamges)
+  '/upload',
+  uploadQuestions.single('file'),
+  asynHandler(questionController.uploadQuizIamges),
 );
 
 module.exports = router;

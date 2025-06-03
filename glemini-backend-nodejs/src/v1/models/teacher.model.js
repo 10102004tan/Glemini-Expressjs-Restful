@@ -4,26 +4,55 @@ const mongoose = require('mongoose');
 const { type } = require('os');
 const { Schema, model } = mongoose;
 
-const teacherSchema = new Schema({
-    teacher_status: {
-        type:String,
-        enum: ['active', 'pedding','rejected'],
-        default:'pedding'
+const teacherSchema = new Schema(
+  {
+    attributes: {
+      type: Array,
+      default: [],
+      /**
+         * {
+            "name":"Cccd",
+            "url":"https://example.com/cccd.png",
+            "type":"image",
+            "items":[
+                {
+                    field:"Ho ten",
+                    value:"Nguyen Van A"
+                },
+                {
+                    field:"Ngay sinh",
+                    value:"01/01/2000"
+                },
+                {
+                    field:"Gioi tinh",
+                    value:"Nam"
+                },
+                {
+                    field:"Que quan",
+                    value:"Ha Noi"
+                }
+            ]
+         * }
+         */
     },
-    teacher_attributes:{
-        type: Array,
-        default: []
+    schools: {
+      type: Array,
+      default: [],
     },
-    schools:{
-        type: Array,
-        default: []
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'deleted', 'pending'],
+      default: 'inactive',
     },
-    file_urls:{
-        type: Array,
-        default: []
-    }
-}, {
-    timestamps: true
-});
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 module.exports = model('Teacher', teacherSchema);

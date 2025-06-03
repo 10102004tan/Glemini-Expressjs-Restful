@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-const { BadRequestError } = require("../cores/error.repsone");
-const collectionModel = require("../models/collection.model");
+const { BadRequestError } = require('../cores/error.repsone');
+const collectionModel = require('../models/collection.model');
 
 class CollectionSevice {
   static create({ collection_name, user_id, quiz_ids }) {
@@ -11,7 +11,7 @@ class CollectionSevice {
       user: user_id,
     });
     if (!collection) {
-      return new BadRequestError("Create collection failed");
+      return new BadRequestError('Create collection failed');
     }
 
     return collection;
@@ -21,7 +21,7 @@ class CollectionSevice {
     console.log(user_id);
     const collections = await collectionModel.find({ user: user_id });
     if (!collections) {
-      return new BadRequestError("Collections not found");
+      return new BadRequestError('Collections not found');
     }
 
     return collections;
@@ -30,7 +30,7 @@ class CollectionSevice {
   static async getCollectionById({ collection_id }) {
     const collection = await collectionModel.findById(collection_id);
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      return new BadRequestError('Collection not found');
     }
 
     return collection;
@@ -39,11 +39,11 @@ class CollectionSevice {
   static async addQuizToCollection({ collection_id, quiz_id }) {
     const collection = await collectionModel.findById(collection_id);
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      return new BadRequestError('Collection not found');
     }
 
     if (!quiz_id) {
-      return new BadRequestError("Quiz Id not found");
+      return new BadRequestError('Quiz Id not found');
     }
 
     collection.quizzes.push(quiz_id);
@@ -55,14 +55,16 @@ class CollectionSevice {
   static async removeQuizFromCollection({ collection_id, quiz_id }) {
     const collection = await collectionModel.findById(collection_id);
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      return new BadRequestError('Collection not found');
     }
 
     if (!quiz_id) {
-      return new BadRequestError("Quiz Id not found");
+      return new BadRequestError('Quiz Id not found');
     }
 
-    collection.quizzes = collection.quizzes.filter((quiz) => quiz.toString() !== quiz_id.toString());
+    collection.quizzes = collection.quizzes.filter(
+      (quiz) => quiz.toString() !== quiz_id.toString(),
+    );
 
     console.log(collection.quizzes);
 
@@ -73,7 +75,7 @@ class CollectionSevice {
   static async deleteCollection({ collection_id }) {
     const collection = await collectionModel.findByIdAndDelete(collection_id);
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      return new BadRequestError('Collection not found');
     }
 
     return collection;
@@ -85,7 +87,7 @@ class CollectionSevice {
       quizzes: quiz_ids,
     });
     if (!collection) {
-      return new BadRequestError("Collection not found");
+      return new BadRequestError('Collection not found');
     }
     return collection;
   }

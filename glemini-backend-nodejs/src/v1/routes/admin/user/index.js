@@ -5,6 +5,6 @@ const userController = require('../../../controllers/user.controller');
 
 const router = express.Router();
 
-router.post('/teachers',userController.getAllTeacher);
+router.post('/teachers', userController.getAllTeacher);
 
 module.exports = router;

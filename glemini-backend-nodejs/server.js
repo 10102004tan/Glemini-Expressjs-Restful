@@ -1,15 +1,13 @@
 'use strict';
 
-const server = require('./src/v1/app');
+const server = require('./src/app');
 const PORT = process.env.PORT || 8000;
-const colors = require('./src/v1/configs/colors.config');
+const chark = require('chalk');
 
 server.listen(PORT, () => {
-	console.log(
-		colors.bg.blue,
-		colors.fg.black,
-		`Server is running on port::${PORT} ⚝`,
-		colors.reset
-	);
-	console.log();
+  console.log(
+    chark.blue.bold('Glemini Backend Server'),
+    chark.green.bold('is running on port'),
+    chark.yellow.bold(PORT),
+  );
 });

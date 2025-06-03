@@ -1,0 +1,14 @@
+{
+        "user_id": "68048fbfb00fba7d5aa60679",
+        "quiz_name": "Quiz Toán lớp 6 - Chương 1",
+        "quiz_description": "Bộ đề kiểm tra kiến thức chương 1 Toán lớp 6, gồm 20 câu hỏi trắc nghiệm.",
+        "quiz_status": "published",
+        "quiz_thumb": "https://example.com/images/quiz-thumb.jpg",
+        "quiz_turn": 0,
+        "subject_ids": [],
+        "_id": "683d4e707b826950cc4baf66",
+        "shared_user_ids": [],
+        "createdAt": "2025-06-02T07:10:40.168Z",
+        "updatedAt": "2025-06-02T07:10:40.168Z",
+        "__v": 0
+}
