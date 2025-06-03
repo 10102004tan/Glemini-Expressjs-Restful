@@ -17,6 +17,7 @@ const {BadRequestError} = require('@v1/cores/error.repsone');
 const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
 const { sortRandomArray, isPairInCorrectAnswers, convertArrayToGroups } = require('../util');
+const { findAnswersByIds } = require('../models/repo/answer.repo');
 
 class QuizService {
   /**
@@ -279,7 +280,7 @@ class QuizService {
       throw new BadRequestError("answer invalid!!!");
     }
 
-    const isCorrectAnswerExit = await answersIsExit(correctAnswerIds);
+    const isCorrectAnswerExit = await answersIsExit(correctAnswerIds)
 
     if (!isCorrectAnswerExit) {
       throw new BadRequestError("answer invalid!!!");
@@ -292,6 +293,30 @@ class QuizService {
       if (correctAnswerIds.length !== answerIds.length) {
         throw new BadRequestError("match question must have the same number of correct answers as answers");
       }
+
+      const answersFound = await findAnswersByIds(correctAnswerIds,{
+        _id: 1,
+        text: 1,
+        attributes: 1,
+      });
+
+      const correctAnswerIdsMap = correctAnswerIds.map((correctAnswerId) => {
+        const answerFound = answersFound.find((answer) => {
+          return answer._id.toString() === correctAnswerId;
+        });
+        if (!answerFound) {
+          throw new BadRequestError("correct answer not found");
+        }
+        return {
+          col_match: answerFound.attributes.col_match,
+        }
+      });
+    
+      for (let i = 0; i < correctAnswerIdsMap.length - 1; i++) {
+        if (correctAnswerIdsMap[i].col_match === correctAnswerIdsMap[i + 1].col_match) {
+          throw new BadRequestError("match question must have different col_match for each pair");
+      }
+    }
     }
 
     const questionStore = await questionModel.create({
@@ -307,7 +332,8 @@ class QuizService {
       question_type: type,
       question_answer_ids: answerIds.map((answerId) => ObjectId.createFromHexString(answerId)),
       correct_answer_ids: correctAnswerIds.map((answerId) => ObjectId.createFromHexString(answerId)),
-    });
+    })
+
     return questionStore;
   }
 
