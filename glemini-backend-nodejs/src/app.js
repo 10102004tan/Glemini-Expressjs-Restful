@@ -41,8 +41,8 @@ app.use(compression());
 
 /* DATABASE CONNECTION START*/
 require('./v1/databases/init.mongodb');
-const redis = require('./v1/databases/init.redis');
-redis.initRedis();
+// const redis = require('./v1/databases/init.redis');
+// redis.initRedis();
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/

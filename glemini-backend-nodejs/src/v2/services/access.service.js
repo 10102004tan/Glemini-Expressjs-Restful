@@ -36,6 +36,7 @@ const UploadService = require('@v1/services/upload.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const DeviceService = require('./device.service');
 
 class AccessSevice {
   static async signup(signupData) {
@@ -159,7 +160,7 @@ class AccessSevice {
     };
   }
 
-  static async logout({ user }) {
+  static async logout({ user,deviceToken}) {
     const { user_id, jit } = user;
     // check if user is exist
     const foundUser = await findUserById(user_id);
@@ -170,10 +171,15 @@ class AccessSevice {
 
     const key = `TOKEN_BLACK_LIST_${user_id}_${jit}`;
     // await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
+    // remove device token
+    await DeviceService.deleteDevice({
+      userId: user_id,
+      deviceToken,
+    })
     return true;
   }
 
-  static async me({ user }) {
+  static async me({ user,device}) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
     if (!foundTeacher) {
@@ -185,6 +191,17 @@ class AccessSevice {
         user_avatar: user.user_avatar,
       };
     }
+
+    // save device token
+    // const { deviceToken='', deviceType='', deviceName='' } = device;
+    // if (deviceToken && deviceType) {
+    //   await DeviceService.createDevice({
+    //     userId: user.user_id,
+    //     deviceToken,
+    //     deviceType,
+    //     deviceName,
+    //   });
+    // }
 
     return {
       fullname: user.user_fullname,

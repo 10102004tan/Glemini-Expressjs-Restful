@@ -1,5 +1,6 @@
 "use strict"
 const seedRbac = require('./seeders/rbac.seeder');
+const seedSchools = require('./seeders/school.seeder');
 const seedTeacher = require('./seeders/teacher.seeder');
 const seedUser = require('./seeders/user.seeder');
 require('module-alias/register');
@@ -13,6 +14,7 @@ const chark = require('chalk');const runSeeder = async () => {
         await seedRbac();
         await seedUser();
         await seedTeacher();
+        await seedSchools();
         console.log(
             chark.blue.bold('Glemini Backend Seeder'),
             chark.green.bold('has completed successfully'),
