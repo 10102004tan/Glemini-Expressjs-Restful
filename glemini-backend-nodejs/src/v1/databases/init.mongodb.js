@@ -1,6 +1,6 @@
 'use strict';
 const mongoose = require('mongoose');
-const { host, port, name } = require('../configs/mongodb.config');
+const { host, port, name,username,pass } = require('../configs/mongodb.config');
 // const colors = require("../configs/colors.config");
 // const subjectService = require("../services/subject.service");
 // const schoolService = require("../services/school.service");
@@ -10,8 +10,8 @@ class Database {
     this.connect();
   }
   connect() {
-    const connectString = `mongodb://${host}:${port}/${name}`;
-    // const connectString = process.env.PRO_DB_URL;
+    // const connectString = `mongodb://${host}:${port}/${name}`;
+    const connectString = process.env.PRO_DB_URL;
     mongoose
       .connect(connectString)
       .then(() => {
