@@ -13,12 +13,20 @@ const userService = require('@v2/services/user.service');
 class UserController {
   /* =================== V2===================== */
   update = async (req, res, next) => {
+    console.log("update user", req.body);
     return new OK({
       message: 'update user successfully',
       metadata: await userService.update({
-        updateData: req.body,
+       ...req.body,
         user_id: req.user.user_id
       })
+    }).send(res);
+  };
+
+  info = async (req, res, next) => {
+    return new OK({
+      message: 'get user info successfully',
+      metadata: await userService.info({ user_id: req.user.user_id })
     }).send(res);
   };
  
