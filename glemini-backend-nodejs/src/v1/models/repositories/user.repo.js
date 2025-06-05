@@ -59,6 +59,21 @@ const findUserByIdV2 = async ({ id }) => {
   return found[0];
 };
 
+const findUserByIdV3 = async ({
+  id,
+  select = {
+    user_fullname: 1,
+    user_email: 1,
+    user_avatar: 1,
+    user_schoolIds: 1,
+  },
+}) => {
+  const found = await User.findOne({ _id: id }, select)
+    .populate('user_schoolIds', 'school_name school_avatar')
+    .lean();
+  return found;
+}
+
 const updatePasswordByEmail = async ({ email, password }) => {
   const updated = await User.updateOne({ user_email: email }, { user_password: password });
   return updated;
@@ -114,4 +129,5 @@ module.exports = {
   findUserByIdV2,
   findAndUpdateUserById,
   updateStatusUser,
+  findUserByIdV3
 };
