@@ -5,6 +5,7 @@ const {
   updateStatusNotificationService,
   sendNotificationAdminService,
   readAll,
+  getNotificationReceiverIdService,
 } = require('../services/notification.service');
 
 class NotificationController {
@@ -30,6 +31,17 @@ class NotificationController {
     return new OK({
       message: 'Read all notification success',
       data: await readAll(req.user.user_id),
+    }).send(res);
+  }
+
+  async findAll(req, res) {
+    return new OK({
+      message: 'Find all notifications',
+      metadata: await getNotificationReceiverIdService({
+        userId: req.user.user_id,
+        skip: req.query.skip || 0,
+        limit: req.query.limit || 10,
+      })
     }).send(res);
   }
 }
