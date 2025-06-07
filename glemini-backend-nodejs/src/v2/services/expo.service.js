@@ -5,11 +5,10 @@
  */
 "use strict";
 const { default: Expo } = require('expo-server-sdk');
-const expo = require('../configs/expo.sdk.config');
+const expo = require('@v1/configs/expo.sdk.config');
 
 
 class ExpoService {
-
     /**
      * Push notifications to Expo devices.
      * @param {*} param0 
@@ -83,4 +82,4 @@ class ExpoService {
     }
 }
 
-module.exports = ExpoService();
+module.exports = ExpoService;

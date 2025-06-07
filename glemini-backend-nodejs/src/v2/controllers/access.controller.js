@@ -35,6 +35,7 @@ class AccessController {
     return new OK({
       message: 'user logout successfully',
       metadata: await accessService.logout({
+        ...req.body,
         user: req.user,
       }),
     }).send(res);

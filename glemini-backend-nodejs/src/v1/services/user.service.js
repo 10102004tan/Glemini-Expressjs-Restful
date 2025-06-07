@@ -172,18 +172,19 @@ class UserService {
     });
 
     // Tìm người dùng theo email
-    const user = await User.findOne({ user_email: email });
+    const user = await User.findOne({ user_email: email })
+      .populate('user_role', 'role_name')
+      .lean();
 
     if (!user) {
       throw new BadRequestError('Email does not exist');
     }
 
-    // check type user
-    if (user.user_type !== 'teacher') {
-      throw new BadRequestError('Quiz not shared for student');
+    //  check use_role is teacher
+    if (user.user_role.role_name !== "teacher") {
+      throw new BadRequestError('u0001');// 'User is not a teacher'
     }
 
-    console.log('quizIdInShared::', quiz_id);
 
     // Kiểm tra xem quiz đã được chia sẻ cho người dùng này chưa
     const quiz = await quizModel.findOne({
@@ -197,7 +198,7 @@ class UserService {
     });
 
     if (quiz) {
-      throw new BadRequestError('Quiz này đã được chia sẻ');
+      throw new BadRequestError('u0002');// 'Quiz has already been shared with this user'
     }
 
     // Cập nhật quiz với user nhận và quyền chỉnh sửa
@@ -211,7 +212,6 @@ class UserService {
     );
 
     // Gửi thông báo cho người dùng
-    // Tạo thông báo chia sẻ
     const noti = await pushNotiForSys({
       type: 'SHARE-001',
       receiverId: user._id,

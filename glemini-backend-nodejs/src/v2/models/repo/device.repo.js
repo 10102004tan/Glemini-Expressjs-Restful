@@ -11,67 +11,57 @@
 const DeviceModel = require('@v2/models/device.model');
 
 const createDevice = async ({
-    userId,
-    deviceToken = '',
-    deviceType,
-    deviceName = 'unknown',
-    lastLoggedInAt = Date.now(),
+  userId,
+  deviceToken = '',
+  deviceOs,
+  deviceName = 'unknown',
+  lastLoggedInAt = Date.now(),
 }) => {
+  // find token if exists
+  const existingDevice = await findDeviceByToken(deviceToken);
 
-    // find token if exists
-    const existingDevice = await findDeviceByToken(deviceToken);
+  if (existingDevice) {
+    existingDevice.user_id = userId;
+    existingDevice.device_os = deviceOs;
+    existingDevice.device_name = deviceName;
+    existingDevice.last_logged_in_at = lastLoggedInAt;
 
-    if (existingDevice) {
-        existingDevice.user_id = userId;
-        existingDevice.device_type = deviceType;
-        existingDevice.device_name = deviceName;
-        existingDevice.last_logged_in_at = lastLoggedInAt;
+    return await existingDevice.save();
+  }
 
-        return await existingDevice.save();
-    }
+  const device = new DeviceModel({
+    user_id: userId,
+    device_token: deviceToken,
+    device_os: deviceOs,
+    device_name: deviceName,
+    last_logged_in_at: lastLoggedInAt,
+  });
 
-    const device = new DeviceModel({
-        user_id: userId,
-        device_token: deviceToken,
-        device_type: deviceType,
-        device_name: deviceName,
-        last_logged_in_at: lastLoggedInAt,
-    });
-
-    return await device.save();
-}
+  return await device.save();
+};
 
 const findDeviceByToken = async (deviceToken) => {
-    return await DeviceModel.findOne({
-        device_token: deviceToken,
-    });
-}
+  return await DeviceModel.findOne({
+    device_token: deviceToken,
+  });
+};
 
-const deleteDevice = async ({
-    userId,
-    deviceToken,
-}) => {
-    const device = await DeviceModel.findOne({
-        user_id:userId,
-        device_token: deviceToken,
-    });
-
-    if (!device) {
-        return null;
-    }
-
-    return await device.delete();
-}
+const deleteDeviceToken = async ({ userId, deviceToken }) => {
+  return await DeviceModel.deleteOne({
+    user_id: userId,
+    device_token: deviceToken,
+  });
+};
 
 const findTokensByUserId = async (userId) => {
-    return await DeviceModel.find({
-        user_id: userId,
-    }).select('device_token');
-}
+  return await DeviceModel.find({
+    user_id: userId,
+  }).select('device_token');
+};
 
 module.exports = {
-    createDevice,
-    findDeviceByToken,
-    deleteDevice,
-    findTokensByUserId
+  createDevice,
+  findDeviceByToken,
+  deleteDeviceToken,
+  findTokensByUserId,
 };

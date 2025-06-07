@@ -37,6 +37,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const DeviceService = require('./device.service');
+const { countNotificationUnread } = require('../../v1/models/repositories/notification.repo');
 
 class AccessSevice {
   static async signup(signupData) {
@@ -148,6 +149,8 @@ class AccessSevice {
       };
     }
 
+    const countNotiUnRead = await countNotificationUnread(user.user_id);
+
     return {
       user: {
         fullname: foundUser.user_fullname,
@@ -155,6 +158,8 @@ class AccessSevice {
         user_id: foundUser._id,
         user_role: foundUser.user_role.role_name,
         user_avatar: foundUser.user_avatar,
+        status_teacher_verified: null,
+        count_notification_unread: countNotiUnRead,
       },
       tokens: tokens,
     };
@@ -172,14 +177,16 @@ class AccessSevice {
     const key = `TOKEN_BLACK_LIST_${user_id}_${jit}`;
     // await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
     // remove device token
+    console.log('deviceToken', deviceToken);
     await DeviceService.deleteDevice({
       userId: user_id,
-      deviceToken,
-    })
+      deviceToken: deviceToken,
+    });
+
     return true;
   }
 
-  static async me({ user,device}) {
+  static async me({ user}) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
     if (!foundTeacher) {
@@ -192,16 +199,8 @@ class AccessSevice {
       };
     }
 
-    // save device token
-    // const { deviceToken='', deviceType='', deviceName='' } = device;
-    // if (deviceToken && deviceType) {
-    //   await DeviceService.createDevice({
-    //     userId: user.user_id,
-    //     deviceToken,
-    //     deviceType,
-    //     deviceName,
-    //   });
-    // }
+    // get count notification unread
+    const countNotiUnRead = await countNotificationUnread(user.user_id);
 
     return {
       fullname: user.user_fullname,
@@ -210,6 +209,7 @@ class AccessSevice {
       user_role: user.user_role,
       user_avatar: user.user_avatar,
       status_teacher_verified: foundTeacher.status,
+      count_notification_unread: countNotiUnRead,
     };
   }
 
@@ -221,7 +221,6 @@ class AccessSevice {
     if (!files) {
       // console.log("files is required");
       // throw new BadRequestError("files is required");
-
       // find teacher
       const foundTeacher = await teacherModel.findOne({ userId: user_id }).lean();
       if (foundTeacher) {
@@ -244,15 +243,15 @@ class AccessSevice {
         attributes: [],
         schools: [],
         status: 'pending',
-      });
+      })
 
-      return newTeacher;
+      return newTeacher
     }
 
     const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
       files,
       folderName: `glemini/teachers/info/${user_id}`,
-    });
+    })
 
     if (!uploadedUrls) {
       throw new BadRequestError('cannot upload images!!!');
@@ -265,20 +264,20 @@ class AccessSevice {
         type: imageUrl.format,
         items: [],
       };
-    });
+    })
 
     const newTeacher = await teacherModel.create({
       userId: user_id,
       attributes: attributes,
       schools: [],
       status: 'pending',
-    });
+    })
 
     if (!newTeacher) {
       throw new BadRequestError('cannot create teacher!!!');
     }
 
-    return newTeacher;
+    return newTeacher
   }
 
   static async updateRoleForUser({ user_id, role_name = 'teacher', teacher_status = 'active' }) {

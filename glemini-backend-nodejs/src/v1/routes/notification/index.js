@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.use(asynHandler(authentication));
 router.put('/', asynHandler(notificationController.updateStatusNotification));
+router.get('/list', asynHandler(notificationController.findAll));
 router.post('/read-all', asynHandler(notificationController.readAll));
 
 module.exports = router;
