@@ -38,6 +38,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const DeviceService = require('./device.service');
 const { countNotificationUnread } = require('../../v1/models/repositories/notification.repo');
+const messageService = require('@v1/services/producerQueue.service');
 
 class AccessSevice {
   static async signup(signupData) {
@@ -88,6 +89,15 @@ class AccessSevice {
     }
 
     // verify email
+
+    // send email test
+    const bodyNotification = {
+      channels: ['email'],
+      to: email,
+      subject: 'Welcome to Glemini',
+      text: `Hello ${fullname},\n\nThank you for signing up for Glemini! We're excited to have you on board.\n\nBest regards,\nGlemini Team`,
+    }
+    await messageService.producerQueue('notifications', bodyNotification);
 
     return newUser;
   }
@@ -165,7 +175,7 @@ class AccessSevice {
     };
   }
 
-  static async logout({ user,deviceToken}) {
+  static async logout({ user, deviceToken }) {
     const { user_id, jit } = user;
     // check if user is exist
     const foundUser = await findUserById(user_id);
@@ -186,7 +196,7 @@ class AccessSevice {
     return true;
   }
 
-  static async me({ user}) {
+  static async me({ user }) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
     if (!foundTeacher) {
@@ -243,15 +253,15 @@ class AccessSevice {
         attributes: [],
         schools: [],
         status: 'pending',
-      })
+      });
 
-      return newTeacher
+      return newTeacher;
     }
 
     const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
       files,
       folderName: `glemini/teachers/info/${user_id}`,
-    })
+    });
 
     if (!uploadedUrls) {
       throw new BadRequestError('cannot upload images!!!');
@@ -264,20 +274,20 @@ class AccessSevice {
         type: imageUrl.format,
         items: [],
       };
-    })
+    });
 
     const newTeacher = await teacherModel.create({
       userId: user_id,
       attributes: attributes,
       schools: [],
       status: 'pending',
-    })
+    });
 
     if (!newTeacher) {
       throw new BadRequestError('cannot create teacher!!!');
     }
 
-    return newTeacher
+    return newTeacher;
   }
 
   static async updateRoleForUser({ user_id, role_name = 'teacher', teacher_status = 'active' }) {
