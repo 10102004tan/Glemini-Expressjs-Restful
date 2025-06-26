@@ -118,65 +118,6 @@ class AccessController {
       }),
     }).send(res);
   };
-
-  /* =================== V2===================== */
-  signupV2 = async (req, res, next) => {
-    return new CREATED({
-      message: 'user created successfully',
-      metadata: await accessService.signupV2(validation(signUpDto, req.body)),
-    }).send(res);
-  };
-
-  loginV2 = async (req, res, next) => {
-    return new OK({
-      message: 'user login successfully',
-      metadata: await accessService.loginV2(validation(loginDto, req.body)),
-    }).send(res);
-  };
-
-  logoutV2 = async (req, res, next) => {
-    console.log(req.user);
-    return new OK({
-      message: 'user logout successfully',
-      metadata: await accessService.logoutV2({
-        user: req.user,
-      }),
-    }).send(res);
-  };
-
-  me = async (req, res, next) => {
-    const user = req.user;
-    return new OK({
-      message: 'user me successfully',
-      metadata: await accessService.me({ user }),
-    }).send(res);
-  };
-
-  /**
-   * Create a new teacher
-   * @param {Object} req - The request object
-   * @param {Object} res - The response object
-   */
-  createTeacher = async (req, res, next) => {
-    console.log('controller:::', req.user);
-    return new OK({
-      message: 'user created successfully',
-      metadata: await accessService.createNewTeacher({
-        user_id: req.user.user_id,
-        files: req.files,
-      }),
-    }).send(res);
-  };
-
-  updateRoleForUser = async (req, res, next) => {
-    return new OK({
-      message: 'user role updated successfully',
-      metadata: await accessService.updateRoleForUser({
-        //    ...req.user,
-        ...req.body,
-      }),
-    }).send(res);
-  };
 }
 
 module.exports = new AccessController();
