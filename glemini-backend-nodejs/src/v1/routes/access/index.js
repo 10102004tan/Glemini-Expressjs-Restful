@@ -5,7 +5,6 @@ const { asynHandler } = require('../../auths/utils');
 const accessController = require('../../controllers/access.controller');
 const { authentication } = require('../../auths');
 const { uploadDisk } = require('../../configs/multer.config');
-const path = require('path');
 
 router.post('/signup', uploadDisk.array('images'), asynHandler(accessController.signup));
 router.post('/login', asynHandler(accessController.login));

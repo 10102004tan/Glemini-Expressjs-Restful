@@ -37,7 +37,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const DeviceService = require('./device.service');
-const { countNotificationUnread } = require('../../v1/models/repositories/notification.repo');
+const { countNotificationUnread } = require('@v1/models/repositories/notification.repo');
 const messageService = require('@v1/services/producerQueue.service');
 
 class AccessSevice {
@@ -89,15 +89,16 @@ class AccessSevice {
     }
 
     // verify email
-
-    // send email test
-    const bodyNotification = {
-      channels: ['email'],
-      to: email,
-      subject: 'Welcome to Glemini',
-      text: `Hello ${fullname},\n\nThank you for signing up for Glemini! We're excited to have you on board.\n\nBest regards,\nGlemini Team`,
+    const bodyVerifyEmail = {
+      channels:["email"],
+      to:email,
+      subject:'Verify Email',
+      text:'template'
     }
-    await messageService.producerQueue('notifications', bodyNotification);
+
+
+
+    await messageService.producerQueue('notifications', bodyVerifyEmail);
 
     return newUser;
   }
@@ -159,7 +160,7 @@ class AccessSevice {
       };
     }
 
-    const countNotiUnRead = await countNotificationUnread(user.user_id);
+    const countNotiUnRead = await countNotificationUnread(foundUser._id);
 
     return {
       user: {

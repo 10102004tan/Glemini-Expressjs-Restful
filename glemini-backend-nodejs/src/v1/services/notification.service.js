@@ -8,10 +8,7 @@ const {
 const userModel = require('../models/user.model');
 const { pushNoti } = require('./expo.service');
 const { findExpoTokenAllService, findAllExpotoken } = require('./expoToken.service');
-const { producerQueue } = require('./producerQueue.service');
-const { UserService } = require('./user.service');
-const DeviceService = require("@v2/services/device.service");
-const ExpoService = require('@v2/services/expo.service');
+const MessageService = require("@v1/services/producerQueue.service")
 const pushNotiForSys = async ({
   type = 'SYS-001',
   receiverId = 1,
@@ -41,18 +38,13 @@ const pushNotiForSys = async ({
   if (userFoundInMap) {
     console.log('userFoundInMap::', userFoundInMap);
   }else{
-    const deviceTokens = await DeviceService.findAllTokenByUserId(receiverId);
-    if (deviceTokens && deviceTokens.length > 0) {
-       await ExpoService.push({
-        somePushTokens: deviceTokens,
-        data: {
-          body: content,
-          title: 'Notification',
-          url: '/(app)/notification',
-          ttl: 60 * 60, // 1 hour
-        },
-       })
+    const queueName = 'notifications';
+    const message = {
+      channels: ['expo'],
+      to: receiverId,
+      subject: 'Welcome to Glemini',
     }
+    await MessageService.producerQueue(queueName,message)
   }
 
   return newNoti;

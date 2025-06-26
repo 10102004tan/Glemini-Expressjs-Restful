@@ -27,11 +27,11 @@ router.get('/working', (req, res, next) => {
     .status(200);
 });
 router.use('', require('./email'));
+router.use('/auth', routeAccess);
 router.use('/uploads', routerUpload);
 router.use('/rbac', require('./rbac'));
 router.use('/schools', routeSchool);
 router.use('', routeAdmin);
-router.use('/auth', routeAccess);
 router.use('/notification', routeNotification);
 router.use('/quizzes', routeQuizzes);
 router.use('/collections', routeCollection);

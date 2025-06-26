@@ -27,6 +27,7 @@ class OTPService {
   }
 
   static async verifyOTP({ email, otp }) {
+    console.log('Verifying OTP for email:', email, 'with OTP:', otp);
     const foundToken = await OTP.findOne({ otp_email: email, otp_token: otp });
     if (!foundToken) {
       throw new BadRequestError('OTP invalid or expired');
