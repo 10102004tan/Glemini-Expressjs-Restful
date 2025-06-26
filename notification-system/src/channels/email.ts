@@ -5,29 +5,22 @@
  * @created 2025-06-08
  * @updated 2025-06-08
  */
-"use strict"
-import transporter from '../databases/init.nodemailer';
+import EmailService from "../services/email.service"
 
 const send = async (data: {
     subject: string
     body: string
-    to: string
+    to: string,
+    // templateId?: string,
+    html?: string
 }) => {
-    try {
-        const mailOptions = {
-        from: ' "Glemini <glemini.dev@gmai.com>" ',
-        to: data.to,
-        subject: data.subject,
-        html: data.body
-      };
-
-        // Send the email
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
-    } catch (error) {
-        console.error('Error sending email:', error);
-        throw new Error('Failed to send email');
-    }
+    console.log("Sending email with data:", data);
+    await EmailService.sendEmail({
+        html:data.html || data.body,
+        subject:data.subject,
+        text:data.subject,
+        toEmail:data.to,
+    })
 }
 
 export default {
