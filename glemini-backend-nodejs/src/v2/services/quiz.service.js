@@ -18,6 +18,7 @@ const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
 const { sortRandomArray, isPairInCorrectAnswers, convertArrayToGroups } = require('../util');
 const { findAnswersByIds } = require('../models/repo/answer.repo');
+const {pushToListQuizSearchRecent,getKeySearchRecent:getKeySearchRecentRedisService,delListByKey} = require("@v1/services/redis.service");
 
 class QuizService {
   /**
@@ -25,24 +26,26 @@ class QuizService {
    * @param {*} param0
    * @returns
    */
-  static async search({ key, page = 1, limit = 20, sortStatus = 1, quiz_on = -1, subjectIds }) {
+  static async search({ key, page = 1, limit = 20, subjectIds,user_id,sort='createdAt',order = 'asc' }) {
+
     const query = {};
     if (key) {
       query.quiz_name = { $regex: key, $options: 'i' };
+      await pushToListQuizSearchRecent(user_id, key,10);
     }
 
     // get quiz published
     query.quiz_status = 'published';
 
+    console.log("subjectIds",subjectIds);
     // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
     if (subjectIds && subjectIds.length > 0) {
       subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
       query.subject_ids = { $in: subjectIds };
     }
 
-    if (quiz_on !== -1) {
-      query.quiz_turn = { $gte: quiz_on };
-    }
+    // sort by createdAt
+    const sortStatus = order === 'asc' ? 1 : -1;
     const result = {
       items: [],
       totalPage: 0,
@@ -92,7 +95,8 @@ class QuizService {
       {
         $match: { question_count: { $gt: 0 } },
       },
-      { $sort: { createdAt: sortStatus } },
+      // { $sort: { createdAt: sortStatus } },
+      { $sort: { [sort]: sortStatus } },
       { $skip: skip },
       { $limit: limit },
     ]);
@@ -460,6 +464,27 @@ class QuizService {
         throw new BadRequestError("type invalid");
       }
     }
+  }
+
+  /**
+   * get key search recent
+   * @param {string} user_id - The ID of the user.
+   */
+  static async getKeySearchRecent(user_id) {
+    const data = await getKeySearchRecentRedisService(user_id);
+    if (!data || data.length === 0) {
+      return [];
+    }
+    return data;
+  }
+
+  /**
+   * clear all key search recent
+   */
+  static async clearKeySearchRecent(user_id) {
+    const redisKey = `QUIZ_SEARCH_RECENT_${user_id}`;
+    await delListByKey(redisKey);
+    return 1;
   }
 }
 
