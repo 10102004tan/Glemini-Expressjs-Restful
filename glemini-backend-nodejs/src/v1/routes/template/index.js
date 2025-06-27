@@ -37,6 +37,19 @@ router.get('/template_txt', (req, res) => {
   sendFileSafely(res, filePath);
 });
 
+// NEW: Complete templates with 5 question types
+router.get('/complete_template_txt', (req, res) => {
+  const filename = 'complete_template.txt';
+  const filePath = path.join(uploadsDir, 'templates', filename);
+  sendFileSafely(res, filePath);
+});
+
+router.get('/complete_template_md', (req, res) => {
+  const filename = 'complete_template.md';
+  const filePath = path.join(uploadsDir, 'templates', filename);
+  sendFileSafely(res, filePath);
+});
+
 router.get('/template_excel', (req, res) => {
   const filename = 'example.demo.xlsx';
   const filePath = path.join(uploadsDir, 'templates', filename);

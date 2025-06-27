@@ -42,7 +42,7 @@ app.use(compression());
 /* DATABASE CONNECTION START*/
 require('./v1/databases/init.mongodb');
 const redis = require('./v1/databases/init.redis');
-redis.initRedis();
+// redis.initRedis();
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
@@ -59,9 +59,9 @@ app.use('/api/v2', require('./v2/routes'));
 
 // // catch 404 and forward to error handler
 app.use((req, res, next) => {
-	const error = new Error('Not Found');
-	error.status = 404;
-	next(error);
+  const error = new Error('Not Found');
+  error.status = 404;
+  next(error);
 });
 
 app.use(errorHandler);

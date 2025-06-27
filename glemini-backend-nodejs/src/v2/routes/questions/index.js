@@ -8,8 +8,23 @@
 const express = require('express');
 const router = express.Router();
 const { asynHandler } = require('@v1/auths/utils');
-const {authentication} = require('@v1/auths');
+const { authentication } = require('@v1/auths');
 const quizController = require('@v2/controllers/quiz.controller');
-router.post('/create',asynHandler(authentication), asynHandler(quizController.createQuestion));
+router.get(
+  '/:questionId',
+  asynHandler(authentication),
+  asynHandler(quizController.getQuestionDetails),
+);
+router.post('/create', asynHandler(authentication), asynHandler(quizController.createQuestionV1));
+router.put(
+  '/:questionId',
+  asynHandler(authentication),
+  asynHandler(quizController.updateQuestionV1),
+);
+router.delete(
+  '/:questionId',
+  asynHandler(authentication),
+  asynHandler(quizController.deleteQuestionV1),
+);
 router.post('/check', asynHandler(authentication), asynHandler(quizController.checkCorrectAnswer));
 module.exports = router;

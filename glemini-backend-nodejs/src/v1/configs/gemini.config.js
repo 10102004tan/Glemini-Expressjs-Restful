@@ -6,71 +6,78 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const schema = {
-  description: 'List of questions',
+  description:
+    'List of quiz questions with various types including single choice, multiple choice, fill-in-blank, ordering, and matching',
   type: SchemaType.ARRAY,
   items: {
     type: SchemaType.OBJECT,
     properties: {
       quizBanner: {
         type: SchemaType.STRING,
-        description: 'Please provide an image for this quiz based on the quiz content title',
-        nullable: false,
+        description: 'Please provide an image URL for this quiz based on the quiz content title',
+        nullable: true,
       },
       questionName: {
         type: SchemaType.STRING,
-        description: 'Content of the question',
+        description:
+          'Content of the question. For fill-in-blank questions, use underscores (_) to mark blank spaces',
         nullable: false,
       },
       questionImage: {
         type: SchemaType.STRING,
-        description: 'Url Image of the question',
+        description: 'URL of an image related to the question (optional)',
         nullable: true,
       },
       questionLanguage: {
         type: SchemaType.STRING,
-        description: 'Language of the question',
+        description: 'Language of the question (e.g., "vi", "en")',
         nullable: true,
       },
       questionExplanation: {
         type: SchemaType.STRING,
-        description: 'Detailed explanation of the question, reason why this answer is correct',
+        description: 'Detailed explanation of the question and why the correct answer is right',
         nullable: true,
       },
       questionType: {
         type: SchemaType.STRING,
-        description: 'Type of the question (single or multiple or box)',
-        nullable: true,
+        description:
+          'Type of question: "single" (one correct choice), "multiple" (multiple correct choices), "fill" (fill-in-blank), "order" (arrange in order), or "match" (match pairs)',
+        nullable: false,
       },
       answers: {
         type: SchemaType.ARRAY,
         description:
-          'List of answers have 4 items if question type is single or multiple, if question type is box list of answer have only 1 items and answer is the correct answer',
+          'List of answers. Structure varies by question type: single/multiple=4 options, fill=blank answers, order=items to arrange, match=pairs to match',
         items: {
           type: SchemaType.OBJECT,
-          description: 'Answer of the question',
+          description: 'Answer option with different structures based on question type',
           properties: {
             answerName: {
               type: SchemaType.STRING,
-              description: 'Name of the answer',
+              description: 'Text content of the answer/option',
               nullable: false,
             },
             isCorrect: {
               type: SchemaType.BOOLEAN,
-              description: 'Is this answer correct?',
-              nullable: false,
+              description: 'Whether this answer is correct (for single/multiple choice)',
+              nullable: true,
+            },
+            position: {
+              type: SchemaType.NUMBER,
+              description: 'Position/order for fill-in-blank or ordering questions (1-based index)',
+              nullable: true,
+            },
+            matchPair: {
+              type: SchemaType.STRING,
+              description: 'For matching questions: the item this answer should be paired with',
+              nullable: true,
             },
           },
+          required: ['answerName'],
         },
       },
     },
-    required: [
-      'questionName',
-      'answers',
-      'questionImage',
-      'questionType',
-      'questionExplanation',
-      'quizBanner',
-    ],
+    required: ['questionName', 'questionType', 'answers'],
   },
 };
 
