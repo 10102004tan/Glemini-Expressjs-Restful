@@ -32,11 +32,11 @@ router.use('/templates', require('./template'));
 
 // PROTECTED ROUTES
 router.use('', require('./email'));
+router.use('/auth', routeAccess);
 router.use('/uploads', routerUpload);
 router.use('/rbac', require('./rbac'));
 router.use('/schools', routeSchool);
 router.use('', routeAdmin);
-router.use('/auth', routeAccess);
 router.use('/notification', routeNotification);
 router.use('/quizzes', routeQuizzes);
 router.use('/collections', routeCollection);
@@ -47,7 +47,5 @@ router.use('/result', routeResult);
 router.use('/classroom', routeClassroom);
 router.use('/exercise', routeExercise);
 router.use('/room', routeRoom);
-// router.use('/api/v2/auth', require('./accessV2'));
-// router.use('/api/v2/system', require('./system'));
 
 module.exports = router;

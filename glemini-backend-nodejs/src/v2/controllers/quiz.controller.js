@@ -30,6 +30,7 @@ class QuizController {
       ...req.body,
       ...req.user,
     };
+    console.log('newBody', newBody);
     return new OK({
       message: 'Search successfully',
       metadata: await QuizService.search(newBody),
@@ -197,6 +198,22 @@ class QuizController {
       metadata: await QuizService.checkCorrectAnswer({
         ...req.body,
       }),
+    }).send(res);
+  }
+
+  async getKeySearchRecent(req, res, next) {
+    const { user_id } = req.user;
+    return new OK({
+      message: 'Get key search recent successfully',
+      metadata: await QuizService.getKeySearchRecent(user_id),
+    }).send(res);
+  }
+
+  async clearKeySearchRecent(req, res, next) {
+    const { user_id } = req.user;
+    return new OK({
+      message: 'Clear key search recent successfully',
+      metadata: await QuizService.clearKeySearchRecent(user_id),
     }).send(res);
   }
 }

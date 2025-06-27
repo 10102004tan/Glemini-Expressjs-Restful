@@ -16,7 +16,9 @@ const { subjectsIsExit } = require('@v1/models/repositories/subject.repo');
 const { BadRequestError } = require('@v1/cores/error.repsone');
 const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
-const { sortRandomArray } = require('../util');
+const { sortRandomArray, isPairInCorrectAnswers, convertArrayToGroups } = require('../util');
+const { findAnswersByIds } = require('../models/repo/answer.repo');
+const {pushToListQuizSearchRecent,getKeySearchRecent:getKeySearchRecentRedisService,delListByKey} = require("@v1/services/redis.service");
 
 class QuizService {
   /**
@@ -105,24 +107,26 @@ class QuizService {
    * @param {*} param0
    * @returns
    */
-  static async search({ key, page = 1, limit = 20, sortStatus = 1, quiz_on = -1, subjectIds }) {
+  static async search({ key, page = 1, limit = 20, subjectIds,user_id,sort='createdAt',order = 'asc' }) {
+
     const query = {};
     if (key) {
       query.quiz_name = { $regex: key, $options: 'i' };
+      await pushToListQuizSearchRecent(user_id, key,10);
     }
 
     // get quiz published
     query.quiz_status = 'published';
 
+    console.log("subjectIds",subjectIds);
     // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
     if (subjectIds && subjectIds.length > 0) {
       subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
       query.subject_ids = { $in: subjectIds };
     }
 
-    if (quiz_on !== -1) {
-      query.quiz_turn = { $gte: quiz_on };
-    }
+    // sort by createdAt
+    const sortStatus = order === 'asc' ? 1 : -1;
     const result = {
       items: [],
       totalPage: 0,
@@ -172,7 +176,8 @@ class QuizService {
       {
         $match: { question_count: { $gt: 0 } },
       },
-      { $sort: { createdAt: sortStatus } },
+      // { $sort: { createdAt: sortStatus } },
+      { $sort: { [sort]: sortStatus } },
       { $skip: skip },
       { $limit: limit },
     ]);
@@ -270,6 +275,7 @@ class QuizService {
         updatedAt: question.updatedAt,
       };
 
+
       console.log(`✅ Backend - V2 Question ${index + 1}:`, JSON.stringify(v2Question, null, 2));
       return v2Question;
     });
@@ -347,7 +353,7 @@ class QuizService {
       throw new BadRequestError('answer invalid!!!');
     }
 
-    const isCorrectAnswerExit = await answersIsExit(correctAnswerIds);
+    const isCorrectAnswerExit = await answersIsExit(correctAnswerIds)
 
     if (!isCorrectAnswerExit) {
       throw new BadRequestError('answer invalid!!!');
@@ -362,6 +368,30 @@ class QuizService {
           'match question must have the same number of correct answers as answers',
         );
       }
+
+      const answersFound = await findAnswersByIds(correctAnswerIds,{
+        _id: 1,
+        text: 1,
+        attributes: 1,
+      });
+
+      const correctAnswerIdsMap = correctAnswerIds.map((correctAnswerId) => {
+        const answerFound = answersFound.find((answer) => {
+          return answer._id.toString() === correctAnswerId;
+        });
+        if (!answerFound) {
+          throw new BadRequestError("correct answer not found");
+        }
+        return {
+          col_match: answerFound.attributes.col_match,
+        }
+      });
+    
+      for (let i = 0; i < correctAnswerIdsMap.length - 1; i++) {
+        if (correctAnswerIdsMap[i].col_match === correctAnswerIdsMap[i + 1].col_match) {
+          throw new BadRequestError("match question must have different col_match for each pair");
+      }
+    }
     }
 
     const questionStore = await questionModel.create({
@@ -673,6 +703,8 @@ class QuizService {
    * create answer for question
    * @param {Object} answerData - The data for the answer to be created.
    * @returns {Promise<Object>} - The created answer object.
+   * @description This method creates an answer for a question with the provided text, image, and attributes.
+   * @throws {BadRequestError} - If the answer data is invalid.
    */
 
   static async createAnswer({ text, image = '', attributes = {} }) {
@@ -686,6 +718,12 @@ class QuizService {
 
   /**
    * check correct answer for question
+   * @param {Object} param0 - The parameters for checking the correct answer.
+   * @param {string} param0.questionId - The ID of the question.
+   * @param {Array} [param0.answerIds=[]] - The IDs of the answers to check.
+   * @returns {Promise<Object>} - An object containing the result of the check.
+   * @throws {BadRequestError} - If the question is not found or if the answer IDs are invalid.
+   * @description This method checks if the provided answer IDs match the correct answer IDs for the specified question.
    */
   static async checkCorrectAnswer({ questionId, answerIds = [] }) {
     const questionFound = await questionModel.findById(questionId);
@@ -737,7 +775,43 @@ class QuizService {
           return correctAnswerId.toString() === answerIds[index];
         });
       case 'match':
-        return true;
+        // ===== match v2 =======
+//"683e6b67c8abb09d6daef625"
+// "683e6b86c8abb09d6daef628"
+// => right
+//683e6b9dc8abb09d6daef62b
+//683e6ba8c8abb09d6daef62e
+
+        /**
+         * input [
+             683e6b67c8abb09d6daef625,
+              683e6b9dc8abb09d6daef62b
+         ]
+         */
+        
+         /**
+          * correctAnswerIds [
+             683e6b67c8abb09d6daef625,
+             683e6b9dc8abb09d6daef62b,
+              683e6b86c8abb09d6daef628,
+              683e6ba8c8abb09d6daef62e
+          ]
+          => convert to 
+          [
+            [683e6b67c8abb09d6daef625, 683e6b86c8abb09d6daef628],
+            [683e6b9dc8abb09d6daef62b, 683e6ba8c8abb09d6daef62e]
+          ]
+          */
+         if (answerIds.length !== 2) {
+          throw new BadRequestError("invalid answerIds")
+         }
+         const correctAnswerIds = questionFound.correct_answer_ids.map((correctAnswerId) => correctAnswerId.toString());
+         const newCorrectAnswerIds = convertArrayToGroups(correctAnswerIds, 2);
+        if (isPairInCorrectAnswers(answerIds, newCorrectAnswerIds)) {
+          result.isCorrect = true;
+          result.point = questionFound.question_point;
+        }
+        return result;
       default: {
         throw new BadRequestError('type invalid');
       }
@@ -1001,6 +1075,24 @@ class QuizService {
     }
 
     return duplicatedQuiz;
+  }
+  
+ 
+  static async getKeySearchRecent(user_id) {
+    const data = await getKeySearchRecentRedisService(user_id);
+    if (!data || data.length === 0) {
+      return [];
+    }
+    return data;
+  }
+
+  /**
+   * clear all key search recent
+   */
+  static async clearKeySearchRecent(user_id) {
+    const redisKey = `QUIZ_SEARCH_RECENT_${user_id}`;
+    await delListByKey(redisKey);
+    return 1;
   }
 }
 

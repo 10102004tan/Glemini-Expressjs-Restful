@@ -39,7 +39,6 @@ class SocketService {
         })
           .then((decoded) => {
             const { user_id } = decoded;
-            // console.log(`socket ${socket.id} authenticated with userId: ${user_id}`);
             socket.auth = true;
             _userSockets[user_id] = socket;
             console.log(`Pong received from user ${user_id}`);

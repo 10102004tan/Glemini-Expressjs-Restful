@@ -21,24 +21,21 @@ const crypto = require('crypto');
 const UploadService = require('./upload.service');
 const {
   updateStatusTeacher,
-  updateStatusTeacherV2,
 } = require('../models/repositories/teacher.repo');
 const EmailService = require('./email.service');
 const OTPService = require('./otp.service');
 const { removeOTPbyEmail } = require('../models/repositories/otp.repo');
 const { pushNoti } = require('./expo.service');
+const messageService = require('./producerQueue.service');
 const {
   storeNewExpoToken,
   removeExpoToken,
   findExpoTokenByListUserId,
 } = require('./expoToken.service');
 const { pushNotiForSys } = require('./notification.service');
-const userModel = require('../models/user.model');
-const roleModel = require('../models/role.model');
-const { v4: uuidv4 } = require('uuid');
-// const { set } = require('../models/repositories/kvStore.repo');
-const teacherModel = require('../models/teacher.model');
-const { set, del } = require('./redis.service');
+const TemplateService = require('./template.service');
+const { replacePlaceHolder } = require('../utils');
+
 
 class AccessSevice {
   static async signup({
@@ -235,56 +232,60 @@ class AccessSevice {
     const foundUser = await findUserByEmail(email);
 
     if (!foundUser) {
-      throw new BadRequestError('User not found');
+      throw new BadRequestError('u0004'); // user not found
     }
 
     const match = await bcrypt.compare(old_password, foundUser.user_password);
 
     if (!match) {
-      throw new BadRequestError('Old password is incorrect');
+      throw new BadRequestError('a0001'); // password not match
     }
 
     const hashPassword = await bcrypt.hash(new_password, 10);
 
     if (!hashPassword) {
-      throw new BadRequestError('Change password failed');
+      throw new InternalServerError('a0000'); // error
     }
 
     const updated = await updatePasswordByEmail({ email, password: hashPassword });
 
     if (!updated) {
-      throw new BadRequestError('Change password failed');
+      throw new InternalServerError('a0000'); // error
     }
 
-    const keyToken = await findKeyTokenByUserId(foundUser._id);
+    // set token to blacklist
 
-    // update refresh token
-    const payload = {
-      user_id: foundUser._id,
-      user_email: foundUser.user_email,
-      user_type: foundUser.user_type,
-    };
+    return true;
 
-    const tokens = await createKeyPair({
-      payload,
-      publicKey: keyToken.public_key,
-      privateKey: keyToken.private_key,
-    });
+    // const keyToken = await findKeyTokenByUserId(foundUser._id);
 
-    if (!tokens) {
-      throw new BadRequestError('Cannot create key pair');
-    }
+    // // update refresh token
+    // const payload = {
+    //   user_id: foundUser._id,
+    //   user_email: foundUser.user_email,
+    //   user_type: foundUser.user_type,
+    // };
 
-    // update refresh token
-    await KeyTokenService.updateRefreshTokenById({
-      userId: foundUser._id,
-      refreshToken: tokens.refreshToken,
-    });
+    // const tokens = await createKeyPair({
+    //   payload,
+    //   publicKey: keyToken.public_key,
+    //   privateKey: keyToken.private_key,
+    // });
 
-    return {
-      user: foundUser,
-      tokens: tokens,
-    };
+    // if (!tokens) {
+    //   throw new BadRequestError('k0004'); // key not found
+    // }
+
+    // // update refresh token
+    // await KeyTokenService.updateRefreshTokenById({
+    //   userId: foundUser._id,
+    //   refreshToken: tokens.refreshToken,
+    // });
+
+    // return {
+    //   user: foundUser,
+    //   tokens: tokens,
+    // };
   }
   static async refresh({ user, refreshToken }) {
     const keyToken = await findKeyTokenByUserIdAndRefreshToken(user.user_id, refreshToken);
@@ -330,20 +331,38 @@ class AccessSevice {
     return status;
   }
   static async forgotPassword({ email }) {
-    //flow :
-    // check if email is exist
-    // create token
-    // send email with token
     const foundUser = await findUserByEmail(email);
 
     if (!foundUser) {
-      throw new BadRequestError('Account not exist');
+      throw new BadRequestError('u0004');
     }
 
-    return await EmailService.sendEmailOTP({
-      email,
-      name: foundUser.user_fullname,
-    });
+    // generate otp
+    const otp = await OTPService.newOTP(email);
+    if (!otp) {
+      throw new BadRequestError('o0001'); // otp generation failed
+    }
+
+    // get template email
+    const templateOTP = `
+      <p>Dear ${foundUser.user_fullname},</p>
+      <p>You have requested to reset your password. Please use the following OTP to proceed:</p>
+      <h2 style="color: #4CAF50;">${otp.otp_token}</h2>
+      <p>If you did not request this, please ignore this email.</p>
+      <p>Thank you,</p>
+      <p>The Glemini Team</p>
+    `
+    const bodyEmailOTP = {
+      channels: ['email'],
+      to: email,
+      subject: 'Glemini - Forgot Password',
+      text: '',
+      html: templateOTP,
+    };
+
+    await messageService.producerQueue('notifications', bodyEmailOTP);
+
+    return true;
   }
 
   // otp verify
@@ -351,7 +370,7 @@ class AccessSevice {
     otp = otp.toString();
     const verifyOTP = await OTPService.verifyOTP({ email, otp });
     if (!verifyOTP) {
-      throw new BadRequestError('OTP is incorrect');
+      throw new BadRequestError('o0004');
     }
     return 1;
   }
@@ -385,35 +404,41 @@ class AccessSevice {
       throw new BadRequestError('Change password failed, please try again');
     }
 
-    const keyToken = await findKeyTokenByUserId(foundUser._id);
+    // set token to backlist
 
-    // update refresh token
-    const payload = {
-      user_id: foundUser._id,
-      user_email: foundUser.user_email,
-      user_type: foundUser.user_type,
-    };
+    return true;
 
-    const tokens = await createKeyPair({
-      payload,
-      publicKey: keyToken.public_key,
-      privateKey: keyToken.private_key,
-    });
+    // const keyToken = await findKeyTokenByUserId(foundUser._id);
 
-    if (!tokens) {
-      throw new BadRequestError('Please try again');
-    }
 
-    // update refresh token
-    await KeyTokenService.updateRefreshTokenById({
-      userId: foundUser._id,
-      refreshToken: tokens.refreshToken,
-    });
 
-    return {
-      user: foundUser,
-      tokens: tokens,
-    };
+    // // update refresh token
+    // const payload = {
+    //   user_id: foundUser._id,
+    //   user_email: foundUser.user_email,
+    //   user_type: foundUser.user_type,
+    // };
+
+    // const tokens = await createKeyPair({
+    //   payload,
+    //   publicKey: keyToken.public_key,
+    //   privateKey: keyToken.private_key,
+    // });
+
+    // if (!tokens) {
+    //   throw new BadRequestError('Please try again');
+    // }
+
+    // // update refresh token
+    // await KeyTokenService.updateRefreshTokenById({
+    //   userId: foundUser._id,
+    //   refreshToken: tokens.refreshToken,
+    // });
+
+    // return {
+    //   user: foundUser,
+    //   tokens: tokens,
+    // };
   }
 
   static async updateStatus({ user_id, user_status, teacher_status }) {
@@ -494,349 +519,6 @@ class AccessSevice {
       }
       return updatedStatus;
     }
-  }
-
-  /* ============== V2 ======================== */
-  static async signupV2(signupData) {
-    // check if email is already used
-    const { email, password, fullname } = signupData;
-    const foundUser = await findUserByEmailV2(email);
-
-    if (foundUser) {
-      throw new BadRequestError('email is already used');
-    }
-
-    // hash password
-    const hashPassword = await bcrypt.hash(password, 10);
-
-    if (!hashPassword) {
-      throw new InternalServerError('sigup failed!!!');
-    }
-
-    // get role id by role name
-    const roleUser = await roleModel.findOne({ role_name: 'user' }).lean();
-
-    if (!roleUser) {
-      throw new BadRequestError('fail to get role !!!');
-    }
-    // create user
-    const newUser = await userModel.create({
-      user_fullname: fullname,
-      user_email: email,
-      user_password: hashPassword,
-      user_role: roleUser._id,
-    });
-
-    if (!newUser) {
-      throw new BadRequestError('Cannot create user !!!');
-    }
-
-    // create key pair for user
-    const publicKey = await crypto.randomBytes(64).toString('hex');
-    const privateKey = await crypto.randomBytes(64).toString('hex');
-
-    //store key pair
-    const keyToken = await KeyTokenService.storeKeyToken({
-      user_id: newUser._id,
-      public_key: publicKey,
-      private_key: privateKey,
-    });
-
-    if (!keyToken) {
-      throw new BadRequestError('Cannot store key token');
-    }
-
-    // verify email
-
-    return newUser;
-  }
-
-  static async loginV2(loginData) {
-    const { email, password } = loginData;
-    // check if email is already used
-    const foundUser = await findUserByEmail(email);
-    if (!foundUser) {
-      throw new BadRequestError('email is not exist');
-    }
-
-    // check if password is correct
-    const match = await bcrypt.compare(password, foundUser.user_password);
-    if (!match) {
-      throw new BadRequestError('password is incorrect');
-    }
-
-    // if role is teacher
-    // if (foundUser.user_role.role_name === 'teacher') {
-    //     await del(`TOKEN_REVOKED_${foundUser._id}`);
-    // }
-    // check if user is active
-    // if (foundUser.user_status !== "active") {
-    //     throw new BadRequestError('account is not active!!!');
-    // }
-
-    // create tokens
-    const keyToken = await findKeyTokenByUserId(foundUser._id);
-    if (!keyToken) {
-      throw new BadRequestError('login failed!!!,pls try again');
-    }
-
-    const jit = uuidv4();
-
-    // create access token and refresh token
-    const payload = {
-      user_id: foundUser._id,
-      user_email: foundUser.user_email,
-      user_role: foundUser.user_role.role_name,
-      user_avatar: foundUser.user_avatar,
-      user_fullname: foundUser.user_fullname,
-      jit: jit,
-      iat: Math.floor(Date.now() / 1000), // current time in seconds
-    };
-
-    const tokens = await createKeyPair({
-      payload,
-      publicKey: keyToken.public_key,
-      privateKey: keyToken.private_key,
-    });
-
-    if (!tokens) {
-      throw new BadRequestError('login failed!!!,pls try again');
-    }
-
-    if (foundUser.user_role.role_name === 'teacher') {
-      const foundTeacher = await teacherModel.findOne({ userId: foundUser._id }).lean();
-      return {
-        user: {
-          fullname: foundUser.user_fullname,
-          email: foundUser.user_email,
-          user_id: foundUser._id,
-          user_role: foundUser.user_role.role_name,
-          user_avatar: foundUser.user_avatar,
-          status_teacher_verified: foundTeacher ? foundTeacher.status : null,
-        },
-        tokens: tokens,
-      };
-    }
-
-    return {
-      user: {
-        fullname: foundUser.user_fullname,
-        email: foundUser.user_email,
-        user_id: foundUser._id,
-        user_role: foundUser.user_role.role_name,
-        user_avatar: foundUser.user_avatar,
-      },
-      tokens: tokens,
-    };
-  }
-
-  static async logoutV2({ user }) {
-    const { user_id, jit } = user;
-    // check if user is exist
-    const foundUser = await findUserById(user_id);
-
-    if (!foundUser) {
-      throw new BadRequestError('user not found!!!');
-    }
-
-    // set jit to kvStore
-    // const setJit = await set(`TOKEN_BLACK_LIST_${user_id}_${jit}`, 1, 60 * 60 * 24 * 2);
-    // if (!setJit) {
-    //     throw new BadRequestError("logout failed!!!,pls try again");
-    // }
-    const key = `TOKEN_BLACK_LIST_${user_id}_${jit}`;
-    await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
-    return true;
-  }
-
-  static async me({ user }) {
-    // get teacher by user_id
-    const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
-    if (!foundTeacher) {
-      return {
-        fullname: user.user_fullname,
-        email: user.user_email,
-        user_id: user.user_id,
-        user_role: user.user_role,
-        user_avatar: user.user_avatar,
-      };
-    }
-
-    return {
-      fullname: user.user_fullname,
-      email: user.user_email,
-      user_id: user.user_id,
-      user_role: user.user_role,
-      user_avatar: user.user_avatar,
-      status_teacher_verified: foundTeacher.status,
-    };
-  }
-
-  /**
-   * create teacher
-   */
-  static async createNewTeacher({ user_id, files }) {
-    // dev
-    if (!files) {
-      // console.log("files is required");
-      // throw new BadRequestError("files is required");
-
-      // find teacher
-      const foundTeacher = await teacherModel.findOne({ userId: user_id }).lean();
-      if (foundTeacher) {
-        if (foundTeacher.status === 'active') {
-          throw new BadRequestError('You are already a teacher');
-        }
-        if (foundTeacher.status === 'pending') {
-          throw new BadRequestError('Your request is pending, please wait for approval');
-        }
-        if (foundTeacher.status === 'deleted') {
-          throw new BadRequestError('Your account has been deleted, please contact support');
-        }
-
-        // return found teacher
-        return foundTeacher;
-      }
-
-      const newTeacher = await teacherModel.create({
-        userId: user_id,
-        attributes: [],
-        schools: [],
-        status: 'pending',
-      });
-
-      return newTeacher;
-    }
-
-    const uploadedUrls = await UploadService.uploadMultipleImagesFromFiles({
-      files,
-      folderName: `glemini/teachers/info/${user_id}`,
-    });
-
-    if (!uploadedUrls) {
-      throw new BadRequestError('cannot upload images!!!');
-    }
-
-    // create new teacher
-    /**
-         * attributes:{
-                 type: Array,
-                 default: []
-             },
-             schools:{
-                 type: Array,
-                 default: []
-             },
-             file_urls:{
-                 type: Array,
-                 default: []
-             },
-             status:{
-                 type: String,
-                 enum: ['active', 'inactive','deleted','pending'],
-                 default: 'inactive'
-             },
-         */
-    // const newTeacher = await teacherModel.create({
-    //     user_id: user_id,
-    //     attributes: {
-    //         file_urls: uploadedUrls.map(imageUrl => imageUrl.image_url)
-    //     },
-    //     schools: [],
-    //     status: 'pending'
-    // })
-    /*
-        [{
-            "name":"Cccd",
-            "url":"https://example.com/cccd.png",
-            "type":"image",
-            "items":[
-                {
-                    field:"Ho ten",
-                    value:"Nguyen Van A"
-                },
-                {
-                    field:"Ngay sinh",
-                    value:"01/01/2000"
-                },
-                {
-                    field:"Gioi tinh",
-                    value:"Nam"
-                },
-                {
-                    field:"Que quan",
-                    value:"Ha Noi"
-                }
-            ]
-    }]*/
-    const attributes = uploadedUrls.map((imageUrl) => {
-      return {
-        name: imageUrl.original_filename,
-        url: imageUrl.image_url,
-        type: imageUrl.format,
-        items: [],
-      };
-    });
-
-    const newTeacher = await teacherModel.create({
-      userId: user_id,
-      attributes: attributes,
-      schools: [],
-      status: 'pending',
-    });
-
-    if (!newTeacher) {
-      throw new BadRequestError('cannot create teacher!!!');
-    }
-
-    return newTeacher;
-  }
-
-  static async updateRoleForUser({ user_id, role_name = 'teacher', teacher_status = 'active' }) {
-    // update role for user
-    const foundUser = await findUserById(user_id);
-    if (!foundUser) {
-      throw new NotFoundError('not found!');
-    }
-
-    // check if role_name is valid
-    const foundRole = await roleModel.findOne({ role_name }).lean();
-    if (!foundRole) {
-      throw new BadRequestError('role invalid!!!');
-    }
-
-    // update role for user
-    const updatedUser = await userModel
-      .findByIdAndUpdate(
-        user_id,
-        {
-          user_role: foundRole._id,
-        },
-        { new: true },
-      )
-      .lean();
-
-    if (!updatedUser) {
-      throw new BadRequestError('update failed!!!');
-    }
-
-    // update status for teacher
-    if (foundRole.role_name === 'teacher' && teacher_status) {
-      const updatedTeacher = await updateStatusTeacherV2(user_id, teacher_status);
-      if (!updatedTeacher) {
-        throw new BadRequestError('update failed!!!');
-      }
-    }
-
-    // emit socket to user in _userMap
-    const socket = _userSockets[user_id];
-    if (socket) {
-      socket.emit('updateRole', {
-        role_name,
-        teacher_status,
-      });
-    }
-    return 1;
   }
 }
 

@@ -32,20 +32,21 @@ class AccessController {
   };
 
   logout = async (req, res, next) => {
-    console.log(req.user);
     return new OK({
       message: 'user logout successfully',
       metadata: await accessService.logout({
+        ...req.body,
         user: req.user,
       }),
     }).send(res);
   };
 
   me = async (req, res, next) => {
-    const user = req.user;
     return new OK({
       message: 'user me successfully',
-      metadata: await accessService.me({ user }),
+      metadata: await accessService.me({
+        user:req.user
+      }),
     }).send(res);
   };
 
@@ -55,7 +56,6 @@ class AccessController {
    * @param {Object} res - The response object
    */
   createTeacher = async (req, res, next) => {
-    console.log('controller:::', req.user);
     return new OK({
       message: 'user created successfully',
       metadata: await accessService.createNewTeacher({
@@ -69,7 +69,6 @@ class AccessController {
     return new OK({
       message: 'user role updated successfully',
       metadata: await accessService.updateRoleForUser({
-        //    ...req.user,
         ...req.body,
       }),
     }).send(res);

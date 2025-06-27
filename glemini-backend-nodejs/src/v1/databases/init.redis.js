@@ -29,6 +29,8 @@ const handlerEventConnection = ({ connectionRedis }) => {
   connectionRedis.on(statusConnectRedis.RECONNECT, () => {
     console.log(chark.blue('Redis reconnecting...'));
   });
+
+
 };
 
 /**
@@ -38,7 +40,7 @@ const handlerEventConnection = ({ connectionRedis }) => {
 const initRedis = () => {
   try {
     const instanceRedis = createClient();
-    instanceRedis.connect();
+    instanceRedis.connect(); 
     client.instanceRedis = instanceRedis;
     handlerEventConnection({
       connectionRedis: instanceRedis,
@@ -53,6 +55,10 @@ const initRedis = () => {
  * @returns {Object} Redis client instance
  */
 const getRedis = () => {
+  if (!client.instanceRedis) {
+    initRedis();
+    return client; 
+  }
   return client;
 };
 
