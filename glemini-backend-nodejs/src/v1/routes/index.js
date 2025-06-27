@@ -26,6 +26,11 @@ router.get('/working', (req, res, next) => {
     })
     .status(200);
 });
+
+// PUBLIC ROUTES (no authentication required)
+router.use('/templates', require('./template'));
+
+// PROTECTED ROUTES
 router.use('', require('./email'));
 router.use('/auth', routeAccess);
 router.use('/uploads', routerUpload);
