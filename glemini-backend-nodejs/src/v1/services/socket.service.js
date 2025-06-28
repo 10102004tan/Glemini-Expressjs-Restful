@@ -39,7 +39,6 @@ class SocketService {
         })
           .then((decoded) => {
             const { user_id } = decoded;
-            // console.log(`socket ${socket.id} authenticated with userId: ${user_id}`);
             socket.auth = true;
             _userSockets[user_id] = socket;
             console.log(`Pong received from user ${user_id}`);
@@ -85,6 +84,9 @@ class SocketService {
     }, PING_INTERVAL);
 
     socket.on('disconnect', () => {
+      if (!userId) {
+        console.log(`User ID not set for socket ${socket.id}. Cannot handle disconnect.`);
+      }
       console.log(`User ${userId} disconnected`);
       clearInterval(pingInterval); // Clear interval khi user disconnect
       delete _userSockets[userId];
@@ -120,6 +122,7 @@ class SocketService {
 
     // Xử lý sự kiện join vào một room
     socket.on('joinRoom', ({ roomCode, user }) => {
+      console.log('HERE');
       socket.join(roomCode);
       socket.user = user; // Lưu thông tin người dùng vào socket
       socket.user.score = 0; // Khởi tạo điểm số ban đầu

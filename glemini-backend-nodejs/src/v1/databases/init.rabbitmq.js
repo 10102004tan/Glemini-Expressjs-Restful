@@ -4,15 +4,15 @@ const amqplib = require('amqplib');
 
 const connectToRabbitMQ = async () => {
   try {
-    const connection = await amqplib.connect('amqp://guest:guest@localhost');
+    const connection = await amqplib.connect('amqp://localhost');
     if (!connection) {
       throw new Error('Failed to connect to RabbitMQ');
     }
     const channel = await connection.createChannel();
-
+    console.log('Connected to RabbitMQ successfully');
     return { connection, channel };
   } catch (error) {
-    console.error(error);
+    console.log("Error connecting to RabbitMQ:", error);
   }
 };
 
@@ -49,6 +49,7 @@ const producerQueue = async (channel, queueName, message) => {
     throw new Error('Failed to send message to queue');
   }
 };
+
 
 module.exports = {
   connectToRabbitMQ,

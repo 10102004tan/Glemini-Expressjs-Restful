@@ -36,6 +36,9 @@ const UploadService = require('@v1/services/upload.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const DeviceService = require('./device.service');
+const { countNotificationUnread } = require('@v1/models/repositories/notification.repo');
+const messageService = require('@v1/services/producerQueue.service');
 
 class AccessSevice {
   static async signup(signupData) {
@@ -86,6 +89,16 @@ class AccessSevice {
     }
 
     // verify email
+    const bodyVerifyEmail = {
+      channels:["email"],
+      to:email,
+      subject:'Verify Email',
+      text:'template'
+    }
+
+
+
+    await messageService.producerQueue('notifications', bodyVerifyEmail);
 
     return newUser;
   }
@@ -147,6 +160,8 @@ class AccessSevice {
       };
     }
 
+    const countNotiUnRead = await countNotificationUnread(foundUser._id);
+
     return {
       user: {
         fullname: foundUser.user_fullname,
@@ -154,12 +169,14 @@ class AccessSevice {
         user_id: foundUser._id,
         user_role: foundUser.user_role.role_name,
         user_avatar: foundUser.user_avatar,
+        status_teacher_verified: null,
+        count_notification_unread: countNotiUnRead,
       },
       tokens: tokens,
     };
   }
 
-  static async logout({ user }) {
+  static async logout({ user, deviceToken }) {
     const { user_id, jit } = user;
     // check if user is exist
     const foundUser = await findUserById(user_id);
@@ -170,6 +187,13 @@ class AccessSevice {
 
     const key = `TOKEN_BLACK_LIST_${user_id}_${jit}`;
     // await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
+    // remove device token
+    console.log('deviceToken', deviceToken);
+    await DeviceService.deleteDevice({
+      userId: user_id,
+      deviceToken: deviceToken,
+    });
+
     return true;
   }
 
@@ -186,6 +210,9 @@ class AccessSevice {
       };
     }
 
+    // get count notification unread
+    const countNotiUnRead = await countNotificationUnread(user.user_id);
+
     return {
       fullname: user.user_fullname,
       email: user.user_email,
@@ -193,6 +220,7 @@ class AccessSevice {
       user_role: user.user_role,
       user_avatar: user.user_avatar,
       status_teacher_verified: foundTeacher.status,
+      count_notification_unread: countNotiUnRead,
     };
   }
 
@@ -204,7 +232,6 @@ class AccessSevice {
     if (!files) {
       // console.log("files is required");
       // throw new BadRequestError("files is required");
-
       // find teacher
       const foundTeacher = await teacherModel.findOne({ userId: user_id }).lean();
       if (foundTeacher) {

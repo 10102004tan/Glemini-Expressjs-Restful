@@ -54,7 +54,7 @@ var questionSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Answer', // Liên kết đến model 'Answer'
-      },
+      }
     ],
   },
   {
