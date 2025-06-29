@@ -209,7 +209,7 @@ class ResultService {
       });
 
     if (!result) {
-      throw new BadRequestError('Result not found');
+      return null;
     }
 
     // Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
