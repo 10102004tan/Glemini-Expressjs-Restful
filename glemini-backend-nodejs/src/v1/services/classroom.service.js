@@ -4,8 +4,9 @@ const quizModel = require('../models/quiz.model');
 const schoolModel = require('../models/school.model');
 const subjectModel = require('../models/subject.model');
 const exerciseModel = require('../models/exercise.model');
-const AccessService = require('../services/access.service');
+const AccessService = require('../../v2/services/access.service');
 const userModel = require('../models/user.model');
+const roleModel = require('../models/role.model');
 const { BadRequestError } = require('../cores/error.repsone');
 const fs = require('fs');
 const xlsx = require('xlsx');
@@ -13,6 +14,8 @@ const { pushNotiForSys } = require('./notification.service');
 const expoTokenModel = require('../models/expoToken.model');
 const { pushNoti } = require('./expo.service');
 const { findExpoTokenByListUserId } = require('./expoToken.service');
+const { log } = require('console');
+
 
 class ClassroomService {
   // Hàm lấy lớp theo học sinh
@@ -165,23 +168,22 @@ class ClassroomService {
 
   // Hàm tạo lớp học mới
   async createClassroom(classData) {
-    const { class_name, user_id, school_id, subject_id, students } = classData;
-
-    const school = await schoolModel.findById(school_id);
+    const school = await schoolModel.findById(classData.school_id);
     if (!school) throw new BadRequestError('School not found');
 
-    const subject = await subjectModel.findById(subject_id);
+    const subject = await subjectModel.findById(classData.subject_id);
+
     if (!subject) throw new BadRequestError('Subject not found');
 
-    const teacher = await userModel.findById(user_id);
+    const teacher = await userModel.findById(classData.user_id);
 
     const classroom = await classroomModel.create({
-      class_name,
+      class_name: classData.class_name,
       exercises: [],
       school: school._id,
       subject: subject._id,
       user_id: teacher._id,
-      students: students || [],
+      students: classData.students || [],
     });
 
     return classroom;
@@ -240,131 +242,84 @@ class ClassroomService {
 
   // Hàm thêm học sinh vào lớp học bằng file Excel
   static addStudentsFromExcel = async (classroomId, filePath) => {
-    const students = ClassroomService.readStudentsFromExcel(filePath);
+  const students = ClassroomService.readStudentsFromExcel(filePath);
+  if (!students || students.length === 0) {
+    throw new BadRequestError('Không có dữ liệu học sinh từ file Excel');
+  }
 
-    const classroom = await classroomModel.findById(classroomId);
-    if (!classroom) throw new BadRequestError('Classroom not found');
+  // Lọc trùng email, chỉ lấy duy nhất mỗi email
+  const uniqueEmails = [...new Set(students.map(s => s.email.trim().toLowerCase()))];
 
-    // Initialize an array to hold promises for all user creation and classroom updates
-    const studentPromises = students.map(async (student) => {
-      let user = await userModel.findOne({ user_email: student.email });
-
-      if (!user) {
-        const signupData = {
-          fullname: student.fullname,
-          email: student.email,
-          password: '12345678',
-          type: 'student',
-          attributes: {},
-        };
-
-        const newUser = await AccessService.signup(signupData);
-        user = newUser.user;
+  const results = await Promise.all(
+    uniqueEmails.map(async (email) => {
+      try {
+        const success = await ClassroomService.addStudent({ classroomId, user_email: email });
+        return { email, success };
+      } catch (err) {
+        console.error(`❌ Thêm học sinh thất bại cho email: ${email}`, err);
+        return { email, success: false };
       }
+    })
+  );
 
-      if (user.user_type === 'teacher') {
-        return;
-      }
+  const successList = results.filter(r => r.success).map(r => r.email);
+  const failedList = results.filter(r => !r.success).map(r => r.email);
 
-      // Add student to classroom if not already there
-      if (!classroom.students.includes(user._id)) {
-        if (user.user_type === 'student') {
-          await classroomModel.updateOne(
-            { _id: classroomId },
-            { $addToSet: { students: user._id } },
-          );
-
-          // Update student's classroom list
-          await studentModel.updateOne(
-            { _id: user._id },
-            { $addToSet: { classroom_ids: classroomId } },
-            { upsert: true },
-          );
-
-          const noti = await pushNotiForSys({
-            type: 'CLASSROOM-001',
-            receiverId: user._id,
-            senderId: classroom.user_id,
-            content: `You have been added to the classroom ${classroom.class_name}`,
-            options: {
-              classroom_id: classroom._id,
-              classroom_name: classroom.class_name,
-            },
-          });
-
-          // push real-time notification for user
-          const listUserOnline = _listUserOnline.filter(
-            (item) => item.userId === user._id.toString(),
-          );
-          if (listUserOnline.length == 0) {
-            // push notification with expo notification
-          } else {
-            listUserOnline.forEach((item) => {
-              item.socket.emit('notification', noti);
-            });
-          }
-        }
-      }
-    });
-
-    // Wait for all promises to resolve before returning
-    await Promise.all(studentPromises);
-
-    const listExpoTokens = await findExpoTokenByListUserId(classroom.students);
-    await pushNoti({
-      somePushTokens: listExpoTokens,
-      data: {
-        body: `Bạn đã được thêm vào lớp học ${classroom.class_name}`,
-        title: 'Thông báo',
-      },
-    });
-
-    return classroom;
+  return {
+    success: successList.length,
+    failed: failedList.length,
+    failedList,
   };
+};
+
 
   // Hàm thêm một học sinh
-  async addStudent({ classroomId, user_email }) {
+  static addStudent = async( {classroomId, user_email} ) => {
     try {
       const classroom = await classroomModel.findById(classroomId);
       if (!classroom) throw new BadRequestError('Classroom not found');
 
       let user = await userModel.findOne({ user_email });
 
-      // Kiểm tra nếu người dùng là giáo viên
-      if (user && user.user_type === 'teacher') {
-        return false;
+      // console.log('user::', user);
+
+      //  Nếu người dùng tồn tại thì kiểm tra vai trò từ bảng roles
+      if (user) {
+        const role = await roleModel.findOne(user.user_role).lean();
+        // console.log('role::', role);
+
+        if (role && role.role_name === 'teacher') {
+          console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
+          return false;
+        }
+
+        // Nếu học sinh đã ở trong lớp, trả về false
+        if (classroom.students.includes(user._id)) {
+          return false;
+        }
       }
 
-      // Nếu học sinh đã ở trong lớp, trả về false
-      if (user && classroom.students.includes(user._id)) {
-        return false;
-      }
-
-      // Nếu người dùng chưa tồn tại, tạo mới
+      // Nếu người dùng chưa tồn tại thì tạo mới
       if (!user) {
         const fullname = user_email.split('@')[0];
         const signupData = {
-          fullname: fullname,
           email: user_email,
           password: '12345678',
-          type: 'student',
-          attributes: {},
+          fullname: fullname,
         };
 
         const newUser = await AccessService.signup(signupData);
         user = newUser.user;
 
-        // Kiểm tra nếu người dùng mới được tạo là giáo viên
-        if (user.user_type === 'teacher') {
-          console.warn(
-            `User with email ${user_email} is a teacher and cannot be added to the classroom.`,
-          );
+        // Sau khi tạo, kiểm tra lại role
+        const role = await roleModel.findOne(user.user_role).lean();
+        if (role && role.role_name === 'teacher') {
+          console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
           return false;
         }
       }
 
-      // Thêm học sinh vào lớp nếu chưa có
-      // Thêm học sinh vào lớp nếu chưa có
+      // hêm học sinh vào lớp nếu chưa có
       if (!classroom.students.includes(user._id)) {
         await classroomModel.updateOne({ _id: classroomId }, { $addToSet: { students: user._id } });
         await studentModel.updateOne(
@@ -384,25 +339,9 @@ class ClassroomService {
           },
         });
 
-        const listUserOnline = _listUserOnline.filter(
-          (item) => item.userId === user._id.toString(),
-        );
-        console.log('list:::', listUserOnline);
-        if (listUserOnline.length == 0) {
-          // push notification with expo notification
-          // get expo token , get token not null
-          const expoToken = await expoTokenModel
-            .findOne(
-              { user_id: user._id },
-              {
-                token: 1,
-              },
-            )
-            .select('token')
-            .lean();
-
-          console.log('expotoken::', expoToken);
-
+        const listUserOnline = _listUserOnline.filter(item => item.userId === user._id.toString());
+        if (listUserOnline.length === 0) {
+          const expoToken = await expoTokenModel.findOne({ user_id: user._id }, { token: 1 }).lean();
           if (expoToken) {
             pushNoti({
               somePushTokens: [expoToken],
@@ -414,9 +353,7 @@ class ClassroomService {
             });
           }
         } else {
-          listUserOnline.forEach((item) => {
-            item.socket.emit('notification', noti);
-          });
+          listUserOnline.forEach(item => item.socket.emit('notification', noti));
         }
       }
 
@@ -424,7 +361,7 @@ class ClassroomService {
       return true;
     } catch (error) {
       console.error('Error in addStudent:', error);
-      return false; // Trả về false nếu xảy ra lỗi
+      return false;
     }
   }
 
