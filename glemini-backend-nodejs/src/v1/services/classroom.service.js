@@ -365,6 +365,10 @@ class ClassroomService {
     }
   }
 
+  async addStudentToClass({classroomId, user_email}) {
+    return await ClassroomService.addStudent({classroomId, user_email});
+  }
+
   // Xóa học sinh ra khỏi lớp
   async removeStudentFromClass(classroomId, studentId) {
     const classroom = await classroomModel.findByIdAndUpdate(

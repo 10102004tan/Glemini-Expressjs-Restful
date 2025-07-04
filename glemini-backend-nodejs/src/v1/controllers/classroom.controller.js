@@ -63,7 +63,7 @@ class ClassroomController {
   }
 
   async addStudent(req, res, next) {
-    const result = await classroomService.addStudent(req.body);
+    const result = await classroomService.addStudentToClass(req.body);
     return new OK({
       message: 'Add student for classroom successfully',
       metadata: result,

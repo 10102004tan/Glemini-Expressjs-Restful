@@ -726,7 +726,9 @@ class QuizService {
    * @description This method checks if the provided answer IDs match the correct answer IDs for the specified question.
    */
   static async checkCorrectAnswer({ questionId, answerIds }) {
-    console.log('🔍 Backend - Checking correct answer for question:', questionId, 'with answers:', answerIds);
+    const filteredAnswerIds = answerIds.filter(id => id !== null && id !== undefined && id !== '');
+
+    console.log('🔍 Backend - Checking correct answer for question:', questionId, 'with answers:', filteredAnswerIds);
 
     const questionFound = await questionModel.findById(questionId);
     if (!questionFound) {
@@ -739,13 +741,13 @@ class QuizService {
     switch (questionFound.question_type) {
       case 'single':
         result.isCorrect = questionFound.correct_answer_ids.some((correctAnswerId) => {
-          return answerIds.includes(correctAnswerId.toString());
+          return filteredAnswerIds.includes(correctAnswerId.toString());
         });
         result.point = result.isCorrect ? questionFound.question_point : 0;
         return result;
       case 'multiple':
         const correctAnswerIds = questionFound.correct_answer_ids.map(id => id.toString());
-        const selectedAnswerIds = answerIds;
+        const selectedAnswerIds = filteredAnswerIds;
 
         // Check: đúng hết và không dư không thiếu
         result.isCorrect =
@@ -756,8 +758,13 @@ class QuizService {
 
         return result;
       case 'fill':
+        if (questionFound.correct_answer_ids.length !== filteredAnswerIds.length) {
+          return result;
+        }
+        
         const correctIds = questionFound.correct_answer_ids.map(id => id.toString());
-        const userIds = answerIds.map(id => id.toString());
+
+        const userIds = filteredAnswerIds.map(id => id.toString());
 
         const allIds = [...new Set([...correctIds, ...userIds])];
 
@@ -776,11 +783,11 @@ class QuizService {
         return result;
       case 'order':
         // check length and index
-        if (questionFound.correct_answer_ids.length !== answerIds.length) {
-          return false;
+        if (questionFound.correct_answer_ids.length !== filteredAnswerIds.length) {
+          return result;
         }
         const isValidOrder = questionFound.correct_answer_ids.every((correctAnswerId, index) => {
-          return correctAnswerId.toString() === answerIds[index];
+          return correctAnswerId.toString() === filteredAnswerIds[index];
         });
 
         if (isValidOrder) {
