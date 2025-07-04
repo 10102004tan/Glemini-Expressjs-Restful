@@ -1,4 +1,4 @@
-# Quiz Title: Template Hoàn Chỉnh - 5 Loại Câu Hỏi
+# Quiz Title: Template Hoàn Chỉnh - 4 Loại Câu Hỏi
 
 ## ========== LOẠI 1: SINGLE CHOICE (Chọn 1 đáp án đúng) ==========
 
@@ -85,26 +85,6 @@
 - **Order:** Ủ trà 3-5 phút (position: 4)
 - **Order:** Rót trà ra tách (position: 5)
 
-## ========== LOẠI 5: MATCH (Nối cặp) ==========
-
-## Question: Nối các quốc gia với thủ đô tương ứng:
-
-**Type:** match
-
-- **Match:** Việt Nam -> Hà Nội
-- **Match:** Thái Lan -> Bangkok
-- **Match:** Nhật Bản -> Tokyo
-- **Match:** Pháp -> Paris
-
-## Question: Nối các môn học với công cụ học tập:
-
-**Type:** match
-
-- **Match:** Toán học -> Máy tính
-- **Match:** Vẽ -> Bút chì
-- **Match:** Thể dục -> Bóng đá
-- **Match:** Âm nhạc -> Đàn piano
-
 ---
 
 ## 📚 HƯỚNG DẪN SỬ DỤNG TEMPLATE
@@ -164,26 +144,13 @@
 - **Order:** Mục 3 (position: 3)
 ```
 
-#### 5. **MATCH** (Nối cặp)
-
-```markdown
-## Question: Nối các cặp sau:
-
-**Type:** match
-
-- **Match:** A -> 1
-- **Match:** B -> 2
-- **Match:** C -> 3
-```
-
 ### ⚠️ **LƯU Ý QUAN TRỌNG:**
 
 1. **Bắt buộc:** Mỗi câu hỏi phải có `## Question:` ở đầu
 2. **Bắt buộc:** Phải có `**Type:**` để xác định loại câu hỏi
 3. **Format:** Tuân thủ đúng format cho từng loại
 4. **Position:** Với fill/order, position bắt đầu từ 1
-5. **Match:** Dùng dấu `->` để nối cặp
-6. **Multiple:** Dùng dấu phẩy để phân cách đáp án đúng
+5. **Multiple:** Dùng dấu phẩy để phân cách đáp án đúng
 
 ### 💡 **TIPS:**
 
