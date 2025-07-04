@@ -18,7 +18,7 @@ const { answersIsExit } = require('@v1/models/repositories/answer.repo');
 const answerModel = require('@v1/models/answer.model');
 const { sortRandomArray, isPairInCorrectAnswers, convertArrayToGroups } = require('../util');
 const { findAnswersByIds } = require('../models/repo/answer.repo');
-const {pushToListQuizSearchRecent,getKeySearchRecent:getKeySearchRecentRedisService,delListByKey} = require("@v1/services/redis.service");
+const { pushToListQuizSearchRecent, getKeySearchRecent: getKeySearchRecentRedisService, delListByKey } = require("@v1/services/redis.service");
 
 class QuizService {
   /**
@@ -107,18 +107,18 @@ class QuizService {
    * @param {*} param0
    * @returns
    */
-  static async search({ key, page = 1, limit = 20, subjectIds,user_id,sort='createdAt',order = 'asc' }) {
+  static async search({ key, page = 1, limit = 20, subjectIds, user_id, sort = 'createdAt', order = 'asc' }) {
 
     const query = {};
     if (key) {
       query.quiz_name = { $regex: key, $options: 'i' };
-      await pushToListQuizSearchRecent(user_id, key,10);
+      await pushToListQuizSearchRecent(user_id, key, 10);
     }
 
     // get quiz published
     query.quiz_status = 'published';
 
-    console.log("subjectIds",subjectIds);
+    console.log("subjectIds", subjectIds);
     // get quiz by subject : quiz.subject_ids = [1,2,3,4] ; subjectIds = [1,2]
     if (subjectIds && subjectIds.length > 0) {
       subjectIds = subjectIds.map((subjectId) => ObjectId.createFromHexString(subjectId));
@@ -288,11 +288,11 @@ class QuizService {
       itemsCount: result.items.length,
       firstItem: result.items[0]
         ? {
-            id: result.items[0].id,
-            question: result.items[0].question?.substring(0, 50) + '...',
-            type: result.items[0].type,
-            optionsCount: result.items[0].options?.length,
-          }
+          id: result.items[0].id,
+          question: result.items[0].question?.substring(0, 50) + '...',
+          type: result.items[0].type,
+          optionsCount: result.items[0].options?.length,
+        }
         : null,
     });
 
@@ -369,7 +369,7 @@ class QuizService {
         );
       }
 
-      const answersFound = await findAnswersByIds(correctAnswerIds,{
+      const answersFound = await findAnswersByIds(correctAnswerIds, {
         _id: 1,
         text: 1,
         attributes: 1,
@@ -386,12 +386,12 @@ class QuizService {
           col_match: answerFound.attributes.col_match,
         }
       });
-    
+
       for (let i = 0; i < correctAnswerIdsMap.length - 1; i++) {
         if (correctAnswerIdsMap[i].col_match === correctAnswerIdsMap[i + 1].col_match) {
           throw new BadRequestError("match question must have different col_match for each pair");
+        }
       }
-    }
     }
 
     const questionStore = await questionModel.create({
@@ -725,7 +725,9 @@ class QuizService {
    * @throws {BadRequestError} - If the question is not found or if the answer IDs are invalid.
    * @description This method checks if the provided answer IDs match the correct answer IDs for the specified question.
    */
-  static async checkCorrectAnswer({ questionId, answerIds = [] }) {
+  static async checkCorrectAnswer({ questionId, answerIds }) {
+    console.log('🔍 Backend - Checking correct answer for question:', questionId, 'with answers:', answerIds);
+
     const questionFound = await questionModel.findById(questionId);
     if (!questionFound) {
       throw new BadRequestError('invalid');
@@ -742,76 +744,88 @@ class QuizService {
         result.point = result.isCorrect ? questionFound.question_point : 0;
         return result;
       case 'multiple':
-        result.isCorrect =
-          questionFound.correct_answer_ids.every((correctAnswerId) => {
-            return answerIds.includes(correctAnswerId.toString());
-          }) && questionFound.correct_answer_ids.length === answerIds.length;
+        const correctAnswerIds = questionFound.correct_answer_ids.map(id => id.toString());
+        const selectedAnswerIds = answerIds;
 
-        if (result.isCorrect) {
-          result.point = questionFound.question_point;
-        } else {
-          // count correct answer
-          const correctCount = questionFound.correct_answer_ids.filter((correctAnswerId) => {
-            return answerIds.includes(correctAnswerId.toString());
-          }).length;
-          result.point =
-            (questionFound.question_point / questionFound.correct_answer_ids.length) * correctCount;
-        }
+        // Check: đúng hết và không dư không thiếu
+        result.isCorrect =
+          correctAnswerIds.length === selectedAnswerIds.length &&
+          correctAnswerIds.every(id => selectedAnswerIds.includes(id));
+
+        result.point = result.isCorrect ? questionFound.question_point : 0;
+
         return result;
       case 'fill':
-        // check length and index
-        if (questionFound.correct_answer_ids.length !== answerIds.length) {
-          return false;
-        }
-        return questionFound.correct_answer_ids.every((correctAnswerId, index) => {
-          return correctAnswerId.toString() === answerIds[index];
-        });
+        const correctIds = questionFound.correct_answer_ids.map(id => id.toString());
+        const userIds = answerIds.map(id => id.toString());
+
+        const allIds = [...new Set([...correctIds, ...userIds])];
+
+        const answers = await answerModel.find({ _id: { $in: allIds } }).select('_id text image').lean();
+        const idToValue = new Map(answers.map(ans => [ans._id.toString(), ans.text]));
+
+        const correctValues = correctIds.map(id => idToValue.get(id));
+        const userValues = userIds.map(id => idToValue.get(id));
+        const normalize = (str) => str.trim().toLowerCase();
+
+        const isCorrect = correctValues.every((val, i) => normalize(val) === normalize(userValues[i]));
+
+        result.isCorrect = isCorrect;
+        result.point = isCorrect ? questionFound.question_point : 0;
+
+        return result;
       case 'order':
         // check length and index
         if (questionFound.correct_answer_ids.length !== answerIds.length) {
           return false;
         }
-        return questionFound.correct_answer_ids.every((correctAnswerId, index) => {
+        const isValidOrder = questionFound.correct_answer_ids.every((correctAnswerId, index) => {
           return correctAnswerId.toString() === answerIds[index];
         });
-      case 'match':
-        // ===== match v2 =======
-//"683e6b67c8abb09d6daef625"
-// "683e6b86c8abb09d6daef628"
-// => right
-//683e6b9dc8abb09d6daef62b
-//683e6ba8c8abb09d6daef62e
 
-        /**
-         * input [
-             683e6b67c8abb09d6daef625,
-              683e6b9dc8abb09d6daef62b
-         ]
-         */
-        
-         /**
-          * correctAnswerIds [
-             683e6b67c8abb09d6daef625,
-             683e6b9dc8abb09d6daef62b,
-              683e6b86c8abb09d6daef628,
-              683e6ba8c8abb09d6daef62e
-          ]
-          => convert to 
-          [
-            [683e6b67c8abb09d6daef625, 683e6b86c8abb09d6daef628],
-            [683e6b9dc8abb09d6daef62b, 683e6ba8c8abb09d6daef62e]
-          ]
-          */
-         if (answerIds.length !== 2) {
-          throw new BadRequestError("invalid answerIds")
-         }
-         const correctAnswerIds = questionFound.correct_answer_ids.map((correctAnswerId) => correctAnswerId.toString());
-         const newCorrectAnswerIds = convertArrayToGroups(correctAnswerIds, 2);
-        if (isPairInCorrectAnswers(answerIds, newCorrectAnswerIds)) {
+        if (isValidOrder) {
           result.isCorrect = true;
           result.point = questionFound.question_point;
         }
         return result;
+      case 'match':
+      // ===== match v2 =======
+      //"683e6b67c8abb09d6daef625"
+      // "683e6b86c8abb09d6daef628"
+      // => right
+      //683e6b9dc8abb09d6daef62b
+      //683e6ba8c8abb09d6daef62e
+
+      /**
+       * input [
+           683e6b67c8abb09d6daef625,
+            683e6b9dc8abb09d6daef62b
+       ]
+       */
+
+      /**
+       * correctAnswerIds [
+          683e6b67c8abb09d6daef625,
+          683e6b9dc8abb09d6daef62b,
+           683e6b86c8abb09d6daef628,
+           683e6ba8c8abb09d6daef62e
+       ]
+       => convert to 
+       [
+         [683e6b67c8abb09d6daef625, 683e6b86c8abb09d6daef628],
+         [683e6b9dc8abb09d6daef62b, 683e6ba8c8abb09d6daef62e]
+       ]
+       */
+      // if (answerIds.length !== 2) {
+      //   throw new BadRequestError("invalid answerIds")
+      // }
+      // const correctAnswerIds = questionFound.correct_answer_ids.map((correctAnswerId) => correctAnswerId.toString());
+      // const newCorrectAnswerIds = convertArrayToGroups(correctAnswerIds, 2);
+      // if (isPairInCorrectAnswers(answerIds, newCorrectAnswerIds)) {
+      //   result.isCorrect = true;
+      //   result.point = questionFound.question_point;
+      // }
+      // return result;
       default: {
         throw new BadRequestError('type invalid');
       }
@@ -1076,8 +1090,8 @@ class QuizService {
 
     return duplicatedQuiz;
   }
-  
- 
+
+
   static async getKeySearchRecent(user_id) {
     const data = await getKeySearchRecentRedisService(user_id);
     if (!data || data.length === 0) {
