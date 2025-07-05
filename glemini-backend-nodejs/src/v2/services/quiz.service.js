@@ -728,7 +728,7 @@ class QuizService {
   static async checkCorrectAnswer({ questionId, answerIds }) {
     const filteredAnswerIds = answerIds.filter(id => id !== null && id !== undefined && id !== '');
 
-    console.log('🔍 Backend - Checking correct answer for question:', questionId, 'with answers:', filteredAnswerIds);
+    // console.log('🔍 Backend - Checking correct answer for question:', questionId, 'with answers:', filteredAnswerIds);
 
     const questionFound = await questionModel.findById(questionId);
     if (!questionFound) {

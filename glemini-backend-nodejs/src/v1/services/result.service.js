@@ -21,20 +21,7 @@ class ResultService {
     answer,
     correct,
     score,
-    question_type,
   }) {
-    console.log(
-      exercise_id,
-      room_id,
-      user_id,
-      quiz_id,
-      question_id,
-      answer,
-      correct,
-      score,
-      question_type,
-    );
-
     const query = {
       user_id,
       quiz_id,
@@ -96,21 +83,12 @@ class ResultService {
       }
     }
 
-    if (question_type === 'box') {
-      result.result_questions.push({
-        question_id,
-        answer: answer.toString(),
-        correct,
-        score,
-      });
-    } else {
-      result.result_questions.push({
-        question_id,
-        answer,
-        correct,
-        score,
-      });
-    }
+    result.result_questions.push({
+      question_id,
+      answer,
+      correct,
+      score,
+    });
 
     await result.save();
 
