@@ -803,12 +803,11 @@ class QuizService {
 
       Yêu cầu cụ thể:
       1. Tạo ít nhất 5-10 câu hỏi đa dạng về chủ đề này
-      2. Sử dụng 5 loại câu hỏi khác nhau:
+      2. Sử dụng 4 loại câu hỏi khác nhau:
         - "single": Chọn 1 đáp án đúng (4 lựa chọn)
         - "multiple": Chọn nhiều đáp án đúng (4 lựa chọn, có thể có 2-3 đáp án đúng)
         - "fill": Điền từ vào chỗ trống (sử dụng dấu _ để đánh dấu chỗ trống)
         - "order": Sắp xếp theo thứ tự (5-8 mục cần sắp xếp)
-        - "match": Nối cặp (4-6 cặp cần nối)
 
       Hướng dẫn chi tiết theo từng loại:
 
@@ -935,7 +934,6 @@ Hướng dẫn tạo câu hỏi:
    - "multiple": Chọn nhiều đáp án đúng về các yếu tố trong hình
    - "fill": Điền từ mô tả hình ảnh (sử dụng dấu _)
    - "order": Sắp xếp các bước/quá trình thể hiện trong hình
-   - "match": Nối các yếu tố trong hình với mô tả/tên gọi
 
 Ví dụ câu hỏi dựa trên hình ảnh:
 - Nhận dạng đối tượng: "Trong hình có bao nhiêu...?"

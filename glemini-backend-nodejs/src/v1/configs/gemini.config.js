@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const schema = {
   description:
-    'List of quiz questions with various types including single choice, multiple choice, fill-in-blank, ordering, and matching',
+    'List of quiz questions with various types including single choice, multiple choice, fill-in-blank, and ordering',
   type: SchemaType.ARRAY,
   items: {
     type: SchemaType.OBJECT,
@@ -41,13 +41,13 @@ const schema = {
       questionType: {
         type: SchemaType.STRING,
         description:
-          'Type of question: "single" (one correct choice), "multiple" (multiple correct choices), "fill" (fill-in-blank), "order" (arrange in order), or "match" (match pairs)',
+          'Type of question: "single" (one correct choice), "multiple" (multiple correct choices), "fill" (fill-in-blank), or "order" (arrange in order)',
         nullable: false,
       },
       answers: {
         type: SchemaType.ARRAY,
         description:
-          'List of answers. Structure varies by question type: single/multiple=4 options, fill=blank answers, order=items to arrange, match=pairs to match',
+          'List of answers. Structure varies by question type: single/multiple=4 options, fill=blank answers, order=items to arrange',
         items: {
           type: SchemaType.OBJECT,
           description: 'Answer option with different structures based on question type',
@@ -65,11 +65,6 @@ const schema = {
             position: {
               type: SchemaType.NUMBER,
               description: 'Position/order for fill-in-blank or ordering questions (1-based index)',
-              nullable: true,
-            },
-            matchPair: {
-              type: SchemaType.STRING,
-              description: 'For matching questions: the item this answer should be paired with',
               nullable: true,
             },
           },
