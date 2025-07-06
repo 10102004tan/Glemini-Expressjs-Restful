@@ -21,20 +21,7 @@ class ResultService {
     answer,
     correct,
     score,
-    question_type,
   }) {
-    console.log(
-      exercise_id,
-      room_id,
-      user_id,
-      quiz_id,
-      question_id,
-      answer,
-      correct,
-      score,
-      question_type,
-    );
-
     const query = {
       user_id,
       quiz_id,
@@ -96,21 +83,12 @@ class ResultService {
       }
     }
 
-    if (question_type === 'box') {
-      result.result_questions.push({
-        question_id,
-        answer: answer.toString(),
-        correct,
-        score,
-      });
-    } else {
-      result.result_questions.push({
-        question_id,
-        answer,
-        correct,
-        score,
-      });
-    }
+    result.result_questions.push({
+      question_id,
+      answer,
+      correct,
+      score,
+    });
 
     await result.save();
 
@@ -209,7 +187,7 @@ class ResultService {
       });
 
     if (!result) {
-      throw new BadRequestError('Result not found');
+      return null;
     }
 
     // Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
@@ -399,14 +377,24 @@ class ResultService {
           select: 'user_fullname',
         },
       })
-      .populate({
+      .populate([{
         path: 'result_questions.question_id',
         model: 'Question',
-        populate: {
-          path: 'question_answer_ids',
-          model: 'Answer',
-        },
-      })
+        populate: [
+          {
+            path: 'question_answer_ids',
+            model: 'Answer',
+          },
+          {
+            path: 'correct_answer_ids',
+            model: 'Answer',
+          },
+        ]
+      }, {
+        path: 'result_questions.answer',
+        model: 'Answer',
+        select: 'text image',
+      }])
       .populate({
         path: 'exercise_id',
         select: 'name date_end',
@@ -415,6 +403,8 @@ class ResultService {
         path: 'room_id',
         select: 'room_code user_created_id',
       });
+
+
 
     // Nhóm các kết quả theo trạng thái
     const categorizedResults = {

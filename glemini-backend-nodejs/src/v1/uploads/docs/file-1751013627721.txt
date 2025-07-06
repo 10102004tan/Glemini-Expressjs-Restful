@@ -1,0 +1,118 @@
+Quiz Title: Template Hoàn Chỉnh - 5 Loại Câu Hỏi
+
+# ========== LOẠI 1: SINGLE CHOICE (Chọn 1 đáp án đúng) ==========
+
+Question: Thủ đô của Việt Nam là gì?
+Type: single
+Answer: A. Hà Nội
+Answer: B. Hồ Chí Minh
+Answer: C. Đà Nẵng
+Answer: D. Cần Thơ
+Correct Answer: A
+
+Question: 2 + 3 bằng bao nhiêu?
+Type: single
+Answer: A. 4
+Answer: B. 5
+Answer: C. 6
+Answer: D. 7
+Correct Answer: B
+
+# ========== LOẠI 2: MULTIPLE CHOICE (Chọn nhiều đáp án đúng) ==========
+
+Question: Những loài động vật nào sau đây là động vật có vú?
+Type: multiple
+Answer: A. Chó
+Answer: B. Mèo
+Answer: C. Cá vàng
+Answer: D. Bò
+Correct Answers: A, B, D
+
+Question: Những thành phố nào sau đây thuộc miền Bắc Việt Nam?
+Type: multiple
+Answer: A. Hà Nội
+Answer: B. Hải Phòng
+Answer: C. Đà Nẵng
+Answer: D. Quảng Ninh
+Correct Answers: A, B, D
+
+# ========== LOẠI 3: FILL IN THE BLANK (Điền từ vào chỗ trống) ==========
+
+Question: Thủ đô của Việt Nam là ___ và nó nằm ở miền ___ của đất nước.
+Type: fill
+Fill: Hà Nội (position: 1)
+Fill: Bắc (position: 2)
+
+Question: Trong năm có ___ tháng và một tuần có ___ ngày.
+Type: fill
+Fill: 12 (position: 1)
+Fill: 7 (position: 2)
+
+# ========== LOẠI 4: ORDER (Sắp xếp theo thứ tự) ==========
+
+Question: Sắp xếp các số sau theo thứ tự từ nhỏ đến lớn:
+Type: order
+Order: 3 (position: 1)
+Order: 7 (position: 2)
+Order: 15 (position: 3)
+Order: 25 (position: 4)
+
+Question: Sắp xếp các bước làm trà theo đúng thứ tự:
+Type: order
+Order: Đun nước sôi (position: 1)
+Order: Cho trà vào ấm (position: 2)
+Order: Rót nước sôi vào ấm (position: 3)
+Order: Ủ trà 3-5 phút (position: 4)
+Order: Rót trà ra tách (position: 5)
+
+# ========== LOẠI 5: MATCH (Nối cặp) ==========
+
+Question: Nối các quốc gia với thủ đô tương ứng:
+Type: match
+Match: Việt Nam -> Hà Nội
+Match: Thái Lan -> Bangkok
+Match: Nhật Bản -> Tokyo
+Match: Pháp -> Paris
+
+Question: Nối các môn học với công cụ học tập:
+Type: match
+Match: Toán học -> Máy tính
+Match: Vẽ -> Bút chì
+Match: Thể dục -> Bóng đá
+Match: Âm nhạc -> Đàn piano
+
+# ========== HƯỚNG DẪN SỬ DỤNG ==========
+
+CÁCH SỬ DỤNG TEMPLATE:
+
+1. SINGLE CHOICE:
+   - Dùng "Type: single"
+   - 4 đáp án A, B, C, D
+   - 1 đáp án đúng duy nhất
+
+2. MULTIPLE CHOICE:
+   - Dùng "Type: multiple"
+   - 4 đáp án A, B, C, D
+   - Có thể có 2-3 đáp án đúng
+   - Viết "Correct Answers: A, B, D"
+
+3. FILL IN THE BLANK:
+   - Dùng "Type: fill"
+   - Câu hỏi có dấu gạch dưới _
+   - Mỗi từ cần điền có "Fill: từ (position: số thứ tự)"
+
+4. ORDER:
+   - Dùng "Type: order"
+   - Liệt kê các mục cần sắp xếp
+   - Mỗi mục có "Order: nội dung (position: thứ tự đúng)"
+
+5. MATCH:
+   - Dùng "Type: match"
+   - Dùng dấu mũi tên -> để nối cặp
+   - "Match: A -> B"
+
+LƯU Ý:
+- Mỗi câu hỏi bắt đầu bằng "Question:"
+- Phải có "Type:" để xác định loại câu hỏi
+- Đáp án đúng phải chính xác
+- Có thể trộn lẫn các loại câu hỏi trong một file

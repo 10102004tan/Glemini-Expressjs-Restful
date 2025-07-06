@@ -8,10 +8,8 @@ const {
   uploadDocs,
   uploadGenimiRequestImage,
 } = require('../../configs/multer.config');
-const templateRouter = require('../template');
 const { authentication } = require('../../auths');
 
-router.use('/get-templates', templateRouter);
 router.post('/search', asynHandler(quizController.search));
 
 // AUTHENTICATION
