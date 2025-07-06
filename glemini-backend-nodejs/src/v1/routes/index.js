@@ -18,6 +18,17 @@ const routeClassroom = require('./classroom');
 const routeExercise = require('./exercise');
 const routeRoom = require('./room');
 
+
+const deprecatedRoutes = [
+  {
+    version: 'v1',
+    routes: ['auth/login', 'auth/signup', 'auth/logout', 'auth/refresh-token'],
+  }
+];
+
+const deprecated = require('../middlewares/deprecated');
+router.use(deprecated(deprecatedRoutes));
+
 router.get('/working', (req, res, next) => {
   res
     .send({
