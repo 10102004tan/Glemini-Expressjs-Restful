@@ -73,6 +73,16 @@ class AccessController {
       }),
     }).send(res);
   };
+
+  refreshToken = async (req, res, next) => {
+    console.log('refresh token');
+    return new OK({
+      message: 'refresh token successfully',
+      metadata: await accessService.refreshToken({
+        user: req.user,
+      }),
+    }).send(res);
+  }
 }
 
 module.exports = new AccessController();
