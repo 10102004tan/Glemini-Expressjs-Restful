@@ -8,6 +8,7 @@ const { uploadDisk } = require('@v1/configs/multer.config');
 
 router.post('/signup', asynHandler(accessController.signup));
 router.post('/login', asynHandler(accessController.login));
+router.post('/refresh-token', asynHandler(authentication), asynHandler(accessController.refreshToken));
 
 router.post('/logout', asynHandler(authentication), asynHandler(accessController.logout));
 
