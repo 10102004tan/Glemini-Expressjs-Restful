@@ -208,16 +208,33 @@ class ClassroomService {
   async getClassroomById(classroomId) {
     const classroom = await classroomModel
       .findById(classroomId)
+      .populate('user_id', 'user_fullname user_email user_avatar')
       .populate({
         path: 'exercises',
+        select: 'name date_start date_end',
         populate: {
           path: 'quiz_id',
           select: 'quiz_name quiz_thumb',
         },
       })
-      .populate('school')
-      .populate('subject')
-      .populate('students');
+      .populate([
+        {
+          path: 'school', 
+          select: 'school_name',
+          populate: [{
+            path: 'district',
+            select: 'district_name',
+          },{
+            path: 'province',
+            select: 'province_name',
+          }]
+        },
+      ])
+      .populate({
+        path: 'subject',
+        select: 'name thumb',
+      })
+      .populate('students', 'user_fullname user_email user_avatar');
 
     if (!classroom) {
       throw new BadRequestError('Classroom not found');
@@ -286,7 +303,7 @@ class ClassroomService {
       //  Nếu người dùng tồn tại thì kiểm tra vai trò từ bảng roles
       if (user) {
         const role = await roleModel.findOne(user.user_role).lean();
-        // console.log('role::', role);
+        console.log('role::', role);
 
         if (role && role.role_name === 'teacher') {
           console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
@@ -300,24 +317,29 @@ class ClassroomService {
       }
 
       // Nếu người dùng chưa tồn tại thì tạo mới
-      if (!user) {
-        const fullname = user_email.split('@')[0];
-        const signupData = {
-          email: user_email,
-          password: '12345678',
-          fullname: fullname,
-        };
+     if (!user) {
+  const fullname = user_email.split('@')[0];
+  const signupData = {
+    email: user_email,
+    password: '12345678',
+    fullname: fullname,
+  };
 
-        const newUser = await AccessService.signup(signupData);
-        user = newUser.user;
+  user = await AccessService.signup(signupData);
 
-        // Sau khi tạo, kiểm tra lại role
-        const role = await roleModel.findOne(user.user_role).lean();
-        if (role && role.role_name === 'teacher') {
-          console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
-          return false;
-        }
-      }
+  if (!user.user_role) {
+    console.warn(`User ${user_email} does not have a role assigned yet.`);
+    return false;
+  }
+
+  const role = await roleModel.findOne({ _id: user.user_role }).lean();
+  log(`Role of user ${user_email}:`, role);
+
+  if (role?.role_name === 'teacher') {
+    console.warn(`User with email ${user_email} is a teacher and cannot be added to the classroom.`);
+    return false;
+  }
+}
 
       // hêm học sinh vào lớp nếu chưa có
       if (!classroom.students.includes(user._id)) {
