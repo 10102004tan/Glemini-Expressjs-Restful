@@ -18,11 +18,11 @@ const createKeyPair = async ({ payload, publicKey, privateKey }) => {
   const accessToken = await JWT.sign(payload, publicKey, {
     // expiresIn: '2 days',
     // 30s
-    expiresIn: '5 seconds',
+    expiresIn: '7 days',
   });
 
   const refreshToken = await JWT.sign(payload, privateKey, {
-    expiresIn: '10 seconds',
+    expiresIn: '30 days',
   });
 
   return {

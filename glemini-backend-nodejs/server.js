@@ -1,7 +1,7 @@
 'use strict';
 
 const server = require('./src/app');
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 const chark = require('chalk');
 
 server.listen(PORT, () => {

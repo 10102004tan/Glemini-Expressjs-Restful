@@ -39,9 +39,10 @@ class SocketService {
         })
           .then((decoded) => {
             const { user_id } = decoded;
+            userId = user_id; // Set userId từ token
             socket.auth = true;
             _userSockets[user_id] = socket;
-            console.log(`Pong received from user ${user_id}`);
+            console.log(`User ${user_id} authenticated successfully`);
           })
           .catch((err) => {
             console.log('Token verification failed:', err);
@@ -53,18 +54,17 @@ class SocketService {
 
     // Xử lý sự kiện pong từ client
     socket.on('pong', async ({ timestamp }) => {
-      if (socket.auth) {
+      if (socket.auth && userId) {
         _userLast[userId] = timestamp;
+        _lastPongAt = timestamp;
       }
     });
 
     //
     const pingInterval = setInterval(() => {
       console.log(`Checking user ${socket.id} connection`);
-      if (!socket.auth) {
+      if (!socket.auth || !userId) {
         console.log(`User ${socket.id} not authenticated yet, skip ping.`);
-        _userSockets[userId]; // Nếu chưa xác thực thì không gửi ping
-        socket.disconnect();
         return;
       }
 
@@ -84,12 +84,13 @@ class SocketService {
     }, PING_INTERVAL);
 
     socket.on('disconnect', () => {
-      if (!userId) {
-        console.log(`User ID not set for socket ${socket.id}. Cannot handle disconnect.`);
+      console.log(`Socket ${socket.id} disconnected`);
+      if (userId) {
+        console.log(`User ${userId} disconnected`);
+        delete _userSockets[userId];
+        delete _userLast[userId];
       }
-      console.log(`User ${userId} disconnected`);
       clearInterval(pingInterval); // Clear interval khi user disconnect
-      delete _userSockets[userId];
     });
 
     socket.on('react-dashboard-call', (data) => {
@@ -123,19 +124,28 @@ class SocketService {
     // Xử lý sự kiện join vào một room
     socket.on('joinRoom', ({ roomCode, user }) => {
       console.log('HERE');
-      socket.join(roomCode);
+      console.log('User object received from client:', user);
+      console.log('RoomCode:', roomCode);
+
+      // Tạm thời bỏ qua authentication để test
+      socket.auth = true;
       socket.user = user; // Lưu thông tin người dùng vào socket
       socket.user.score = 0; // Khởi tạo điểm số ban đầu
 
-      console.log(`${user.user_fullname} joined room: ${roomCode}`);
+      socket.join(roomCode);
+      console.log(`Socket ${socket.id} joined room: ${roomCode}`);
+
+      console.log(`${user.fullname || user.user_fullname || 'Unknown'} joined room: ${roomCode}`);
 
       // Phát cho tất cả các client khác trong room biết người mới vào
+      console.log(`Emitting userJoined to room ${roomCode}`);
       socket.to(roomCode).emit('userJoined', {
-        message: `${user.user_fullname} has joined the room.`,
+        message: `${user.fullname || user.user_fullname || 'Unknown'} has joined the room.`,
         user: user,
       });
 
       // Phát danh sách tất cả user hiện tại trong room cho người mới vào
+      console.log(`Emitting updateUserList to room ${roomCode}`);
       _io.to(roomCode).emit('updateUserList', getUsersInRoom(roomCode));
     });
 
@@ -147,7 +157,7 @@ class SocketService {
 
     // Xử lý khi user rời room
     socket.on('leaveRoom', ({ roomCode }) => {
-      const username = socket.user?.user_fullname || 'Unknown user';
+      const username = socket.user?.fullname || socket.user?.user_fullname || 'Unknown user';
       socket.leave(roomCode);
       console.log(`${username} left room: ${roomCode}`);
 

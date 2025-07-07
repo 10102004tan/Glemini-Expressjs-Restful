@@ -30,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   require('cors')({
-    origin: 'http://localhost:8000',
+    origin: ['http://localhost:8000', 'http://192.168.2.4:3000', 'http://localhost:3000'],
     credentials: true,
   }),
 );

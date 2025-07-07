@@ -127,20 +127,48 @@ class ResultService {
       query.type = 'publish';
     }
 
-    // Cập nhật lại trạng thái kết thúc cho quiz đó
-    const result = await ResultModel.findOneAndUpdate(
-      query,
-      { status: 'completed' },
-      { new: true, runValidators: true },
-    );
+    // Tìm result hiện tại
+    let result = await ResultModel.findOne(query);
+
+    // Nếu không có result (user chưa làm câu nào), tạo result rỗng
+    if (!result) {
+      result = new ResultModel({
+        user_id,
+        quiz_id,
+        status: 'completed',
+        result_questions: [],
+        type: query.type,
+      });
+
+      if (exercise_id) {
+        result.exercise_id = exercise_id;
+      }
+      if (room_id) {
+        result.room_id = room_id;
+      }
+
+      await result.save();
+
+      // Thêm result vào room nếu có
+      if (room_id) {
+        await roomModel.findByIdAndUpdate(
+          { _id: room_id },
+          { $addToSet: { result_ids: result._id } },
+          { new: true, runValidators: true },
+        );
+      }
+    } else {
+      // Cập nhật trạng thái kết thúc cho quiz đó
+      result = await ResultModel.findOneAndUpdate(
+        query,
+        { status: 'completed' },
+        { new: true, runValidators: true },
+      );
+    }
 
     // Xóa người dùng ra khỏi phòng
     if (room_id) {
       await roomModel.findByIdAndUpdate({ _id: room_id }, { $pull: { user_join_ids: user_id } });
-    }
-
-    if (!result) {
-      throw new BadRequestError('Result not found');
     }
 
     // Update quiz play count
@@ -377,24 +405,27 @@ class ResultService {
           select: 'user_fullname',
         },
       })
-      .populate([{
-        path: 'result_questions.question_id',
-        model: 'Question',
-        populate: [
-          {
-            path: 'question_answer_ids',
-            model: 'Answer',
-          },
-          {
-            path: 'correct_answer_ids',
-            model: 'Answer',
-          },
-        ]
-      }, {
-        path: 'result_questions.answer',
-        model: 'Answer',
-        select: 'text image',
-      }])
+      .populate([
+        {
+          path: 'result_questions.question_id',
+          model: 'Question',
+          populate: [
+            {
+              path: 'question_answer_ids',
+              model: 'Answer',
+            },
+            {
+              path: 'correct_answer_ids',
+              model: 'Answer',
+            },
+          ],
+        },
+        {
+          path: 'result_questions.answer',
+          model: 'Answer',
+          select: 'text image',
+        },
+      ])
       .populate({
         path: 'exercise_id',
         select: 'name date_end',
@@ -403,8 +434,6 @@ class ResultService {
         path: 'room_id',
         select: 'room_code user_created_id',
       });
-
-
 
     // Nhóm các kết quả theo trạng thái
     const categorizedResults = {
