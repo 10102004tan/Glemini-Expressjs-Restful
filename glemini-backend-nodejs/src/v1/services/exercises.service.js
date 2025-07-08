@@ -4,24 +4,46 @@ const { BadRequestError } = require('../cores/error.repsone');
 class ExerciseService {
   async detailExercise({ id }) {
     const exercise = await exerciseModel.findById(id).populate([
+  {
+    path: 'quiz_id',
+    select: 'quiz_name quiz_thumb',
+  },
+  {
+    path: 'classroom_id',
+    model: 'Classroom',
+    select: 'class_name',
+  },
+  {
+    path: 'result_ids',
+    model: 'Result',
+    populate: [
+      {
+        path: 'user_id',
+        model: 'User',
+        select: 'user_fullname user_avatar user_email',
+      },
       {
         path: 'quiz_id',
         select: 'quiz_name quiz_thumb',
       },
       {
-        path: 'classroom_id',
-        model: 'Classroom',
-        select: 'class_name',
-      },
-      {
-        path: 'result_ids',
+        path: 'result_questions.question_id',
+        select:
+          'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
         populate: {
-          path: 'user_id',
-          model: 'User',
-          select: 'user_fullname user_avatar user_email',
+          path: 'question_answer_ids',
+          model: 'Answer',
+          select: 'text image',
         },
       },
-    ]);
+      {
+        path: 'result_questions.answer',
+        select: 'text image',
+      },
+    ],
+  },
+]);
+
 
     if (!exercise) {
       throw new BadRequestError("Don't have exercise in exercise!");
