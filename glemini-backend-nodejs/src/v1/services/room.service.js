@@ -67,27 +67,49 @@ class RoomService {
   }
 
   async detailRoom({ id }) {
-    const room = await roomModel.findById(id).populate([
-      {
-        path: 'quiz_id',
-        select: 'quiz_name quiz_thumb',
-      },
-      {
-        path: 'result_ids',
-        populate: {
+  const room = await roomModel.findById(id).populate([
+    {
+      path: 'quiz_id',
+      select: 'quiz_name quiz_thumb',
+    },
+    {
+      path: 'result_ids',
+      match: { status: 'completed' },
+      model: 'Result',
+      populate: [
+        {
           path: 'user_id',
           model: 'User',
           select: 'user_fullname user_avatar user_email',
         },
-      },
-    ]);
+        {
+          path: 'quiz_id',
+          select: 'quiz_name quiz_thumb',
+        },
+        {
+          path: 'result_questions.question_id',
+          select:
+            'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
+          populate: {
+            path: 'question_answer_ids',
+            model: 'Answer',
+            select: 'text image',
+          },
+        },
+        {
+          path: 'result_questions.answer',
+          select: 'text image',
+        },
+      ],
+    },
+  ]);
 
-    if (!room) {
-      throw new BadRequestError("Don't have report in room!");
-    }
-
-    return room;
+  if (!room) {
+    throw new BadRequestError("Don't have report in room!");
   }
+
+  return room;
+}
 
   // Hàm thêm người dùng đã join vào phòng
   async addUserToRoom({ room_code, user_id }) {

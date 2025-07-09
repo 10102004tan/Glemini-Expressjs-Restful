@@ -15,6 +15,7 @@ class ExerciseService {
   },
   {
     path: 'result_ids',
+    match: { status: 'completed' },
     model: 'Result',
     populate: [
       {
