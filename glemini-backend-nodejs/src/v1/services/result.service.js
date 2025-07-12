@@ -377,24 +377,27 @@ class ResultService {
           select: 'user_fullname',
         },
       })
-      .populate([{
-        path: 'result_questions.question_id',
-        model: 'Question',
-        populate: [
-          {
-            path: 'question_answer_ids',
-            model: 'Answer',
-          },
-          {
-            path: 'correct_answer_ids',
-            model: 'Answer',
-          },
-        ]
-      }, {
-        path: 'result_questions.answer',
-        model: 'Answer',
-        select: 'text image',
-      }])
+      .populate([
+        {
+          path: 'result_questions.question_id',
+          model: 'Question',
+          populate: [
+            {
+              path: 'question_answer_ids',
+              model: 'Answer',
+            },
+            {
+              path: 'correct_answer_ids',
+              model: 'Answer',
+            },
+          ],
+        },
+        {
+          path: 'result_questions.answer',
+          model: 'Answer',
+          select: 'text image',
+        },
+      ])
       .populate({
         path: 'exercise_id',
         select: 'name date_end',
@@ -403,8 +406,6 @@ class ResultService {
         path: 'room_id',
         select: 'room_code user_created_id',
       });
-
-
 
     // Nhóm các kết quả theo trạng thái
     const categorizedResults = {
@@ -699,7 +700,9 @@ class ResultService {
   static async resetResultRoom({ room_id, user_id }) {
     const result = await ResultModel.findOne({ room_id, user_id });
     if (!result) {
-      throw new BadRequestError('Result not found');
+      // Return null or empty object instead of throwing error
+      // This is normal for users who haven't played this room before
+      return null;
     }
 
     result.status = 'doing';
