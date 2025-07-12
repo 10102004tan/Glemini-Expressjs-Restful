@@ -87,18 +87,23 @@ class RoomService {
           select: 'quiz_name quiz_thumb',
         },
         {
-          path: 'result_questions.question_id',
-          select:
-            'question_excerpt question_description question_image question_point question_explanation question_answer_ids',
-          populate: {
-            path: 'question_answer_ids',
-            model: 'Answer',
-            select: 'text image',
+            path: 'result_questions.question_id',
+            select:
+              'question_excerpt question_description question_type question_image question_point question_explanation question_answer_ids correct_answer_ids',
+            populate: [{
+              path: 'question_answer_ids',
+              model: 'Answer',
+              select: 'text image',
+            }, {
+              path: 'correct_answer_ids',
+              model: 'Answer',
+              select: 'text image',
+            }],
           },
-        },
         {
           path: 'result_questions.answer',
           select: 'text image',
+          model: 'Answer',
         },
       ],
     },
