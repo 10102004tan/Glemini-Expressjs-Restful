@@ -89,9 +89,26 @@ class QuestionService {
       const correctAnswerIds = [];
 
       const promises = question.question_answer_ids.map(async (answer, index) => {
+        console.log(`🔍 Processing answer ${index}:`, JSON.stringify(answer, null, 2));
+
+        if (!answer.text) {
+          console.error(`❌ Answer ${index} missing text field:`, answer);
+          throw new BadRequestError(`Answer ${index + 1} text is required.`);
+        }
+
+        // For match questions, store matchPair in attributes
+        const attributes = {};
+        if (answer.matchPair) {
+          attributes.match = answer.matchPair;
+        }
+        if (answer.position) {
+          attributes.position = answer.position;
+        }
+
         const answerData = await answerModel.create({
           text: answer.text,
-          image: answer.image,
+          image: answer.image || '',
+          attributes: attributes,
         });
 
         if (answerData) {

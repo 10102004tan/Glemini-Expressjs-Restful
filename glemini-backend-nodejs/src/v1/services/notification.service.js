@@ -8,8 +8,7 @@ const {
 const userModel = require('../models/user.model');
 const { pushNoti } = require('./expo.service');
 const { findExpoTokenAllService, findAllExpotoken } = require('./expoToken.service');
-const { producerQueue } = require('./producerQueue.service');
-const { UserService } = require('./user.service');
+const MessageService = require("@v1/services/producerQueue.service")
 const pushNotiForSys = async ({
   type = 'SYS-001',
   receiverId = 1,
@@ -25,6 +24,50 @@ const pushNotiForSys = async ({
     noti_type: type,
   });
 
+
+  // push notification
+  /*flow
+  1. check if user online
+  2. if online, emit notification to user
+  3. if offline, push notification to expo token
+  4. if not found expo token, do nothing
+  */ 
+ console.log('receiverId::', receiverId);
+ const userFoundInMap = _userSockets[receiverId.toString()];
+ console.log('userFoundInMap::', userFoundInMap);
+  if (userFoundInMap) {
+    console.log('userFoundInMap::', userFoundInMap);
+  }else{
+    const queueName = 'notifications';
+    const message = {
+      channels: ['expo'],
+      to: receiverId,
+      subject: 'Welcome to Glemini',
+    }
+    await MessageService.producerQueue(queueName,message)
+  }
+
+  return newNoti;
+};
+
+const createNotification = async ({
+  type = 'SYS-001',
+  receiverId = 1,
+  senderId = 1,
+  options = {},
+  content = '',
+}) => {
+  const newNoti = await NOTI.create({
+    noti_content: content,
+    noti_options: options,
+    noti_receiverId: receiverId,
+    noti_senderId: senderId,
+    noti_type: type,
+  });
+
+  // push
+  
+
   return newNoti;
 };
 
@@ -36,8 +79,35 @@ const findNotiByType = async (type) => {
 };
 
 const getNotificationReceiverIdService = async ({ userId, skip, limit }) => {
-  console.log('userId', userId);
-  return await getNotificationByReceiverId({ userId, skip, limit });
+  let result ={
+    items: [],
+    totalPage:0,
+    totalItems: 0,
+  }
+  const notifications = await getNotificationByReceiverId({
+    userId,
+    skip,
+    limit,
+  });
+
+  const totalPage = Math.ceil(notifications.total / limit);
+  result.totalPage = totalPage;
+  result.totalItems = notifications.length;
+  result.items = notifications.listNoti.map((item) => {
+    return {
+      noti_id: item._id,
+      noti_content: item.noti_content,
+      noti_options: item.noti_options,
+      noti_receiverId: item.noti_receiverId,
+      noti_senderId: item.noti_senderId,
+      noti_type: item.noti_type,
+      noti_status: item.noti_status,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
+  });
+  return result;
+
 };
 
 const updateStatusNotificationService = async ({ notiId, status }) => {
@@ -51,6 +121,7 @@ const updateStatusNotificationService = async ({ notiId, status }) => {
 const readAll = (userId) => {
   return NOTI.updateMany({ noti_receiverId: userId }, { noti_status: 'read' });
 };
+
 
 const sendNotificationAdminService = async ({
   senderId,
@@ -116,4 +187,5 @@ module.exports = {
   updateStatusNotificationService,
   sendNotificationAdminService,
   readAll,
+  createNotification
 };

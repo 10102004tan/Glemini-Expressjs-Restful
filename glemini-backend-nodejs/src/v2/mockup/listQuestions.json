@@ -1,0 +1,181 @@
+[
+    {
+      "id": 1,
+      question: 'What is the capital of France?',
+      options: [
+        {
+          id: 1,
+          text: 'Paris',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 2,
+          text: 'London',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 3,
+          text: 'Berlin',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 4,
+          text: 'Madrid',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+      ],
+      type: 'single',
+    },
+    {
+      id: 2,
+      question: 'The capital of France is ___ and it is known for the ___ Tower.',
+      // đục lỗ
+      type: 'fill',
+      image:
+        'https://cdn3d.iconscout.com/3d/free/preview/free-duolingo-3d-icon-download-in-png-blend-fbx-gltf-file-formats--logo-brand-social-media-and-pack-logos-icons-9940806.png?f=webp&h=700',
+      options: [
+        {
+          id: 1,
+          position: 1,
+          text: 'Paris',
+        },
+        {
+          id: 2,
+          position: 2,
+          text: 'Eiffel',
+        },
+        {
+          id: 3,
+          position: 3,
+          text: 'Tower',
+        },
+        {
+          id: 4,
+          position: 4,
+          text: 'France',
+        },
+      ],
+    },
+    // xắp xếp theo thứ tự
+    {
+      id: 3,
+      question: 'Arrange the planets in order of their distance from the sun.',
+      type: 'order',
+      options: [
+        {
+          id: 1,
+          text: 'Mercury',
+        },
+        {
+          id: 2,
+          text: 'Venus',
+        },
+        {
+          id: 3,
+          text: 'Earth',
+        },
+        {
+          id: 4,
+          text: 'Mars',
+        },
+        {
+          id: 5,
+          text: 'Jupiter',
+        },
+        {
+          id: 6,
+          text: 'Saturn',
+        },
+        {
+          id: 7,
+          text: 'Uranus',
+        },
+        {
+          id: 8,
+          text: 'Neptune',
+        },
+      ],
+    },
+    {
+      id: 4,
+      question: 'Match the following countries with their capitals.',
+      type: 'match',
+      options: [
+        {
+          id: 1,
+          items: [
+            {
+              text: 'France',
+            },
+            {
+              text: 'Paris',
+            },
+            {
+              text: 'Germany',
+            },
+            {
+              text: 'Berlin',
+            },
+            {
+              text: 'Spain',
+            },
+            {
+              text: 'Madrid',
+            },
+          ],
+        },
+        {
+          id: 2,
+          items: [
+            {
+              text: 'Italy',
+            },
+            {
+              text: 'Rome',
+            },
+            {
+              text: 'Japan',
+            },
+            {
+              text: 'Tokyo',
+            },
+            {
+              text: 'USA',
+            },
+            {
+              text: 'Washington D.C.',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 1,
+      question: 'What is the capital of France?',
+      options: [
+        {
+          id: 1,
+          text: 'Paris',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 2,
+          text: 'London',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+        {
+          id: 3,
+          text: 'Berlin',
+          image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS77FladSUDfZrsWEf9Vf1RSh752wuXXE52ig&s',
+        },
+      ],
+      type: 'single',
+    },
+  ]

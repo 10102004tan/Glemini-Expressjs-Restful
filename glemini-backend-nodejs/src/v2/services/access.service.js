@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * @file AccessSevice.ts
+ * @file AccessSevice.js
  * @description Service for handling user access operations such as signup, login, logout, and user management.
  * @module AccessSevice
  * @requires bcrypt
@@ -11,31 +11,35 @@
  * @author 10102004tan
  * @license MIT
  */
-const { createKeyPair } = require('../../v1/auths');
+const { createKeyPair } = require('@v1/auths');
 const {
   BadRequestError,
   InternalServerError,
   NotFoundError,
 } = require('../../v1/cores/error.repsone');
 
-const { findKeyTokenByUserId } = require('../../v1/models/repositories/keyToken.repo');
-const { updateStatusTeacherV2 } = require('../../v1/models/repositories/teacher.repo');
+const { findKeyTokenByUserId } = require('@v1/models/repositories/keyToken.repo');
+const { updateStatusTeacherV2 } = require('@v1/models/repositories/teacher.repo');
 const {
   findUserByEmail,
   findUserByEmailV2,
   findUserById,
-} = require('../../v1/models/repositories/user.repo');
+} = require('@v1/models/repositories/user.repo');
 
-const roleModel = require('../../v1/models/role.model');
-const teacherModel = require('../../v1/models/teacher.model');
-const userModel = require('../../v1/models/user.model');
+const roleModel = require('@v1/models/role.model');
+const teacherModel = require('@v1/models/teacher.model');
+const userModel = require('@v1/models/user.model');
 
-const KeyTokenService = require('../../v1/services/keyToken.service');
-const { set } = require('../../v1/services/redis.service');
-const UploadService = require('../../v1/services/upload.service');
+const KeyTokenService = require('@v1/services/keyToken.service');
+const { set } = require('@v1/services/redis.service');
+const UploadService = require('@v1/services/upload.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const DeviceService = require('./device.service');
+const { countNotificationUnread } = require('@v1/models/repositories/notification.repo');
+const messageService = require('@v1/services/producerQueue.service');
+
 
 class AccessSevice {
   static async signup(signupData) {
@@ -86,10 +90,17 @@ class AccessSevice {
     }
 
     // verify email
+    const bodyVerifyEmail = {
+      channels: ['email'],
+      to: email,
+      subject: 'Verify Email',
+      text: 'template',
+    };
+
+    await messageService.producerQueue('notifications', bodyVerifyEmail);
 
     return newUser;
   }
-
   static async login(loginData) {
     const { email, password } = loginData;
     // check if email is already used
@@ -147,6 +158,8 @@ class AccessSevice {
       };
     }
 
+    const countNotiUnRead = await countNotificationUnread(foundUser._id);
+
     return {
       user: {
         fullname: foundUser.user_fullname,
@@ -154,12 +167,14 @@ class AccessSevice {
         user_id: foundUser._id,
         user_role: foundUser.user_role.role_name,
         user_avatar: foundUser.user_avatar,
+        status_teacher_verified: null,
+        count_notification_unread: countNotiUnRead,
       },
       tokens: tokens,
     };
   }
 
-  static async logout({ user }) {
+  static async logout({ user, deviceToken }) {
     const { user_id, jit } = user;
     // check if user is exist
     const foundUser = await findUserById(user_id);
@@ -169,10 +184,15 @@ class AccessSevice {
     }
 
     const key = `TOKEN_BLACK_LIST_${user_id}_${jit}`;
-    // await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
+    await set(key, 1, 60 * 60 * 24 * 2); // store for 2 days
+    // remove device token
+    await DeviceService.deleteDevice({
+      userId: user_id,
+      deviceToken: deviceToken,
+    });
+
     return true;
   }
-
   static async me({ user }) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
@@ -186,6 +206,9 @@ class AccessSevice {
       };
     }
 
+    // get count notification unread
+    const countNotiUnRead = await countNotificationUnread(user.user_id);
+
     return {
       fullname: user.user_fullname,
       email: user.user_email,
@@ -193,6 +216,7 @@ class AccessSevice {
       user_role: user.user_role,
       user_avatar: user.user_avatar,
       status_teacher_verified: foundTeacher.status,
+      count_notification_unread: countNotiUnRead,
     };
   }
 
@@ -204,7 +228,6 @@ class AccessSevice {
     if (!files) {
       // console.log("files is required");
       // throw new BadRequestError("files is required");
-
       // find teacher
       const foundTeacher = await teacherModel.findOne({ userId: user_id }).lean();
       if (foundTeacher) {
@@ -308,6 +331,44 @@ class AccessSevice {
       });
     }
     return 1;
+  }
+
+  static async refreshToken({ user }) {
+    const { user_id,jit:jitRefreshToken } = user;
+    // find key token by user_id
+    const keyToken = await findKeyTokenByUserId(user_id);
+    if (!keyToken) {
+      throw new NotFoundError('key token not found');
+    }
+
+    // create new jit
+    const jit = uuidv4();
+
+    // create access token and refresh token
+    const payload = {
+      user_id: user_id,
+      user_email: user.user_email,
+      user_role: user.user_role,
+      user_avatar: user.user_avatar,
+      user_fullname: user.user_fullname,
+      jit: jit,
+      iat: Math.floor(Date.now() / 1000), // current time in seconds
+    };
+
+    const tokens = await createKeyPair({
+      payload,
+      publicKey: keyToken.public_key,
+      privateKey: keyToken.private_key,
+    });
+
+    if (!tokens) {
+      throw new BadRequestError('refresh token failed!!!,pls try again');
+    }
+
+    // set refreshToken to redis
+    const key = `TOKEN_BLACK_LIST_${user_id}_${jitRefreshToken}`;
+    await set(key, 1, 60 * 60 * 24 * 7); // store for 7 days
+    return tokens;
   }
 }
 

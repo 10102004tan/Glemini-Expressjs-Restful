@@ -560,13 +560,15 @@ class QuizService {
 
   // Hàm phân tích nội dung và tạo câu hỏi từ file docx
   static parseQuestionsFromText = (text) => {
-    console.log(text);
+    console.log('📄 Parsing text template...');
     const lines = text.split('\n');
     const questions = [];
     let currentQuestion = null;
 
     lines.forEach((line) => {
-      line = line.replace('\r', '');
+      line = line.replace('\r', '').trim();
+
+      // Detect question start
       if (line.startsWith('Question:')) {
         if (currentQuestion) {
           questions.push(currentQuestion);
@@ -574,11 +576,59 @@ class QuizService {
         currentQuestion = {
           question: line.split('Question:')[1].trim(),
           answers: [],
+          questionType: 'single', // default
         };
-      } else if (line.startsWith('Answer: ')) {
-        currentQuestion.answers.push(line.split('Answer: ')[1]);
-      } else if (line.startsWith('Correct Answer:')) {
+      }
+      // Detect question type
+      else if (line.startsWith('Type:')) {
+        const type = line.split('Type:')[1].trim().toLowerCase();
+        if (['single', 'multiple', 'fill', 'order', 'match'].includes(type)) {
+          currentQuestion.questionType = type;
+        }
+      }
+      // Handle different answer formats based on type
+      else if (line.startsWith('Answer: ') || line.match(/^[A-Z]\./)) {
+        const answer = line.startsWith('Answer: ') ? line.split('Answer: ')[1] : line;
+        currentQuestion.answers.push(answer);
+      }
+      // Handle fill-in-blank answers with position
+      else if (line.startsWith('Fill: ')) {
+        const fillData = line.split('Fill: ')[1];
+        const parts = fillData.split(' (position: ');
+        if (parts.length === 2) {
+          const answer = parts[0];
+          const position = parseInt(parts[1].replace(')', ''));
+          currentQuestion.answers.push({ answer, position });
+        }
+      }
+      // Handle order answers with position
+      else if (line.startsWith('Order: ')) {
+        const orderData = line.split('Order: ')[1];
+        const parts = orderData.split(' (position: ');
+        if (parts.length === 2) {
+          const answer = parts[0];
+          const position = parseInt(parts[1].replace(')', ''));
+          currentQuestion.answers.push({ answer, position });
+        }
+      }
+      // Handle match pairs
+      else if (line.startsWith('Match: ')) {
+        const matchData = line.split('Match: ')[1];
+        const parts = matchData.split(' -> ');
+        if (parts.length === 2) {
+          currentQuestion.answers.push({ answer: parts[0], matchPair: parts[1] });
+        }
+      }
+      // Handle correct answers
+      else if (line.startsWith('Correct Answer:')) {
         currentQuestion.correctAnswer = line.split(': ')[1];
+      }
+      // Handle multiple correct answers
+      else if (line.startsWith('Correct Answers:')) {
+        currentQuestion.correctAnswers = line
+          .split(': ')[1]
+          .split(',')
+          .map((a) => a.trim());
       }
     });
 
@@ -586,49 +636,90 @@ class QuizService {
       questions.push(currentQuestion);
     }
 
+    console.log(`✅ Parsed ${questions.length} questions from text template`);
     return questions;
   };
 
   // Hàm phân tích nội dung và tạo câu hỏi từ file md
   static parseQuestionsFromMd(text) {
-    const lines = text.split('\n'); // Tách nội dung thành từng dòng
-    const questions = []; // Mảng để lưu trữ các câu hỏi
-    let currentQuestion = null; // Biến để lưu câu hỏi hiện tại
+    console.log('📄 Parsing markdown template...');
+    const lines = text.split('\n');
+    const questions = [];
+    let currentQuestion = null;
 
     lines.forEach((line) => {
-      // console.log('lien: ' + line);
-      // Kiểm tra dòng bắt đầu bằng '## Question'
+      line = line.trim();
+
+      // Detect question start
       if (line.startsWith('## Question:')) {
-        // Nếu có câu hỏi hiện tại thì thêm vào mảng câu hỏi
         if (currentQuestion) {
           questions.push(currentQuestion);
         }
-        // Tạo một đối tượng câu hỏi mới
         currentQuestion = {
-          question: line.split('## Question:')[1].trim(), // Lấy câu hỏi
-          answers: [], // Mảng để lưu đáp án
+          question: line.split('## Question:')[1].trim(),
+          answers: [],
+          questionType: 'single', // default
         };
       }
-      // Kiểm tra dòng đáp án bắt đầu bằng '-'
-      else if (line.match(/^\-   [A-Z]\./)) {
-        // console.log('LINE MATCH ANSWER');
-        // Lấy đáp án từ dòng bắt đầu bằng '-'
-        const answer = line.replace(/^\-   /, '').trim(); // Loại bỏ ký tự '-' và khoảng trắng
-        currentQuestion.answers.push(answer); // Lưu đáp án vào mảng
+      // Detect question type
+      else if (line.startsWith('**Type:**')) {
+        const type = line.split('**Type:**')[1].trim().toLowerCase();
+        if (['single', 'multiple', 'fill', 'order', 'match'].includes(type)) {
+          currentQuestion.questionType = type;
+        }
       }
-      // Kiểm tra dòng có câu trả lời đúng
+      // Handle choice answers
+      else if (line.match(/^-\s+[A-Z]\./)) {
+        const answer = line.replace(/^-\s+/, '').trim();
+        currentQuestion.answers.push(answer);
+      }
+      // Handle fill-in-blank answers
+      else if (line.startsWith('- **Fill:**')) {
+        const fillData = line.split('- **Fill:**')[1].trim();
+        const parts = fillData.split(' (position: ');
+        if (parts.length === 2) {
+          const answer = parts[0];
+          const position = parseInt(parts[1].replace(')', ''));
+          currentQuestion.answers.push({ answer, position });
+        }
+      }
+      // Handle order answers
+      else if (line.startsWith('- **Order:**')) {
+        const orderData = line.split('- **Order:**')[1].trim();
+        const parts = orderData.split(' (position: ');
+        if (parts.length === 2) {
+          const answer = parts[0];
+          const position = parseInt(parts[1].replace(')', ''));
+          currentQuestion.answers.push({ answer, position });
+        }
+      }
+      // Handle match pairs
+      else if (line.startsWith('- **Match:**')) {
+        const matchData = line.split('- **Match:**')[1].trim();
+        const parts = matchData.split(' -> ');
+        if (parts.length === 2) {
+          currentQuestion.answers.push({ answer: parts[0], matchPair: parts[1] });
+        }
+      }
+      // Handle correct answers
       else if (line.startsWith('### Correct Answer:')) {
-        // console.log('LINE MATCH CORRECT ANSWER');
-        currentQuestion.correctAnswer = line.split(': ')[1].trim(); // Lấy câu trả lời đúng
+        currentQuestion.correctAnswer = line.split(': ')[1].trim();
+      }
+      // Handle multiple correct answers
+      else if (line.startsWith('### Correct Answers:')) {
+        currentQuestion.correctAnswers = line
+          .split(': ')[1]
+          .split(',')
+          .map((a) => a.trim());
       }
     });
 
-    // Nếu vẫn còn câu hỏi hiện tại thì thêm vào mảng câu hỏi
     if (currentQuestion) {
       questions.push(currentQuestion);
     }
 
-    return questions; // Trả về mảng câu hỏi
+    console.log(`✅ Parsed ${questions.length} questions from markdown template`);
+    return questions;
   }
 
   // Hàm lấy template file docx
@@ -696,14 +787,92 @@ class QuizService {
 
   // Hàm tạo ra bộ câu hỏi từ gemini AI theo prompt
   async geminiCreateQuestionByPrompt({ prompt }) {
+    console.log('🤖 Backend - Starting Gemini AI generation with prompt:', prompt);
+
     // Kiểm tra nếu không có prompt thì trả về lỗi
     if (!prompt) {
       throw new BadRequestError('Prompt is required');
     }
-    // Tạo câu hỏi từ prompt
-    const result = await model.generateContent(prompt);
-    // Trả về câu hỏi vừa tạo
-    return JSON.parse(result.response.text());
+
+    try {
+      // Tạo prompt hướng dẫn chi tiết cho AI
+      const enhancedPrompt = `
+      Bạn là một chuyên gia tạo câu hỏi quiz giáo dục. Hãy tạo các câu hỏi đa dạng và chất lượng cao dựa trên yêu cầu sau:
+
+      "${prompt}"
+
+      Yêu cầu cụ thể:
+      1. Tạo ít nhất 5-10 câu hỏi đa dạng về chủ đề này
+      2. Sử dụng 4 loại câu hỏi khác nhau:
+        - "single": Chọn 1 đáp án đúng (4 lựa chọn)
+        - "multiple": Chọn nhiều đáp án đúng (4 lựa chọn, có thể có 2-3 đáp án đúng)
+        - "fill": Điền từ vào chỗ trống (sử dụng dấu _ để đánh dấu chỗ trống)
+        - "order": Sắp xếp theo thứ tự (5-8 mục cần sắp xếp)
+
+      Hướng dẫn chi tiết theo từng loại:
+
+      **Single/Multiple Choice:**
+      - Tạo 4 đáp án, trong đó single có 1 đáp án đúng, multiple có 2-3 đáp án đúng
+      - Các đáp án sai phải hợp lý và có tính chất nhiễu
+
+      **Fill-in-blank:**
+      - Câu hỏi có dạng: "Thủ đô của Việt Nam là ___ và nó nằm ở miền ___"
+      - Tạo danh sách các từ cần điền với position tương ứng
+      - Mỗi answer có answerName (từ cần điền) và position (vị trí thứ mấy)
+
+      **Order Questions:**
+      - Tạo danh sách 5-8 mục cần sắp xếp theo thứ tự logic
+      - Mỗi answer có answerName và position (thứ tự đúng)
+      - Ví dụ: sắp xếp các hành tinh theo khoảng cách từ mặt trời
+
+      **Match Questions:**
+      - Tạo 4-6 cặp cần nối với nhau
+      - Mỗi answer có answerName và matchPair
+      - Ví dụ: nối quốc gia với thủ đô
+
+      Đảm bảo:
+      - Câu hỏi phù hợp với độ tuổi và trình độ
+      - Nội dung chính xác và cập nhật
+      - Giải thích rõ ràng cho mỗi câu hỏi
+      - Ngôn ngữ tiếng Việt chuẩn và dễ hiểu
+      `;
+
+      console.log('📡 Backend - Calling Gemini API...');
+      const startTime = Date.now();
+
+      // Tạo câu hỏi từ prompt đã được cải thiện
+      const result = await model.generateContent(enhancedPrompt);
+
+      const endTime = Date.now();
+      console.log(`⏱️ Backend - Gemini API responded in ${endTime - startTime}ms`);
+
+      const responseText = result.response.text();
+      console.log('📄 Backend - Raw Gemini response length:', responseText.length);
+
+      // Trả về câu hỏi vừa tạo
+      const parsedResult = JSON.parse(responseText);
+      console.log('✅ Backend - Successfully parsed', parsedResult.length, 'questions');
+
+      return parsedResult;
+    } catch (error) {
+      console.error('❌ Backend - Gemini AI Error:', error);
+      console.error('❌ Backend - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+
+      // Re-throw với thông tin chi tiết hơn
+      if (error.message.includes('API key')) {
+        throw new BadRequestError('Gemini API key không hợp lệ');
+      } else if (error.message.includes('quota')) {
+        throw new BadRequestError('Gemini API đã vượt quá giới hạn');
+      } else if (error.message.includes('timeout')) {
+        throw new BadRequestError('Gemini API timeout - vui lòng thử lại');
+      } else {
+        throw new BadRequestError(`Lỗi Gemini AI: ${error.message}`);
+      }
+    }
   }
 
   // Hàm tạo câu hỏi từ gemini AI theo prompt dữ liệu trả về dạng stream
@@ -740,11 +909,7 @@ class QuizService {
     }
 
     const fileName = req.file.filename;
-    const prompt = req.body.prompt;
-
-    if (!prompt) {
-      throw new BadRequestError('Prompt is required');
-    }
+    const prompt = req.body.prompt || 'Tạo câu hỏi dựa trên hình ảnh này';
 
     const image = {
       inlineData: {
@@ -755,7 +920,36 @@ class QuizService {
       },
     };
 
-    const result = await model.generateContent([prompt, image]);
+    // Tạo prompt hướng dẫn chi tiết cho AI khi phân tích hình ảnh
+    const enhancedImagePrompt = `
+Bạn là một chuyên gia tạo câu hỏi quiz giáo dục. Hãy phân tích hình ảnh này và tạo các câu hỏi đa dạng, chất lượng cao.
+
+Yêu cầu người dùng: "${prompt}"
+
+Hướng dẫn tạo câu hỏi:
+1. Phân tích kỹ nội dung hình ảnh (đối tượng, màu sắc, bối cảnh, văn bản nếu có)
+2. Tạo 5-8 câu hỏi đa dạng dựa trên hình ảnh
+3. Sử dụng các loại câu hỏi khác nhau:
+   - "single": Chọn 1 đáp án đúng về nội dung hình ảnh
+   - "multiple": Chọn nhiều đáp án đúng về các yếu tố trong hình
+   - "fill": Điền từ mô tả hình ảnh (sử dụng dấu _)
+   - "order": Sắp xếp các bước/quá trình thể hiện trong hình
+
+Ví dụ câu hỏi dựa trên hình ảnh:
+- Nhận dạng đối tượng: "Trong hình có bao nhiêu...?"
+- Màu sắc: "Màu chủ đạo của... trong hình là gì?"
+- Vị trí: "Đối tượng X nằm ở đâu trong hình?"
+- Ngữ cảnh: "Hình ảnh này thể hiện hoạt động gì?"
+- Chi tiết: "Điền từ mô tả: Trong hình có ___ đang ___"
+
+Đảm bảo:
+- Câu hỏi dựa trên nội dung thực tế của hình ảnh
+- Đáp án chính xác và có căn cứ từ hình ảnh
+- Ngôn ngữ tiếng Việt rõ ràng, dễ hiểu
+- Độ khó phù hợp với đối tượng học tập
+`;
+
+    const result = await model.generateContent([enhancedImagePrompt, image]);
     const response = JSON.parse(result.response.text());
     return response;
   }

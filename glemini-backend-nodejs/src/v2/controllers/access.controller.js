@@ -1,11 +1,11 @@
 'use strict';
 
-const { CREATED } = require('../../v1/cores/success.response');
-const { OK } = require('../../v1/cores/success.response');
-const accessService = require('../services/access.service');
-const { validation } = require('../dtos/util');
-const { loginDto } = require('../dtos/access/login.dto');
-const { signUpDto } = require('../dtos/access/sign-up.dto');
+const { CREATED } = require('@cores/success.response');
+const { OK } = require('@cores/success.response');
+const accessService = require('@v2/services/access.service');
+const { validation } = require('@v2/dtos/util');
+const { loginDto } = require('@v2/dtos/access/login.dto');
+const { signUpDto } = require('@v2/dtos/access/sign-up.dto');
 
 /**
  * @file access.controller.js
@@ -32,20 +32,21 @@ class AccessController {
   };
 
   logout = async (req, res, next) => {
-    console.log(req.user);
     return new OK({
       message: 'user logout successfully',
       metadata: await accessService.logout({
+        ...req.body,
         user: req.user,
       }),
     }).send(res);
   };
 
   me = async (req, res, next) => {
-    const user = req.user;
     return new OK({
       message: 'user me successfully',
-      metadata: await accessService.me({ user }),
+      metadata: await accessService.me({
+        user:req.user
+      }),
     }).send(res);
   };
 
@@ -55,7 +56,6 @@ class AccessController {
    * @param {Object} res - The response object
    */
   createTeacher = async (req, res, next) => {
-    console.log('controller:::', req.user);
     return new OK({
       message: 'user created successfully',
       metadata: await accessService.createNewTeacher({
@@ -69,11 +69,20 @@ class AccessController {
     return new OK({
       message: 'user role updated successfully',
       metadata: await accessService.updateRoleForUser({
-        //    ...req.user,
         ...req.body,
       }),
     }).send(res);
   };
+
+  refreshToken = async (req, res, next) => {
+    console.log('refresh token');
+    return new OK({
+      message: 'refresh token successfully',
+      metadata: await accessService.refreshToken({
+        user: req.user,
+      }),
+    }).send(res);
+  }
 }
 
 module.exports = new AccessController();

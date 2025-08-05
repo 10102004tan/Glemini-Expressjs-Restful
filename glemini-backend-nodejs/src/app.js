@@ -1,13 +1,14 @@
 'use strict';
 require('dotenv').config();
+require('module-alias/register');
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const { default: helmet } = require('helmet');
 const compression = require('compression');
 const server = require('http').createServer(app);
-const socketService = require('./v1/services/socket.service');
-const errorHandler = require('./v1/middlewares/error.handler');
+const socketService = require('@v1/services/socket.service');
+const errorHandler = require('@v1/middlewares/error.handler');
 const io = require('socket.io')(server, {
   cors: {
     origin: '*',
@@ -40,8 +41,10 @@ app.use(compression());
 
 /* DATABASE CONNECTION START*/
 require('./v1/databases/init.mongodb');
-const redis = require('./v1/databases/init.redis');
-redis.initRedis();
+
+// const redis = require('./v1/databases/init.redis');
+
+// redis.initRedis();
 /* DATABASE CONNECTION END*/
 
 /* SOCKET CONNECTION START*/
@@ -57,11 +60,11 @@ app.use('/api/v1', require('./v1/routes'));
 app.use('/api/v2', require('./v2/routes'));
 
 // // catch 404 and forward to error handler
-// app.use((req, res, next) => {
-// 	const error = new Error('Not Found');
-// 	error.status = 404;
-// 	next(error);
-// });
+app.use((req, res, next) => {
+  const error = new Error('Not Found');
+  error.status = 404;
+  next(error);
+});
 
 app.use(errorHandler);
 /* ROUTES END*/

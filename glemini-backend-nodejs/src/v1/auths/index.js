@@ -16,6 +16,8 @@ const createKeyPair = async ({ payload, publicKey, privateKey }) => {
   // use public key for access token
 
   const accessToken = await JWT.sign(payload, publicKey, {
+    // expiresIn: '2 days',
+    // 30s
     expiresIn: '2 days',
   });
 
@@ -37,54 +39,16 @@ const authentication = async (req, res, next) => {
   }
 
   const tokens = await findKeyTokenByUserId(userId);
-
   if (!tokens) {
     throw new UnauthorizedError('unauthorized');
   }
 
-  // check endpoint is refresh
   if (req.path === '/refresh-token') {
     const refreshToken = req.headers[HEADER.REFRESHTOKEN];
     if (!refreshToken) {
       throw new UnauthorizedError('Refresh token is required');
     }
-
     await JWT.verify(refreshToken, tokens.private_key, async (err, decoded) => {
-      if (err) {
-        if (err.name === 'TokenExpiredError') {
-          throw new UnauthorizedError('expired');
-        } else {
-          throw new UnauthorizedError('Invalid refresh token 1');
-        }
-      }
-      if (decoded.user_id !== userId) {
-        throw new UnauthorizedError('Invalid refresh token 2');
-      }
-      // check token in blacklist
-      const isBlackList = await get(`TOKEN_BLACK_LIST_${userId}_${decoded.jit}`);
-
-      if (isBlackList) {
-        throw new UnauthorizedError('expired');
-      }
-      // kiểm tra xem nếu là giáo viên thì token đã được cấp lại chưa
-      const isRevoked = await get(`TOKEN_REVOKED_${userId}`);
-
-      if (isRevoked) {
-        throw new UnauthorizedError('logout and login again');
-      }
-
-      req.user = decoded;
-      req.refreshToken = refreshToken;
-      next();
-    });
-  } else {
-    const accessToken = req.headers[HEADER.AUTHORIZATION];
-
-    if (!accessToken) {
-      throw new UnauthorizedError('Access token is required');
-    }
-
-    await JWT.verify(accessToken, tokens.public_key, async (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
           throw new UnauthorizedError('expired');
@@ -97,10 +61,39 @@ const authentication = async (req, res, next) => {
         throw new UnauthorizedError('invalid token');
       }
 
-      // const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
-      // if (isTokenBlkacklist) {
-      //     throw new UnauthorizedError("expired");
-      // }
+      //  check in blacklist
+
+      const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
+
+      if (isTokenBlkacklist) {
+        throw new UnauthorizedError('expired');
+      }
+
+      req.user = decoded;
+      next();
+    });
+  } else {
+    const accessToken = req.headers[HEADER.AUTHORIZATION];
+    if (!accessToken) {
+      throw new UnauthorizedError('Access token is required');
+    }
+    await JWT.verify(accessToken, tokens.public_key, async (err, decoded) => {
+      if (err) {
+        if (err.name === 'TokenExpiredError') {
+          throw new UnauthorizedError('expired');
+        } else {
+          throw new UnauthorizedError('invalid token');
+        }
+      }
+
+      if (decoded.user_id !== userId) {
+        throw new UnauthorizedError('invalid token');
+      }
+      const isTokenBlkacklist = await get(`TOKEN_BLACK_LIST_${decoded.user_id}_${decoded.jit}`);
+
+      if (isTokenBlkacklist) {
+        throw new UnauthorizedError('expired');
+      }
       req.user = decoded;
       next();
     });

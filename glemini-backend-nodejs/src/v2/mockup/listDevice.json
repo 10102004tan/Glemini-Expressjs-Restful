@@ -1,0 +1,30 @@
+[
+  
+    {
+    "user_id": "665d6a3c9a1c8f001f5b4567",
+    "device_token": "Ncp3ftEwcc73wC2jvihDw6",
+    "device_os": "android",
+    "device_name": "Samsung Galaxy S21",
+    "last_logged_in_at": "2025-06-02T08:30:00.000Z",
+    "createdAt": "2025-06-01T09:00:00.000Z",
+    "updatedAt": "2025-06-02T08:30:00.000Z"
+  },
+  {
+    "user_id": "665d6a3c9a1c8f001f5b4567",
+    "device_token": "Ncp3ftEwcc73wC2jvihDw7",
+    "device_os": "ios",
+    "device_name": "iPhone 14 Pro",
+    "last_logged_in_at": "2025-06-02T08:30:00.000Z",
+    "createdAt": "2025-06-01T09:00:00.000Z",
+    "updatedAt": "2025-06-02T08:30:00.000Z"
+  },
+  {
+    "user_id": "665d6a3c9a1c8f001f5b4568",
+    "device_token": "Ncp3ftEwcc73wC2jvihDwa",
+    "device_os": "ios",
+    "device_name": "iPhone 15 Pro",
+    "last_logged_in_at": "2025-06-02T12:00:00.000Z",
+    "createdAt": "2025-06-01T10:00:00.000Z",
+    "updatedAt": "2025-06-02T12:00:00.000Z"
+  }
+]

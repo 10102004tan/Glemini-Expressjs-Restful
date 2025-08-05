@@ -10,6 +10,15 @@ var answerSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    /**
+     * {
+     *  match:"New York",
+     * }
+     */
+    attributes: {
+      type: Object,
+      default: {},
+    },
   },
   {
     timestamps: true,

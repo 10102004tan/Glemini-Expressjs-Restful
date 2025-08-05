@@ -21,20 +21,7 @@ class ResultService {
     answer,
     correct,
     score,
-    question_type,
   }) {
-    console.log(
-      exercise_id,
-      room_id,
-      user_id,
-      quiz_id,
-      question_id,
-      answer,
-      correct,
-      score,
-      question_type,
-    );
-
     const query = {
       user_id,
       quiz_id,
@@ -96,21 +83,12 @@ class ResultService {
       }
     }
 
-    if (question_type === 'box') {
-      result.result_questions.push({
-        question_id,
-        answer: answer.toString(),
-        correct,
-        score,
-      });
-    } else {
-      result.result_questions.push({
-        question_id,
-        answer,
-        correct,
-        score,
-      });
-    }
+    result.result_questions.push({
+      question_id,
+      answer,
+      correct,
+      score,
+    });
 
     await result.save();
 
@@ -209,7 +187,7 @@ class ResultService {
       });
 
     if (!result) {
-      throw new BadRequestError('Result not found');
+      return null;
     }
 
     // Populate data for `answer`, `question_answer_ids`, and `correct_answer_ids`
@@ -399,14 +377,27 @@ class ResultService {
           select: 'user_fullname',
         },
       })
-      .populate({
-        path: 'result_questions.question_id',
-        model: 'Question',
-        populate: {
-          path: 'question_answer_ids',
-          model: 'Answer',
+      .populate([
+        {
+          path: 'result_questions.question_id',
+          model: 'Question',
+          populate: [
+            {
+              path: 'question_answer_ids',
+              model: 'Answer',
+            },
+            {
+              path: 'correct_answer_ids',
+              model: 'Answer',
+            },
+          ],
         },
-      })
+        {
+          path: 'result_questions.answer',
+          model: 'Answer',
+          select: 'text image',
+        },
+      ])
       .populate({
         path: 'exercise_id',
         select: 'name date_end',
@@ -709,7 +700,9 @@ class ResultService {
   static async resetResultRoom({ room_id, user_id }) {
     const result = await ResultModel.findOne({ room_id, user_id });
     if (!result) {
-      throw new BadRequestError('Result not found');
+      // Return null or empty object instead of throwing error
+      // This is normal for users who haven't played this room before
+      return null;
     }
 
     result.status = 'doing';
