@@ -18,7 +18,7 @@ class QuizController {
     return new OK({
       message: 'Get quizzes successfully',
       metadata: await QuizService.getQuizzesByUser({
-        user_id: req.query.user_id,
+        user_id: req.user.user_id,
         skip: req.query.skip || 0,
         limit: req.query.limit || 10,
       }),

@@ -26,6 +26,7 @@
     "nodemon": "^3.1.7",
     "redis": "^5.1.1",
     "socket.io": "^4.8.0",
+    "supertest": "^7.1.4",
     "uuid": "^11.1.0",
     "xlsx": "^0.18.5"
   },
@@ -45,8 +46,10 @@
   },
   "scripts": {
     "test": "jest",
+    "test:unit": "jest src/v2/__tests__ --verbose",
     "start:dev": "nodemon server.js",
     "start:prod": "node server.js",
+    "build": "tsc",
     "prepare": "husky",
     "format": "prettier --write .",
     "seed": "node src/v2/seed/index.js"

@@ -31,7 +31,6 @@ class QuizService {
    */
   static async getQuizzesByUser({ user_id, skip = 0, limit = 10 }) {
     console.log(
-      '🔍 Backend V2 - Getting quizzes for user:',
       user_id,
       'skip:',
       skip,
@@ -46,7 +45,10 @@ class QuizService {
         $match: {
           $and: [
             {
-              $or: [{ user_id: userId }, { 'shared_user_ids.user_id': userId }],
+              $or: [
+                { user_id: userId }, 
+                { shared_user_ids: { $elemMatch: { user_id: userId} } }
+              ],
             },
             {
               quiz_status: { $ne: 'deleted' }, // Exclude deleted quizzes
@@ -98,7 +100,6 @@ class QuizService {
       { $limit: parseInt(limit) },
     ]);
 
-    console.log('📊 Backend V2 - Found quizzes:', quizzes.length);
     return quizzes;
   }
 

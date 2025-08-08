@@ -6,7 +6,6 @@ const quizModel = require('../models/quiz.model');
 const subjectModel = require('../models/subject.model');
 const fs = require('fs');
 
-const { url } = require('../configs/url.response.config');
 const UploadService = require('./upload.service');
 const { model } = require('../configs/gemini.config');
 const {

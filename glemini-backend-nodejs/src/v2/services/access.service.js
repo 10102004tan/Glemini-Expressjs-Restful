@@ -39,6 +39,8 @@ const { v4: uuidv4 } = require('uuid');
 const DeviceService = require('./device.service');
 const { countNotificationUnread } = require('@v1/models/repositories/notification.repo');
 const messageService = require('@v1/services/producerQueue.service');
+const { findRoleByName } = require('../../v1/models/repositories/role.repo');
+const { createUser } = require('../../v1/models/repositories/user.repo');
 
 
 class AccessSevice {
@@ -58,16 +60,16 @@ class AccessSevice {
       throw new InternalServerError('sigup failed!!!');
     }
 
-    const roleUser = await roleModel.findOne({ role_name: 'user' }).lean();
+    const roleUser = await findRoleByName('user');
 
     if (!roleUser) {
       throw new BadRequestError('fail to get role !!!');
     }
-    const newUser = await userModel.create({
-      user_fullname: fullname,
-      user_email: email,
-      user_password: hashPassword,
-      user_role: roleUser._id,
+    const newUser = createUser({
+      fullname: fullname,
+      email: email,
+      password: hashPassword,
+      role_id: roleUser._id,
     });
 
     if (!newUser) {
@@ -193,6 +195,7 @@ class AccessSevice {
 
     return true;
   }
+
   static async me({ user }) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();

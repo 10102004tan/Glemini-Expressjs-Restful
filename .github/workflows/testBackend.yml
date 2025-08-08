@@ -1,0 +1,29 @@
+name: Build and Test Backend Glemini
+
+on:
+  pull_request:
+    paths:
+      - './glemini-backend-nodejs/**'
+    branches: [ main ]
+    paths-ignore:
+      - '.github/workflows/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./glemini-backend-nodejs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install
+
+      - name: Run test unit
+        run: npm run test:unit

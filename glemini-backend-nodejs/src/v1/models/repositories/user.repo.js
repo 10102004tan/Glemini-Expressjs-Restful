@@ -120,6 +120,21 @@ const updateStatusUser = async ({ user_id, user_status }) => {
   return updatedStatus;
 };
 
+const createUser = async ({
+  fullname,
+  email,
+  hashPassword,
+  role_id
+}) => {
+ const newUser = await userModel.create({
+       user_fullname: fullname,
+       user_email: email,
+       user_password: hashPassword,
+       user_role: role_id,
+     });
+   return newUser;
+};
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -129,5 +144,6 @@ module.exports = {
   findUserByIdV2,
   findAndUpdateUserById,
   updateStatusUser,
-  findUserByIdV3
+  findUserByIdV3,
+  createUser,
 };
