@@ -16,13 +16,11 @@ const createKeyPair = async ({ payload, publicKey, privateKey }) => {
   // use public key for access token
 
   const accessToken = await JWT.sign(payload, publicKey, {
-    // expiresIn: '2 days',
-    // 30s
-    expiresIn: '5 seconds',
+    expiresIn: '2 days',
   });
 
   const refreshToken = await JWT.sign(payload, privateKey, {
-    expiresIn: '10 seconds',
+    expiresIn: '7 days',
   });
 
   return {

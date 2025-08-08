@@ -39,8 +39,10 @@ const handlerEventConnection = ({ connectionRedis }) => {
  */
 const initRedis = () => {
   try {
-    const instanceRedis = createClient();
-    instanceRedis.connect(); 
+    const instanceRedis = createClient({
+      url: process.env.REDIS_URL,
+    });
+    instanceRedis.connect();
     client.instanceRedis = instanceRedis;
     handlerEventConnection({
       connectionRedis: instanceRedis,
