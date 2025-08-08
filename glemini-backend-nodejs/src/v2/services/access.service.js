@@ -43,6 +43,7 @@ const { findRoleByName } = require('../../v1/models/repositories/role.repo');
 const { createUser } = require('../../v1/models/repositories/user.repo');
 
 
+
 class AccessSevice {
   static async signup(signupData) {
     // check if email is already used
@@ -195,7 +196,6 @@ class AccessSevice {
 
     return true;
   }
-
   static async me({ user }) {
     // get teacher by user_id
     const foundTeacher = await teacherModel.findOne({ userId: user.user_id }).lean();
