@@ -1,6 +1,6 @@
 'use strict';
 const mongoose = require('mongoose');
-const { host, port, name,username,pass } = require('../configs/mongodb.config');
+// const { host, port, name,username,pass } = require('../configs/mongodb.config');
 // const colors = require("../configs/colors.config");
 // const subjectService = require("../services/subject.service");
 // const schoolService = require("../services/school.service");

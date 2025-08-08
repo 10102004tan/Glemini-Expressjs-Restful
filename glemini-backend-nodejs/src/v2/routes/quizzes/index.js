@@ -15,7 +15,7 @@ router.post('/:quizId/questions', asynHandler(quizController.getQuestionsByQuiz)
 router.use(asynHandler(authentication));
 
 // Specific routes first (to avoid conflict with /:quizId)
-router.get('/user', asynHandler(quizController.getQuizzesByUser));
+router.get('/in-library', asynHandler(quizController.getQuizzesByUser));
 router.post('/create', asynHandler(quizController.create));
 router.get('/:quizId', asynHandler(quizController.getDetails));
 router.put('/:quizId', asynHandler(quizController.update));
