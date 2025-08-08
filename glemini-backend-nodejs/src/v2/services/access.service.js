@@ -65,7 +65,7 @@ class AccessSevice {
     if (!roleUser) {
       throw new BadRequestError('fail to get role !!!');
     }
-    const newUser = createUser({
+    const newUser = await createUser({
       fullname: fullname,
       email: email,
       password: hashPassword,

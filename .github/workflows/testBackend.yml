@@ -2,9 +2,7 @@ name: Build and Test Backend Glemini
 
 on:
   pull_request:
-    paths:
-      - './glemini-backend-nodejs/**'
-    branches: [ main ]
+    branches: [ main, develop ]
     paths-ignore:
       - '.github/workflows/**'
 
